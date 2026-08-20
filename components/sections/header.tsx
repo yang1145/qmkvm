@@ -10,20 +10,24 @@ import { siteConfig } from "@/lib/site";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+const navItems: { key: string; href: string; page?: boolean }[] = [
   { key: "products", href: "#products" },
   { key: "pricing", href: "#pricing" },
   { key: "solutions", href: "#solutions" },
   { key: "infrastructure", href: "#infrastructure" },
-] as const;
+  { key: "about", href: "/about", page: true },
+];
 
-/** 顶部导航：Logo + 锚点导航 + 语言切换 + CTA，移动端抽屉菜单 */
+/** 顶部导航：Logo + 锚点导航（非首页时跳首页对应区块）+ 语言切换 + CTA */
 export function Header() {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  /** 锚点导航在非首页页面上没有对应区块，统一指向首页路径 + hash */
+  const homePath = locale === "zh" ? "/" : "/en";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -59,15 +63,25 @@ export function Header() {
           aria-label="主导航"
           className="hidden items-center gap-7 text-sm font-medium text-muted-foreground lg:flex"
         >
-          {navItems.map((item) => (
-            <a
-              key={item.key}
-              href={item.href}
-              className="transition-colors hover:text-foreground"
-            >
-              {t(item.key)}
-            </a>
-          ))}
+          {navItems.map((item) =>
+            item.page ? (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="transition-colors hover:text-foreground"
+              >
+                {t(item.key)}
+              </Link>
+            ) : (
+              <Link
+                key={item.key}
+                href={`${homePath}${item.href}`}
+                className="transition-colors hover:text-foreground"
+              >
+                {t(item.key)}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden items-center gap-2.5 lg:flex">
@@ -104,16 +118,27 @@ export function Header() {
             aria-label="移动端导航"
             className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:px-6"
           >
-            {navItems.map((item) => (
-              <a
-                key={item.key}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent"
-              >
-                {t(item.key)}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item.page ? (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  {t(item.key)}
+                </Link>
+              ) : (
+                <Link
+                  key={item.key}
+                  href={`${homePath}${item.href}`}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  {t(item.key)}
+                </Link>
+              )
+            )}
             <div className="mt-3 flex items-center gap-2.5 border-t border-border/70 pt-4">
               <Button asChild variant="outline" className="flex-1">
                 <a href={siteConfig.cta.contact} onClick={() => setOpen(false)}>

@@ -131,13 +131,13 @@ export function ContactForm() {
         </div>
 
         <div className="space-y-2">
-          <Label>{t("needType")}</Label>
+          <Label htmlFor="contact-need-type">{t("needType")}</Label>
           <Controller
             control={form.control}
             name="needType"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger>
+                <SelectTrigger id="contact-need-type">
                   <SelectValue placeholder={t("needTypePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>

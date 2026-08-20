@@ -48,13 +48,6 @@ export async function generateMetadata({
       description: t("description"),
       images: [siteConfig.ogImage],
     },
-    alternates: {
-      canonical: locale === "zh" ? "/" : "/en",
-      languages: {
-        "zh-CN": "/",
-        "en-US": "/en",
-      },
-    },
   };
 }
 

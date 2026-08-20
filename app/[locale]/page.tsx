@@ -14,6 +14,25 @@ import { Faq } from "@/components/sections/faq";
 import { Contact } from "@/components/sections/contact";
 import { FinalCta } from "@/components/sections/final-cta";
 
+/** 首页 SEO：canonical 自引用，hreflang 指向中英首页（PRD 11） */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    alternates: {
+      canonical: locale === "zh" ? "/" : "/en",
+      languages: {
+        "x-default": "/",
+        "zh-CN": "/",
+        "en-US": "/en",
+      },
+    },
+  };
+}
+
 export default async function HomePage({
   params,
 }: {

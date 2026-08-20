@@ -9,6 +9,8 @@ interface FooterItem {
   label: string;
   href?: string;
   external?: boolean;
+  /** 站内页面链接（使用 i18n Link） */
+  page?: boolean;
 }
 
 /** 页脚：产品 / 资源 / 公司 / 法律链接分组 + 品牌与版权信息（PRD 7.12） */
@@ -21,25 +23,27 @@ export async function Footer() {
   const company = t.raw("company") as string[];
   const legal = t.raw("legal") as string[];
 
-  const contactItem = resources[2] ?? "联系我们";
-
   const groups: { title: string; items: FooterItem[] }[] = [
     {
       title: t("productTitle"),
-      // 产品详情页尚未上线，暂渲染为纯文本，避免死链（PRD 9.2）
+      // 产品详情页由售卖系统提供，暂渲染为纯文本，避免死链（PRD 9.2）
       items: products.map((label) => ({ label })),
     },
     {
       title: t("resourceTitle"),
       items: resources.map((label, i) =>
         i === 2
-          ? { label, href: `mailto:${siteConfig.contact.email}`, external: true }
+          ? { label, href: "/contact", page: true }
           : { label }
       ),
     },
     {
       title: t("companyTitle"),
-      items: company.map((label) => ({ label })),
+      items: company.map((label, i) =>
+        i === 0
+          ? { label, href: "/about", page: true }
+          : { label }
+      ),
     },
   ];
 
@@ -61,12 +65,21 @@ export async function Footer() {
                 {group.items.map((item) => (
                   <li key={item.label}>
                     {item.href ? (
-                      <a
-                        href={item.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {item.label}
-                      </a>
+                      item.page ? (
+                        <Link
+                          href={item.href}
+                          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <a
+                          href={item.href}
+                          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {item.label}
+                        </a>
+                      )
                     ) : (
                       <span className="text-sm text-muted-foreground">
                         {item.label}
@@ -106,7 +119,7 @@ export async function Footer() {
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>{t("copyright", { year })}</p>
           <span>
-            {contactItem} ·{" "}
+            {resources[2]} ·{" "}
             <a
               href={`mailto:${siteConfig.contact.email}`}
               className="transition-colors hover:text-foreground"

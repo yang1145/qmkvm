@@ -8,6 +8,7 @@
     "solutions": "Solutions",
     "infrastructure": "Infrastructure",
     "pricing": "Pricing",
+    "about": "About",
     "ctaPrimary": "Get Started",
     "ctaSecondary": "Contact Sales",
     "langSwitch": "中文",
@@ -267,6 +268,31 @@
     "termsHref": "/en/terms",
     "slogan": "Reliable cloud capabilities at a fair price.",
     "copyright": "© {year} Pinhaoji Cloud · pinhaoji1.cn"
+  },
+  "about": {
+    "badge": "About Pinhaoji",
+    "title": "Reliable cloud capability at a fair price",
+    "intro": "Pinhaoji is a global cloud services brand focused on overseas markets. We believe reliable cloud infrastructure should not come with high costs or complex lock-in.",
+    "storyTitle": "Why we exist",
+    "story": "From developers and startups to enterprise teams, more workloads than ever need stable, predictable cloud resources. Pinhaoji brings together compute, storage and networking with clear specs and transparent billing — so teams get dependable cloud capability at a reasonable cost, from a first website to production workloads.",
+    "principlesTitle": "What we stand for",
+    "principles": [
+      { "name": "Transparent cost", "desc": "Clear billing logic and resource specs keep every cloud spend predictable." },
+      { "name": "Reliability first", "desc": "Redundancy, health checks and failover reduce single points of failure." },
+      { "name": "Global network", "desc": "Edge networking optimized for overseas markets improves access worldwide." },
+      { "name": "Ongoing support", "desc": "24/7 technical support from selection through operations." }
+    ],
+    "architectureTitle": "Platform architecture",
+    "architectureDesc": "From a global edge network and redundant infrastructure, to compute, storage and networking capabilities, to unified support and operations — Pinhaoji uses a clear layered architecture to power workloads of any size.",
+    "architectureLayers": [
+      { "name": "Infrastructure layer", "desc": "Global edge network and multi-region data centers with multi-layer redundancy." },
+      { "name": "Service layer", "desc": "Elastic compute, bare metal, object storage and network acceleration, combined on demand." },
+      { "name": "Support & operations", "desc": "24/7 support, usage monitoring and status transparency across the full lifecycle." }
+    ],
+    "ctaTitle": "Ready to get started?",
+    "ctaDesc": "Submit your requirements for a trial or a tailored proposal.",
+    "ctaPrimary": "Request Trial",
+    "ctaSecondary": "Contact Sales"
   },
   "notfound": {
     "code": "404",

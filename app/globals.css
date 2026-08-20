@@ -168,6 +168,43 @@
   }
 }
 
+/* 法律条款 Markdown 内容排版（/privacy、/terms） */
+.md-content {
+  color: var(--color-muted-foreground);
+  font-size: 0.95rem;
+  line-height: 1.85;
+}
+
+.md-content h2 {
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-foreground);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.md-content p {
+  margin-top: 0.6rem;
+}
+
+.md-content blockquote {
+  margin-top: 1.5rem;
+  border-left: 3px solid var(--color-border);
+  padding-left: 1rem;
+}
+
+.md-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.md-content strong {
+  color: var(--color-foreground);
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
