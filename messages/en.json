@@ -14,18 +14,42 @@
     "langSwitchTitle": "Switch language"
   },
   "hero": {
-    "badge": "Pinhaoji Cloud",
-    "title": "Reliable cloud infrastructure, at a fair price",
-    "subtitle": "A global cloud services brand. Get reliable cloud capabilities at a reasonable cost — on-demand, stable and predictable infrastructure for websites, APIs and enterprise workloads.",
-    "ctaPrimary": "Request Trial",
-    "ctaSecondary": "Contact Sales",
-    "points": ["Scale on demand", "Stable global network", "24/7 support"],
-    "visualTitle": "Console preview (mock)",
-    "visualInstance": "Instance",
-    "visualStatusRunning": "Running",
-    "visualRegion": "Region",
-    "visualSpec": "Spec",
-    "visualUptime": "Uptime"
+    "slides": [
+      {
+        "badge": "Pinhaoji Cloud",
+        "title": "Reliable cloud infrastructure, at a fair price",
+        "subtitle": "A global cloud services brand focused on overseas markets. Get reliable cloud capabilities at a reasonable cost — on-demand, stable and predictable infrastructure for websites, APIs and enterprise workloads.",
+        "ctaPrimary": "Request Trial",
+        "ctaPrimaryHref": "#products",
+        "ctaSecondary": "Contact Sales",
+        "ctaSecondaryHref": "#contact",
+        "points": ["Scale on demand", "Stable global network", "24/7 support"]
+      },
+      {
+        "badge": "High-Performance Compute",
+        "title": "Compute built for performance and isolation",
+        "subtitle": "Bare metal and high-performance compute with dedicated physical resources — low latency, high throughput and predictable performance for databases, rendering, AI training and compute-intensive workloads.",
+        "ctaPrimary": "Explore Bare Metal",
+        "ctaPrimaryHref": "#products",
+        "ctaSecondary": "Contact Sales",
+        "ctaSecondaryHref": "#contact",
+        "points": ["Dedicated resources", "Low latency, high throughput", "Custom configurations"]
+      },
+      {
+        "badge": "Data Storage & Protection",
+        "title": "Scalable data storage and backup",
+        "subtitle": "Object storage and data protection that scale on demand, with lifecycle management and backup workflows so data of any retention period stays safe and under control.",
+        "ctaPrimary": "Explore Storage",
+        "ctaPrimaryHref": "#solutions",
+        "ctaSecondary": "Contact Sales",
+        "ctaSecondaryHref": "#contact",
+        "points": ["Scale storage on demand", "Lifecycle management", "Backup & data protection"]
+      }
+    ],
+    "carousel": {
+      "label": "Products & capabilities showcase",
+      "goToSlide": "Go to slide {index}"
+    }
   },
   "trust": {
     "title": "Capabilities & commitments",
@@ -34,6 +58,27 @@
       { "label": "Pay-as-you-go billing", "note": "transparent, usage-based" },
       { "label": "Global edge acceleration", "note": "improved overseas access" },
       { "label": "24/7 support", "note": "tickets & email" }
+    ]
+  },
+  "audiences": {
+    "title": "Who it is for",
+    "subtitle": "From solo developers to enterprise workloads — find capabilities that match your stage.",
+    "items": [
+      {
+        "name": "Developers & tech leads",
+        "desc": "Focused on deploy speed, APIs, elasticity and network quality — quickly judge fit for new projects or migrations.",
+        "points": ["Provision in minutes", "Standard tooling & observability", "Scale on demand, no lock-in"]
+      },
+      {
+        "name": "Startups & growing teams",
+        "desc": "Focused on cost, speed to launch and stability — with low-friction trials and easy-to-understand offerings.",
+        "points": ["Predictable pay-as-you-go", "Elastic scaling", "24/7 support"]
+      },
+      {
+        "name": "Enterprise IT & procurement",
+        "desc": "Focused on availability, compliance and service boundaries — prefer working with sales for selection and rollout.",
+        "points": ["Redundancy & failover design", "Status transparency", "Dedicated solution consulting"]
+      }
     ]
   },
   "products": {
@@ -55,13 +100,15 @@
         "name": "Object Storage & Data Protection",
         "desc": "Scalable storage and backup capabilities with configurable retention.",
         "points": ["Elastic storage capacity", "Lifecycle management", "Durability per official docs"]
-      },
-      {
-        "name": "Cloud Network, CDN & Security",
-        "desc": "Improve overseas access and reduce network risk; live capabilities per released products.",
-        "points": ["Global accelerated network", "Edge caching", "Baseline protection"]
       }
     ]
+  },
+  "pricing": {
+    "title": "Cloud server pricing",
+    "subtitle": "Pay-as-you-go with monthly options — transparent, controllable plans. Edit content/pricing.json to update plans and prices.",
+    "popular": "Most popular",
+    "cta": "Learn more",
+    "note": "Sample pricing shown above. Final prices and billing details follow official product documentation and terms."
   },
   "diff": {
     "title": "Why Pinhaoji",

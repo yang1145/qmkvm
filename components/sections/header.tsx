@@ -12,9 +12,9 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { key: "products", href: "#products" },
+  { key: "pricing", href: "#pricing" },
   { key: "solutions", href: "#solutions" },
   { key: "infrastructure", href: "#infrastructure" },
-  { key: "pricing", href: "#contact" },
 ] as const;
 
 /** 顶部导航：Logo + 锚点导航 + 语言切换 + CTA，移动端抽屉菜单 */

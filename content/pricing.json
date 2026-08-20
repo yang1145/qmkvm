@@ -1,0 +1,65 @@
+{
+  "_note": "云服务器套餐配置文件：修改价格与规格后页面自动更新。name/tagline/price/specs/features 均按 zh/en 两套文案提供；featured: true 的套餐在页面高亮推荐。价格为示例占位，上线前替换为业务确认的真实定价。",
+  "plans": [
+    {
+      "id": "starter",
+      "featured": false,
+      "name": { "zh": "轻量型", "en": "Starter" },
+      "tagline": { "zh": "个人项目与轻量应用", "en": "Personal projects & light apps" },
+      "price": { "zh": "¥39/月起", "en": "from $6/mo" },
+      "specs": {
+        "zh": ["2 vCPU", "4GB 内存", "40GB SSD", "1TB 月流量"],
+        "en": ["2 vCPU", "4GB RAM", "40GB SSD", "1TB traffic/mo"]
+      },
+      "features": {
+        "zh": ["按量计费，成本可预测", "分钟级创建与释放", "7×24 技术支持"],
+        "en": ["Predictable pay-as-you-go", "Provision in minutes", "24/7 support"]
+      }
+    },
+    {
+      "id": "standard",
+      "featured": true,
+      "name": { "zh": "通用型", "en": "Standard" },
+      "tagline": { "zh": "生产业务与稳定在线服务", "en": "Production apps & online services" },
+      "price": { "zh": "¥99/月起", "en": "from $15/mo" },
+      "specs": {
+        "zh": ["4 vCPU", "8GB 内存", "80GB SSD", "3TB 月流量"],
+        "en": ["4 vCPU", "8GB RAM", "80GB SSD", "3TB traffic/mo"]
+      },
+      "features": {
+        "zh": ["弹性扩缩容，按用量结算", "快照与备份能力", "全球网络加速"],
+        "en": ["Elastic scaling, usage-based", "Snapshots & backups", "Global network acceleration"]
+      }
+    },
+    {
+      "id": "pro",
+      "featured": false,
+      "name": { "zh": "高性能型", "en": "Pro" },
+      "tagline": { "zh": "高并发与计算密集型负载", "en": "High-concurrency & compute-heavy" },
+      "price": { "zh": "¥259/月起", "en": "from $39/mo" },
+      "specs": {
+        "zh": ["8 vCPU", "16GB 内存", "160GB SSD", "5TB 月流量"],
+        "en": ["8 vCPU", "16GB RAM", "160GB SSD", "5TB traffic/mo"]
+      },
+      "features": {
+        "zh": ["高性能磁盘与网络", "多可用区部署", "专属支持通道"],
+        "en": ["High-perf disk & network", "Multi-AZ deployment", "Priority support"]
+      }
+    },
+    {
+      "id": "enterprise",
+      "featured": false,
+      "name": { "zh": "企业定制", "en": "Enterprise" },
+      "tagline": { "zh": "定制规格与专属方案", "en": "Custom specs & dedicated plans" },
+      "price": { "zh": "联系销售", "en": "Contact sales" },
+      "specs": {
+        "zh": ["CPU / 内存 / 存储按需定制", "专属带宽与网络方案", "SLA 与合规支持"],
+        "en": ["Custom CPU / RAM / storage", "Dedicated bandwidth", "SLA & compliance support"]
+      },
+      "features": {
+        "zh": ["专属架构咨询", "迁移支持", "合同制结算"],
+        "en": ["Dedicated architecture review", "Migration support", "Contract billing"]
+      }
+    }
+  ]
+}

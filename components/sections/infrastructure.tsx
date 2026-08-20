@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
+import { BellRing, Globe, Layers } from "lucide-react";
 
 import { Spotlight } from "@/components/aceternity/spotlight";
 import { DotPattern } from "@/components/magicui/dot-pattern";
@@ -7,6 +9,13 @@ interface Capability {
   name: string;
   desc: string;
 }
+
+/** 基础设施能力图标：全球边缘网络 / 多层冗余 / 服务状态披露 */
+const CAPABILITY_ICONS = [Globe, Layers, BellRing] as const;
+
+/** 世界地图背景：生成式素材，展示全球节点与网络连接（装饰性，关键信息仍以文本承载） */
+const WORLD_MAP_IMAGE =
+  "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20navy%20world%20map%20with%20glowing%20cyan%20network%20nodes%20and%20connection%20lines%2C%20global%20cloud%20infrastructure%2C%20top-down%20view%2C%20clean%20minimal%20tech%20style%2C%20no%20text%2C%20high%20detail&image_size=landscape_16_9";
 
 /** 基础设施与覆盖：深色技术展示区，区域列表标注“即将上线”（PRD 7.6） */
 export async function Infrastructure() {
@@ -22,6 +31,13 @@ export async function Infrastructure() {
       <Spotlight className="-top-48 left-0 h-[80%] w-[60%] opacity-80" />
       <DotPattern
         className="opacity-[0.1] text-white [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,#000,transparent)]"
+      />
+      <Image
+        src={WORLD_MAP_IMAGE}
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover opacity-30 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_40%,#000,transparent)]"
       />
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
@@ -51,17 +67,23 @@ export async function Infrastructure() {
 
         {/* 基础设施能力 */}
         <div className="mt-14 grid gap-5 md:grid-cols-3">
-          {capabilities.map((capability) => (
-            <div
-              key={capability.name}
-              className="rounded-lg border border-white/10 bg-white/[0.04] p-6"
-            >
-              <h3 className="text-base font-semibold">{capability.name}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/60">
-                {capability.desc}
-              </p>
-            </div>
-          ))}
+          {capabilities.map((capability, index) => {
+            const Icon = CAPABILITY_ICONS[index];
+            return (
+              <div
+                key={capability.name}
+                className="rounded-lg border border-white/10 bg-white/[0.04] p-6"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10">
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="mt-5 text-base font-semibold">{capability.name}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  {capability.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

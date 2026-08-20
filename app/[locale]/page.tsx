@@ -3,7 +3,9 @@ import { setRequestLocale } from "next-intl/server";
 import { siteConfig } from "@/lib/site";
 import { Hero } from "@/components/sections/hero";
 import { TrustBar } from "@/components/sections/trust-bar";
+import { Audiences } from "@/components/sections/audiences";
 import { Products } from "@/components/sections/products";
+import { Pricing } from "@/components/sections/pricing";
 import { Differentiation } from "@/components/sections/differentiation";
 import { Infrastructure } from "@/components/sections/infrastructure";
 import { Solutions } from "@/components/sections/solutions";
@@ -39,7 +41,9 @@ export default async function HomePage({
     <>
       <Hero />
       <TrustBar />
+      <Audiences />
       <Products />
+      <Pricing />
       <Differentiation />
       <Infrastructure />
       <Solutions />
