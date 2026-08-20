@@ -1,0 +1,225 @@
+{
+  "metadata": {
+    "title": "Pinhaoji Cloud | Affordable, Reliable Global Cloud Infrastructure",
+    "description": "Pinhaoji Cloud provides developers, startups and enterprises with cost-effective, highly available cloud servers, networking and storage. Predictable cost, stable operations, from web hosting to production workloads."
+  },
+  "nav": {
+    "products": "Products",
+    "solutions": "Solutions",
+    "infrastructure": "Infrastructure",
+    "pricing": "Pricing",
+    "ctaPrimary": "Get Started",
+    "ctaSecondary": "Contact Sales",
+    "langSwitch": "中文",
+    "langSwitchTitle": "Switch language"
+  },
+  "hero": {
+    "badge": "Pinhaoji Cloud",
+    "title": "Reliable cloud infrastructure, at a fair price",
+    "subtitle": "A global cloud services brand. Get reliable cloud capabilities at a reasonable cost — on-demand, stable and predictable infrastructure for websites, APIs and enterprise workloads.",
+    "ctaPrimary": "Request Trial",
+    "ctaSecondary": "Contact Sales",
+    "points": ["Scale on demand", "Stable global network", "24/7 support"],
+    "visualTitle": "Console preview (mock)",
+    "visualInstance": "Instance",
+    "visualStatusRunning": "Running",
+    "visualRegion": "Region",
+    "visualSpec": "Spec",
+    "visualUptime": "Uptime"
+  },
+  "trust": {
+    "title": "Capabilities & commitments",
+    "items": [
+      { "label": "99.95% availability target", "note": "to be verified" },
+      { "label": "Pay-as-you-go billing", "note": "transparent, usage-based" },
+      { "label": "Global edge acceleration", "note": "improved overseas access" },
+      { "label": "24/7 support", "note": "tickets & email" }
+    ]
+  },
+  "products": {
+    "title": "Core products",
+    "subtitle": "Clear, controllable cloud services across compute, storage and networking.",
+    "more": "Learn more",
+    "items": [
+      {
+        "name": "Cloud Server · Elastic Compute",
+        "desc": "Create on demand, resize freely — ideal for websites, APIs and business services.",
+        "points": ["Instant provisioning", "Predictable pay-as-you-go", "Multi-region availability"]
+      },
+      {
+        "name": "Bare Metal & HPC",
+        "desc": "For compute-intensive workloads that demand performance and isolation.",
+        "points": ["Dedicated physical resources", "Low latency, high throughput", "Custom configurations"]
+      },
+      {
+        "name": "Object Storage & Data Protection",
+        "desc": "Scalable storage and backup capabilities with configurable retention.",
+        "points": ["Elastic storage capacity", "Lifecycle management", "Durability per official docs"]
+      },
+      {
+        "name": "Cloud Network, CDN & Security",
+        "desc": "Improve overseas access and reduce network risk; live capabilities per released products.",
+        "points": ["Global accelerated network", "Edge caching", "Baseline protection"]
+      }
+    ]
+  },
+  "diff": {
+    "title": "Why Pinhaoji",
+    "subtitle": "Trust built on verifiable metrics and transparent mechanisms — never overpromise.",
+    "items": [
+      {
+        "name": "Cost-efficiency",
+        "desc": "Transparent billing and clear resource specs help teams keep cloud spend predictable.",
+        "metric": "Cost",
+        "metricValue": "Predictable"
+      },
+      {
+        "name": "High availability",
+        "desc": "Redundancy, health checks and failover reduce single points of failure. SLA shown only when signed and deliverable.",
+        "metric": "Availability",
+        "metricValue": "99.95% (TBD)"
+      },
+      {
+        "name": "Stability",
+        "desc": "Long-term operating quality across compute, network, storage and releases, with observability and incident communication.",
+        "metric": "Stability",
+        "metricValue": "Observable"
+      }
+    ]
+  },
+  "infra": {
+    "title": "Infrastructure & coverage",
+    "subtitle": "The final node list and regional availability follow official launch announcements. Planned first batch:",
+    "regions": [
+      "Mainland China",
+      "Hong Kong",
+      "Singapore",
+      "Japan",
+      "US West",
+      "US East",
+      "Frankfurt"
+    ],
+    "regionNote": "Coming soon",
+    "capabilities": [
+      { "name": "Global edge network", "desc": "Edge-based scheduling to reduce latency" },
+      { "name": "Multi-layer redundancy", "desc": "Network, storage and compute redundancy" },
+      { "name": "Status transparency", "desc": "Status page and change announcements after launch" }
+    ]
+  },
+  "solutions": {
+    "title": "Solutions & scenarios",
+    "subtitle": "Combining compute, storage and networking for real business problems.",
+    "items": [
+      {
+        "name": "Web, App & API hosting",
+        "desc": "Elastic compute plus global acceleration for a fast, stable experience everywhere.",
+        "points": ["Highly available deploys", "Auto scaling", "Low global latency"]
+      },
+      {
+        "name": "Gaming, media & real-time",
+        "desc": "Low-latency networking and high-performance compute for interactive workloads.",
+        "points": ["Low-latency routing", "Elastic capacity", "Peak handling"]
+      },
+      {
+        "name": "Enterprise migration & DR",
+        "desc": "Object storage and data protection for backup and recovery.",
+        "points": ["Data backup", "Lifecycle management", "Compliance support"]
+      }
+    ]
+  },
+  "developer": {
+    "title": "Developer experience",
+    "subtitle": "A clear, controllable workflow from provisioning to operations. Full API, CLI and Terraform Provider will follow product releases.",
+    "steps": [
+      { "title": "Provision", "desc": "Pick a region and spec in the console; instances ready in minutes." },
+      { "title": "Deploy", "desc": "Ship your business quickly with standard tools and application images." },
+      { "title": "Operate", "desc": "Monitor usage and status, scale or adjust on demand." }
+    ]
+  },
+  "faq": {
+    "title": "FAQ",
+    "items": [
+      {
+        "q": "How do I request a trial?",
+        "a": "Submit the contact form and our team will reach out within one business day to confirm your scenario and arrange a trial or demo."
+      },
+      {
+        "q": "How does billing work?",
+        "a": "The first release supports pay-as-you-go billing based on actual usage. Prices and details follow official product documentation and terms."
+      },
+      {
+        "q": "How do I migrate existing workloads?",
+        "a": "Common images and standard deployment flows are supported, plus migration consulting. For complex cases, contact sales for architecture guidance."
+      },
+      {
+        "q": "What support is provided?",
+        "a": "24/7 tickets and email support; scope and response time follow official terms of service."
+      },
+      {
+        "q": "How is my data stored and protected?",
+        "a": "Data is stored in the region you select or agree on. Purpose, retention and deletion channels are described in the Privacy Policy and Terms."
+      },
+      {
+        "q": "Is an SLA provided?",
+        "a": "Availability targets and SLA commitments follow signed, deliverable terms — marketing pages make no promises beyond contracts."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "subtitle": "Submit your requirements for a trial or a tailored proposal.",
+    "primary": "Request Trial",
+    "secondary": "Contact Sales"
+  },
+  "form": {
+    "title": "Contact Sales",
+    "subtitle": "Fill in the form and we will get back to you shortly.",
+    "name": "Name",
+    "namePlaceholder": "Your name",
+    "email": "Work email",
+    "emailPlaceholder": "name@company.com",
+    "company": "Company",
+    "companyPlaceholder": "Company or team name",
+    "needType": "Need type",
+    "needTypePlaceholder": "Select a need type",
+    "needTypes": ["Cloud Server / Elastic Compute", "Bare Metal & HPC", "Object Storage & Data Protection", "Cloud Network, CDN & Security", "Full-stack consulting", "Other"],
+    "scale": "Estimated scale",
+    "scalePlaceholder": "e.g. 10 instances / month",
+    "message": "Message",
+    "messagePlaceholder": "Briefly describe your scenario (optional)",
+    "privacy": "I agree that Pinhaoji processes the above information under its Privacy Policy for follow-up communication.",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "success": "Submitted. We will contact you shortly.",
+    "error": "Submission failed, please try again later.",
+    "required": "This field is required",
+    "emailInvalid": "Please enter a valid work email",
+    "privacyRequired": "Please read and agree to the Privacy Policy"
+  },
+  "footer": {
+    "productTitle": "Products",
+    "products": ["Cloud Server", "Bare Metal", "Object Storage", "Network & CDN"],
+    "resourceTitle": "Resources",
+    "resources": ["Docs (coming soon)", "Status (coming soon)", "Contact us"],
+    "companyTitle": "Company",
+    "company": ["About", "Careers", "News"],
+    "legalTitle": "Legal",
+    "legal": ["Privacy Policy", "Terms of Service"],
+    "privacyHref": "/en/privacy",
+    "termsHref": "/en/terms",
+    "slogan": "Reliable cloud capabilities at a fair price.",
+    "copyright": "© {year} Pinhaoji Cloud · pinhaoji1.cn"
+  },
+  "notfound": {
+    "code": "404",
+    "title": "Page not found",
+    "desc": "The page you are looking for may have been moved or deleted.",
+    "backHome": "Back to home"
+  },
+  "legal": {
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Service",
+    "placeholder": "This page is a placeholder. Final terms will be published after review by business and legal teams.",
+    "backHome": "Back to home"
+  }
+}
