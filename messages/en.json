@@ -105,9 +105,9 @@
   },
   "pricing": {
     "title": "Cloud server pricing",
-    "subtitle": "Pay-as-you-go with monthly options — transparent, controllable plans. Edit content/pricing.json to update plans and prices.",
+    "subtitle": "Pay-as-you-go with monthly options — transparent resource specs and predictable prices. Pick the plan that fits.",
     "popular": "Most popular",
-    "cta": "Learn more",
+    "cta": "Buy now",
     "note": "Sample pricing shown above. Final prices and billing details follow official product documentation and terms."
   },
   "diff": {
@@ -217,6 +217,17 @@
     "subtitle": "Submit your requirements for a trial or a tailored proposal.",
     "primary": "Request Trial",
     "secondary": "Contact Sales"
+  },
+  "contactInfo": {
+    "title": "Contact Sales",
+    "desc": "Share your requirements and we will suggest a trial, demo or tailored proposal for your scenario.",
+    "email": "Sales email",
+    "response": "Response time",
+    "responseValue": "Replies within 1 business day",
+    "support": "Technical support",
+    "supportValue": "24/7 tickets & email",
+    "lang": "Service languages",
+    "langValue": "中文 / English"
   },
   "form": {
     "title": "Contact Sales",

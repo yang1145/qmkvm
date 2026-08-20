@@ -13,6 +13,8 @@ interface LocalizedText {
 interface PricingPlan {
   id: string;
   featured: boolean;
+  /** 购买跳转链接：留空回退到联系销售锚点，避免死链（PRD 9.2） */
+  buyUrl?: string;
   name: LocalizedText;
   tagline: LocalizedText;
   price: LocalizedText;
@@ -81,7 +83,10 @@ export async function Pricing() {
               </ul>
 
               <a
-                href={siteConfig.cta.contact}
+                href={plan.buyUrl || siteConfig.cta.contact}
+                {...(plan.buyUrl?.startsWith("http")
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
                 className={
                   plan.featured
                     ? "mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"

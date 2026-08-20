@@ -1,9 +1,10 @@
 {
-  "_note": "云服务器套餐配置文件：修改价格与规格后页面自动更新。name/tagline/price/specs/features 均按 zh/en 两套文案提供；featured: true 的套餐在页面高亮推荐。价格为示例占位，上线前替换为业务确认的真实定价。",
+  "_note": "云服务器套餐配置文件：修改价格与规格后页面自动更新。name/tagline/price/specs/features 均按 zh/en 两套文案提供；featured: true 的套餐在页面高亮推荐。buyUrl 为购买跳转链接：留空时页面回退到联系销售锚点，配置后优先跳转（外部 http(s) 链接将新窗口打开）。价格为示例占位，上线前替换为业务确认的真实定价。",
   "plans": [
     {
       "id": "starter",
       "featured": false,
+      "buyUrl": "",
       "name": { "zh": "轻量型", "en": "Starter" },
       "tagline": { "zh": "个人项目与轻量应用", "en": "Personal projects & light apps" },
       "price": { "zh": "¥39/月起", "en": "from $6/mo" },
@@ -19,6 +20,7 @@
     {
       "id": "standard",
       "featured": true,
+      "buyUrl": "",
       "name": { "zh": "通用型", "en": "Standard" },
       "tagline": { "zh": "生产业务与稳定在线服务", "en": "Production apps & online services" },
       "price": { "zh": "¥99/月起", "en": "from $15/mo" },
@@ -34,6 +36,7 @@
     {
       "id": "pro",
       "featured": false,
+      "buyUrl": "",
       "name": { "zh": "高性能型", "en": "Pro" },
       "tagline": { "zh": "高并发与计算密集型负载", "en": "High-concurrency & compute-heavy" },
       "price": { "zh": "¥259/月起", "en": "from $39/mo" },
@@ -49,6 +52,7 @@
     {
       "id": "enterprise",
       "featured": false,
+      "buyUrl": "",
       "name": { "zh": "企业定制", "en": "Enterprise" },
       "tagline": { "zh": "定制规格与专属方案", "en": "Custom specs & dedicated plans" },
       "price": { "zh": "联系销售", "en": "Contact sales" },

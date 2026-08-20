@@ -105,9 +105,9 @@
   },
   "pricing": {
     "title": "云服务器定价",
-    "subtitle": "按量计费、月付可选，套餐规格透明可控。修改 content/pricing.json 即可更新套餐与价格。",
+    "subtitle": "按量计费、月付可选，资源规格与价格透明可控，按需选择适合你的套餐。",
     "popular": "最受欢迎",
-    "cta": "咨询详情",
+    "cta": "立即购买",
     "note": "以上为示例定价，具体价格与计费细则以正式产品说明与计费条款为准。"
   },
   "diff": {
@@ -217,6 +217,17 @@
     "subtitle": "提交需求，获取试用或专属方案建议。",
     "primary": "申请试用",
     "secondary": "联系销售"
+  },
+  "contactInfo": {
+    "title": "联系销售",
+    "desc": "留下你的需求，我们将根据场景提供试用、演示或专属方案建议。",
+    "email": "销售邮箱",
+    "response": "响应时间",
+    "responseValue": "1 个工作日内回复",
+    "support": "技术支持",
+    "supportValue": "7×24 工单与邮件支持",
+    "lang": "服务语言",
+    "langValue": "中文 / English"
   },
   "form": {
     "title": "联系销售",

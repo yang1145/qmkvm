@@ -13,9 +13,8 @@ interface Capability {
 /** 基础设施能力图标：全球边缘网络 / 多层冗余 / 服务状态披露 */
 const CAPABILITY_ICONS = [Globe, Layers, BellRing] as const;
 
-/** 世界地图背景：生成式素材，展示全球节点与网络连接（装饰性，关键信息仍以文本承载） */
-const WORLD_MAP_IMAGE =
-  "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=dark%20navy%20world%20map%20with%20glowing%20cyan%20network%20nodes%20and%20connection%20lines%2C%20global%20cloud%20infrastructure%2C%20top-down%20view%2C%20clean%20minimal%20tech%20style%2C%20no%20text%2C%20high%20detail&image_size=landscape_16_9";
+/** 世界地图背景：本地素材 map.webp，展示全球节点与网络连接（装饰性，关键信息仍以文本承载） */
+const WORLD_MAP_IMAGE = "/map.webp";
 
 /** 基础设施与覆盖：深色技术展示区，区域列表标注“即将上线”（PRD 7.6） */
 export async function Infrastructure() {
