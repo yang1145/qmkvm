@@ -1,0 +1,27 @@
+{
+  "name": "@pinhaoji/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.0",
+    "@pinhaoji/contracts": "workspace:*",
+    "@pinhaoji/core": "workspace:*",
+    "@pinhaoji/db": "workspace:*",
+    "@pinhaoji/logger": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "ioredis": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@pinhaoji/core",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pinhaoji/contracts": "workspace:*",
+    "@pinhaoji/db": "workspace:*",
+    "@pinhaoji/logger": "workspace:*",
+    "bullmq": "^6.3.4",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}
