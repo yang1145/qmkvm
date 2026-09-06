@@ -98,7 +98,6 @@ const Login: React.FC = () => {
       <div style={{ flex: 1, padding: '32px 0' }}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
-          logo={<img alt="logo" src="/logo.png" style={{ height: 72 }} />}
           title="拼好机管理后台"
           subTitle="云业务系统运营管理"
           initialValues={{ autoLogin: true }}
