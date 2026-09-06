@@ -44,7 +44,12 @@ export function pageParams(params: Record<string, unknown>) {
 
 // ============ 认证 ============
 
-export async function adminLogin(data: { username: string; password: string }) {
+export async function adminLogin(data: {
+  username: string;
+  password: string;
+  captchaId: string;
+  captchaCode: string;
+}) {
   return request<AdminMe>(`${BASE}/auth/login`, {
     method: 'POST',
     data,
@@ -388,6 +393,52 @@ export async function getSettings() {
 export async function putSettings(values: SettingsMap) {
   return request<{ ok: boolean }>(`${BASE}/settings`, { method: 'PUT', data: { values } });
 }
+
+// ============ 支付设置 / 邮件设置（settings 子路由） ============
+
+/** 支付网关配置：敏感字段（privateKey/apiv3Key）读取时为 "******" 掩码，原样回传表示不修改 */
+export async function getPaymentSettings() {
+  return request<{ value: Record<string, unknown> }>(`${BASE}/settings/payment`);
+}
+
+export async function putPaymentSettings(gateways: Record<string, unknown>) {
+  return request<{ ok: boolean }>(`${BASE}/settings/payment`, { method: 'PUT', data: { gateways } });
+}
+
+export interface SmtpSettings {
+  host?: string;
+  port?: number;
+  secure?: boolean;
+  user?: string | null;
+  /** 读取时为 "******" 掩码，原样回传表示不修改 */
+  pass?: string | null;
+  from?: string;
+}
+
+export async function getSmtpSettings() {
+  return request<{ value: SmtpSettings }>(`${BASE}/settings/smtp`);
+}
+
+export async function putSmtpSettings(value: SmtpSettings) {
+  return request<{ ok: boolean }>(`${BASE}/settings/smtp`, { method: 'PUT', data: value });
+}
+
+export type TestEmailResult = { ok: boolean; provider: 'smtp' | 'mock'; error?: string };
+
+export async function testSmtp(to: string) {
+  return request<TestEmailResult>(`${BASE}/settings/smtp/test`, { method: 'POST', data: { to } });
+}
+
+export type TestTemplateResult = TestEmailResult & { subject?: string; body?: string };
+
+/** 按 email 模板渲染示例变量后发送测试邮件 */
+export async function testNotificationTemplate(templateId: number, to: string) {
+  return request<TestTemplateResult>(`${BASE}/settings/templates/test`, {
+    method: 'POST',
+    data: { templateId, to },
+  });
+}
+
 // ============ 知识库 ============
 
 export async function getKbCategories() {
@@ -473,3 +524,49 @@ export const EXPORT_PATHS = {
   invoices: `${BASE}/export/invoices`,
   transactions: `${BASE}/export/transactions`,
 } as const;
+
+// ============ 计划任务管理（与 apps/worker/src/tasks 注册表对应） ============
+
+/** 最近一次执行记录 */
+export type ScheduledTaskLastRun = {
+  status: 'success' | 'partial' | 'failed';
+  startedAt: string;
+  finishedAt: string | null;
+  error: string | null;
+};
+
+/** 计划任务清单项 */
+export type ScheduledTaskItem = {
+  name: string;
+  cron: string;
+  description: string;
+  lastRun: ScheduledTaskLastRun | null;
+};
+
+/** 计划任务执行记录（job_runs） */
+export type ScheduledTaskRunItem = {
+  id: number;
+  status: 'success' | 'partial' | 'failed';
+  result: unknown;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+};
+
+export async function getScheduledTasks() {
+  return request<{ items: ScheduledTaskItem[] }>(`${BASE}/scheduled-tasks`);
+}
+
+export async function getScheduledTaskRuns(name: string, params: Record<string, unknown>) {
+  return request<Paginated<ScheduledTaskRunItem>>(
+    `${BASE}/scheduled-tasks/${encodeURIComponent(name)}/runs`,
+    { params },
+  );
+}
+
+export async function runScheduledTask(name: string) {
+  return request<{ ok: boolean }>(
+    `${BASE}/scheduled-tasks/${encodeURIComponent(name)}/run`,
+    { method: 'POST' },
+  );
+}

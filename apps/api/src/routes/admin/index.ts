@@ -27,6 +27,7 @@ import { adminSettingRoutes } from "./settings.js";
 import { adminAdminRoutes } from "./admins.js";
 import { adminReportRoutes } from "./reports.js";
 import { adminExportRoutes } from "./export.js";
+import { adminScheduledTaskRoutes } from "./scheduled-tasks.js";
 
 export const adminRoutes = new Hono();
 
@@ -56,3 +57,4 @@ adminRoutes.route("/", adminSettingRoutes);
 adminRoutes.route("/", adminAdminRoutes);
 adminRoutes.route("/", adminReportRoutes);
 adminRoutes.route("/", adminExportRoutes);
+adminRoutes.route("/", adminScheduledTaskRoutes);

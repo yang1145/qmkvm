@@ -7,7 +7,7 @@ import { useAccess } from '@umijs/max';
 import { App, Button, Input, Modal, Select, Space, Switch, Tag, Typography } from 'antd';
 import { useRef, useState } from 'react';
 import type React from 'react';
-import { getTemplates, updateTemplate } from '@/services/admin';
+import { getTemplates, testNotificationTemplate, updateTemplate } from '@/services/admin';
 import type { TemplateItem } from '@/services/types';
 import { CHANNEL_LABEL } from '@/services/enums';
 
@@ -19,6 +19,10 @@ const TemplateList: React.FC = () => {
   const { message } = App.useApp();
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<TemplateItem | null>(null);
+  const [testOpen, setTestOpen] = useState(false);
+  const [testing, setTesting] = useState<TemplateItem | null>(null);
+  const [testTo, setTestTo] = useState('');
+  const [testSending, setTestSending] = useState(false);
 
   const doSave = async () => {
     if (!editing) return;
@@ -44,6 +48,30 @@ const TemplateList: React.FC = () => {
     await updateTemplate(row.id, { active: !row.active });
     message.success(row.active ? '已停用' : '已启用');
     actionRef.current?.reload();
+  };
+
+  const doTestSend = async () => {
+    if (!testing) return;
+    if (!testTo.trim() || !testTo.includes('@')) {
+      message.warning('请输入有效的目标邮箱');
+      return;
+    }
+    setTestSending(true);
+    try {
+      const res = await testNotificationTemplate(testing.id, testTo.trim());
+      if (res.ok) {
+        message.success(
+          res.provider === 'mock'
+            ? '测试完成（当前未配置真实 SMTP，走 mock 发送）'
+            : '测试邮件已发送，请查收',
+        );
+        setTestOpen(false);
+      } else {
+        message.error(`发送失败：${res.error ?? '未知错误'}`);
+      }
+    } finally {
+      setTestSending(false);
+    }
   };
 
   const columns: ProColumns<TemplateItem>[] = [
@@ -76,17 +104,30 @@ const TemplateList: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 90,
+      width: 140,
       render: (_, r) =>
         access.canTemplatesManage ? (
-          <a
-            onClick={() => {
-              setEditing(r);
-              setEditOpen(true);
-            }}
-          >
-            编辑
-          </a>
+          <Space size={12}>
+            <a
+              onClick={() => {
+                setEditing(r);
+                setEditOpen(true);
+              }}
+            >
+              编辑
+            </a>
+            {r.channel === 'email' && (
+              <a
+                onClick={() => {
+                  setTesting(r);
+                  setTestTo('');
+                  setTestOpen(true);
+                }}
+              >
+                测试发送
+              </a>
+            )}
+          </Space>
         ) : (
           '-'
         ),
@@ -155,6 +196,30 @@ const TemplateList: React.FC = () => {
             </Space>
           </div>
         )}
+      </Modal>
+      <Modal
+        title={`测试发送：${testing ? `${CHANNEL_LABEL[testing.channel]} / ${testing.event}` : ''}`}
+        open={testOpen}
+        onOk={doTestSend}
+        okText="发送"
+        confirmLoading={testSending}
+        width={520}
+        onCancel={() => setTestOpen(false)}
+      >
+        <div style={{ display: 'grid', gap: 12 }}>
+          <Typography.Text type="secondary">
+            使用该模板渲染示例变量（{'{{变量}}'} 替换为演示值）后，按当前邮件设置真实发送一封测试邮件。
+          </Typography.Text>
+          <div>
+            目标邮箱：
+            <Input
+              style={{ width: 280 }}
+              value={testTo}
+              placeholder="接收测试邮件的邮箱地址"
+              onChange={(e) => setTestTo(e.target.value)}
+            />
+          </div>
+        </div>
       </Modal>
     </PageContainer>
   );

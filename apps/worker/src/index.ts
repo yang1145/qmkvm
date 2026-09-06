@@ -62,6 +62,19 @@ function registerJobHandlers(db: Db): void {
   registerJobHandler("domain.event", async (data: { event?: string; payload?: unknown }) => {
     log.info({ event: data?.event, payload: data?.payload }, "领域事件已接收");
   });
+
+  // 手动触发计划任务（后台「立即执行」）：按 name 从任务注册表执行，
+  // 复用 runTask 包装保证 job_runs 记录与定时调度一致
+  registerJobHandler("cron.run", async (data: { name?: string }) => {
+    const name = String(data?.name ?? "");
+    const task = TASKS.find((t) => t.name === name);
+    if (!task) {
+      log.warn({ name }, "cron.run 目标任务不存在，跳过");
+      return;
+    }
+    log.info({ task: name }, "收到手动执行计划任务请求");
+    await runTask(db, task);
+  });
 }
 
 /** 无 Redis 兜底循环：供应任务兜底 + 过期支付单关闭（驻留直至收到退出信号） */

@@ -1,9 +1,11 @@
-/** 管理后台认证：登录（写审计）/ 登出 / 当前会话。 */
+/** 管理后台认证：图形验证码 / 登录（写审计）/ 登出 / 当前会话。 */
 import { Hono } from "hono";
+import { z } from "zod";
 import { adminLoginSchema } from "@pinhaoji/contracts";
 import { appError } from "@pinhaoji/core";
 import { adminLogin, resolveAdminSession, revokeAdminSession } from "@pinhaoji/auth";
 import { getDb } from "@pinhaoji/db";
+import { consumeCaptcha, generateCaptcha } from "../../utils/captcha.js";
 import {
   rateLimit,
   requireAdmin,
@@ -35,9 +37,31 @@ export function adminPayload(admin: {
 
 export const adminAuthRoutes = new Hono();
 
-/** 登录（限流 10 次/15 分钟/IP）：成功写审计 admin.login，失败由 core 写 admin.login_failed */
+/** 登录请求体：在账密基础上追加图形验证码 */
+const loginBodySchema = adminLoginSchema.extend({
+  captchaId: z.string().min(1).max(64),
+  captchaCode: z.string().min(1).max(8),
+});
+
+/** 图形验证码（限流防刷：30 次/5 分钟/IP） */
+adminAuthRoutes.get("/captcha", rateLimit("admin:captcha", 30, 5 * 60), (c) => {
+  const { id, svg } = generateCaptcha();
+  return c.json({ captchaId: id, svg }, 200, { "cache-control": "no-store" });
+});
+
+/**
+ * 登录（限流 10 次/15 分钟/IP，与验证码错误分开计数）：
+ * 1. 先校验图形验证码（一次性消费，错误即作废；账密校验前拦截）；
+ * 2. 验证码通过后才验证账密；成功写审计 admin.login，失败由 core 写 admin.login_failed。
+ */
 adminAuthRoutes.post("/login", rateLimit("admin:login", 10, 15 * 60), async (c) => {
-  const body = adminLoginSchema.parse(await c.req.json());
+  const body = loginBodySchema.parse(await c.req.json());
+
+  const captchaOk = await consumeCaptcha(body.captchaId, body.captchaCode);
+  if (!captchaOk) {
+    throw appError("AUTH_INVALID_CREDENTIALS", "图形验证码错误或已过期，请刷新后重试");
+  }
+
   const db = getDb();
   const result = await adminLogin(db, body.username, body.password, {
     ip: getClientIp(c),

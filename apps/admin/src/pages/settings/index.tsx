@@ -1,9 +1,11 @@
 /**
- * 系统设置：计费参数 / 站点信息 / 支付网关
+ * 系统设置：计费参数 / 站点信息
+ * （支付网关、SMTP 邮件设置已拆分至独立页面：/system/settings/payment、/system/settings/email）
  * PUT /settings body { values: { key: value } }
  */
 import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { App, Alert, Button, Card, Divider, Input, InputNumber, Spin, Switch } from 'antd';
+import { history } from '@umijs/max';
+import { App, Button, Input, InputNumber, Space, Spin } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { getSettings, putSettings } from '@/services/admin';
 
@@ -19,40 +21,21 @@ const SITE_KEYS = [
   { key: 'site.announcement', label: '站点公告', kind: 'textarea' },
 ] as const;
 
-type GatewayConfig = { enabled: boolean; appId: string; privateKey: string; publicKey: string };
-
-const GATEWAYS: { code: string; name: string; fields: string[] }[] = [
-  { code: 'alipay', name: '支付宝', fields: ['appId', 'privateKey', 'publicKey'] },
-  { code: 'wechat', name: '微信支付', fields: ['appId', 'privateKey', 'publicKey'] },
-];
-
 const SettingsPage: React.FC = () => {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
-  const [gateways, setGateways] = useState<Record<string, GatewayConfig>>({
-    alipay: { enabled: false, appId: '', privateKey: '', publicKey: '' },
-    wechat: { enabled: false, appId: '', privateKey: '', publicKey: '' },
-  });
 
   useEffect(() => {
+    // GET /settings 返回 { items: [{key, value}] }，转成 key → value 映射
     getSettings()
-      .then((map) => {
-        setSettings(map ?? {});
-        setGateways((prev) => {
-          const next = { ...prev };
-          for (const g of GATEWAYS) {
-            const enabled = map?.[`payment.${g.code}.enabled`];
-            next[g.code] = {
-              enabled: enabled === true || enabled === 'true',
-              appId: (map?.[`payment.${g.code}.app_id`] as string) ?? '',
-              privateKey: (map?.[`payment.${g.code}.private_key`] as string) ?? '',
-              publicKey: (map?.[`payment.${g.code}.public_key`] as string) ?? '',
-            };
-          }
-          return next;
-        });
+      .then((res) => {
+        const map: Record<string, unknown> = {};
+        for (const item of (res as { items?: { key: string; value: unknown }[] }).items ?? []) {
+          map[item.key] = item.value;
+        }
+        setSettings(map);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -78,13 +61,6 @@ const SettingsPage: React.FC = () => {
       for (const k of SITE_KEYS) {
         if (val(k.key) !== '') values[k.key] = val(k.key);
       }
-      for (const g of GATEWAYS) {
-        const cfg = gateways[g.code];
-        values[`payment.${g.code}.enabled`] = cfg.enabled;
-        if (cfg.appId) values[`payment.${g.code}.app_id`] = cfg.appId;
-        if (cfg.privateKey) values[`payment.${g.code}.private_key`] = cfg.privateKey;
-        if (cfg.publicKey) values[`payment.${g.code}.public_key`] = cfg.publicKey;
-      }
       await putSettings(values);
       message.success('设置已保存');
     } finally {
@@ -99,9 +75,6 @@ const SettingsPage: React.FC = () => {
       </PageContainer>
     );
   }
-
-  const updateGateway = (code: string, patch: Partial<GatewayConfig>) =>
-    setGateways((prev) => ({ ...prev, [code]: { ...prev[code], ...patch } }));
 
   return (
     <PageContainer
@@ -152,66 +125,16 @@ const SettingsPage: React.FC = () => {
         </div>
       </ProCard>
 
-      <ProCard title="支付网关">
-        <Alert
-          type="info"
-          showIcon
-          message="保存后写入系统 settings，密钥等敏感值将加密存储，再次加载时不会回显明文（留空表示不修改）。"
-          style={{ marginBottom: 16 }}
-        />
-        {GATEWAYS.map((g, gi) => {
-          const cfg = gateways[g.code];
-          return (
-            <div key={g.code}>
-              {gi > 0 && <Divider />}
-              <Card
-                size="small"
-                title={
-                  <span>
-                    {g.name}
-                    <Switch
-                      size="small"
-                      style={{ marginLeft: 12 }}
-                      checked={cfg.enabled}
-                      onChange={(v) => updateGateway(g.code, { enabled: v })}
-                    />
-                    <span style={{ marginLeft: 6, fontSize: 12, color: '#999' }}>{cfg.enabled ? '已开启' : '已关闭'}</span>
-                  </span>
-                }
-              >
-                <div style={{ display: 'grid', gap: 10 }}>
-                  <div>
-                    App ID：
-                    <Input
-                      style={{ width: 420 }}
-                      value={cfg.appId}
-                      onChange={(e) => updateGateway(g.code, { appId: e.target.value })}
-                      placeholder={`${g.name} 应用 ID`}
-                    />
-                  </div>
-                  <div>
-                    应用私钥：
-                    <Input.TextArea
-                      rows={2}
-                      value={cfg.privateKey}
-                      onChange={(e) => updateGateway(g.code, { privateKey: e.target.value })}
-                      placeholder="留空表示不修改"
-                    />
-                  </div>
-                  <div>
-                    平台公钥：
-                    <Input.TextArea
-                      rows={2}
-                      value={cfg.publicKey}
-                      onChange={(e) => updateGateway(g.code, { publicKey: e.target.value })}
-                      placeholder="留空表示不修改"
-                    />
-                  </div>
-                </div>
-              </Card>
-            </div>
-          );
-        })}
+      <ProCard title="更多设置">
+        <Space direction="vertical" size={8}>
+          <Space>
+            <Button onClick={() => history.push('/system/settings/payment')}>支付设置（支付宝 / 微信网关）</Button>
+            <Button onClick={() => history.push('/system/settings/email')}>邮件设置（SMTP / 测试发送）</Button>
+          </Space>
+          <span style={{ fontSize: 12, color: '#999' }}>
+            支付网关与 SMTP 邮件设置已拆分为独立页面，敏感值加密存储。
+          </span>
+        </Space>
       </ProCard>
     </PageContainer>
   );
