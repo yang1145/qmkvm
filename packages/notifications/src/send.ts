@@ -6,6 +6,7 @@ import type { Db } from "@pinhaoji/db/client";
 import {
   notificationLogs,
   notificationTemplates,
+  settings,
   userNotifications,
   users,
 } from "@pinhaoji/db/schema";
@@ -50,6 +51,26 @@ export interface SendNotificationInput {
   vars: Record<string, unknown>;
   /** inapp/邮件 subject 缺失时的标题兜底 */
   title?: string;
+}
+
+/** 站点变量进程内缓存（60s）：所有模板可用 {{site.name}}，读失败/缺省回退「拼好机」 */
+const SITE_VARS_TTL_MS = 60_000;
+const DEFAULT_SITE_NAME = "拼好机";
+let siteVarsCache: { value: Record<string, unknown>; at: number } | null = null;
+
+async function getSiteVars(db: Db): Promise<Record<string, unknown>> {
+  const now = Date.now();
+  if (siteVarsCache && now - siteVarsCache.at < SITE_VARS_TTL_MS) return siteVarsCache.value;
+  let siteName = DEFAULT_SITE_NAME;
+  try {
+    const rows = await db.select().from(settings).where(eq(settings.key, "site")).limit(1);
+    const value = rows[0]?.value as { siteName?: unknown } | undefined;
+    if (typeof value?.siteName === "string" && value.siteName.trim()) siteName = value.siteName.trim();
+  } catch (err) {
+    log.warn({ err }, "读取站点设置失败，使用默认站点名");
+  }
+  siteVarsCache = { value: { site: { name: siteName } }, at: now };
+  return siteVarsCache.value;
 }
 
 async function loadTemplate(db: Db, channel: NotificationChannel, event: string) {
@@ -115,6 +136,8 @@ async function writeLog(db: Db, entry: LogEntry): Promise<void> {
 export async function sendNotification(db: Db, input: SendNotificationInput): Promise<void> {
   const { userId, channel, event, vars, title } = input;
   try {
+    // 注入站点变量 {{site.name}}；调用方传入的同名键优先
+    const mergedVars = { ...(await getSiteVars(db)), ...vars };
     const template = await loadTemplate(db, channel, event);
     if (!template) {
       log.info({ channel, event }, "无可用通知模板，跳过");
@@ -127,8 +150,8 @@ export async function sendNotification(db: Db, input: SendNotificationInput): Pr
         return;
       }
       // title 用 subject 渲染，缺省回退 title 参数 / 事件名；列宽截断
-      const renderedTitle = renderTemplate(template.subject ?? title ?? event, vars).slice(0, 200);
-      const renderedBody = renderTemplate(template.body, vars).slice(0, 1000);
+      const renderedTitle = renderTemplate(template.subject ?? title ?? event, mergedVars).slice(0, 200);
+      const renderedBody = renderTemplate(template.body, mergedVars).slice(0, 1000);
       await db.insert(userNotifications).values({
         userId,
         title: renderedTitle || event,
@@ -153,8 +176,8 @@ export async function sendNotification(db: Db, input: SendNotificationInput): Pr
     }
 
     if (channel === "email") {
-      const subject = renderTemplate(template.subject ?? title ?? event, vars);
-      const html = renderTemplate(template.body, vars);
+      const subject = renderTemplate(template.subject ?? title ?? event, mergedVars);
+      const html = renderTemplate(template.body, mergedVars);
       const result = await sendEmail(target, subject, html);
       await writeLog(db, {
         userId,
@@ -170,7 +193,7 @@ export async function sendNotification(db: Db, input: SendNotificationInput): Pr
     }
 
     // sms
-    const text = renderTemplate(template.body, vars);
+    const text = renderTemplate(template.body, mergedVars);
     const result = await sendSms(target, text);
     await writeLog(db, {
       userId,

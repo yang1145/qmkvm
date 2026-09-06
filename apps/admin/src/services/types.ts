@@ -398,6 +398,11 @@ export type TemplateItem = {
   updatedAt?: string;
 };
 
+/** POST /admin/templates/signature：批量设置短信签名结果 */
+export type SmsSignatureResult = {
+  updated: number;
+};
+
 // ============ 管理员 / 角色 ============
 
 export type AdminUserItem = AdminInfo & {

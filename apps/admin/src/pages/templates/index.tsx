@@ -7,7 +7,7 @@ import { useAccess } from '@umijs/max';
 import { App, Button, Input, Modal, Select, Space, Switch, Tag, Typography } from 'antd';
 import { useRef, useState } from 'react';
 import type React from 'react';
-import { getTemplates, testNotificationTemplate, updateTemplate } from '@/services/admin';
+import { getTemplates, setSmsSignature, testNotificationTemplate, updateTemplate } from '@/services/admin';
 import type { TemplateItem } from '@/services/types';
 import { CHANNEL_LABEL } from '@/services/enums';
 
@@ -23,6 +23,41 @@ const TemplateList: React.FC = () => {
   const [testing, setTesting] = useState<TemplateItem | null>(null);
   const [testTo, setTestTo] = useState('');
   const [testSending, setTestSending] = useState(false);
+  const [sigOpen, setSigOpen] = useState(false);
+  const [sigValue, setSigValue] = useState('');
+  const [sigSaving, setSigSaving] = useState(false);
+
+  const openSignatureModal = async () => {
+    setSigOpen(true);
+    setSigSaving(true);
+    try {
+      // 预填：从现有短信模板正文解析当前签名（【xxx】开头）
+      const res = await getTemplates({ channel: 'sms', page: 1, pageSize: 100 });
+      const items = res.items ?? (res as unknown as TemplateItem[]);
+      const sms = items.find((t) => t.channel === 'sms');
+      const m = sms?.body.match(/^【([^】]+)】/);
+      setSigValue(m?.[1] ?? '');
+    } finally {
+      setSigSaving(false);
+    }
+  };
+
+  const doSetSignature = async () => {
+    const signature = sigValue.trim();
+    if (!signature) {
+      message.warning('签名不能为空');
+      return;
+    }
+    setSigSaving(true);
+    try {
+      const res = await setSmsSignature(signature);
+      message.success(`已更新 ${res.updated} 个短信模板签名`);
+      setSigOpen(false);
+      actionRef.current?.reload();
+    } finally {
+      setSigSaving(false);
+    }
+  };
 
   const doSave = async () => {
     if (!editing) return;
@@ -143,6 +178,15 @@ const TemplateList: React.FC = () => {
         columns={columns}
         cardBordered
         search={false}
+        toolBarRender={
+          access.canTemplatesManage
+            ? () => [
+                <Button key="signature" onClick={openSignatureModal}>
+                  批量设置短信签名
+                </Button>,
+              ]
+            : undefined
+        }
         request={async (params) => {
           const res = await getTemplates({ page: params.current ?? 1, pageSize: params.pageSize ?? 20 });
           return { data: res.items ?? (res as unknown as TemplateItem[]), success: true, total: res.total ?? 0 };
@@ -196,6 +240,33 @@ const TemplateList: React.FC = () => {
             </Space>
           </div>
         )}
+      </Modal>
+      <Modal
+        title="批量设置短信签名"
+        open={sigOpen}
+        onOk={doSetSignature}
+        okText="应用"
+        confirmLoading={sigSaving}
+        width={520}
+        onCancel={() => setSigOpen(false)}
+      >
+        <div style={{ display: 'grid', gap: 12 }}>
+          <Typography.Text type="secondary">
+            将全部短信模板的签名统一为【签名】（原签名会被替换，无签名的模板在最前面插入）。国内短信强制实名签名，建议与站点名保持一致。
+          </Typography.Text>
+          <div>
+            签名（1-20 字）：
+            <Input
+              style={{ width: 240 }}
+              maxLength={20}
+              value={sigValue}
+              placeholder="例如：拼好机"
+              onChange={(e) => setSigValue(e.target.value)}
+              onPressEnter={doSetSignature}
+            />
+          </div>
+          <Typography.Text type="secondary">提示：签名填写 {'{{site.name}}'} 可直接复用站点名（发送时取系统设置中的站点名称）。</Typography.Text>
+        </div>
       </Modal>
       <Modal
         title={`测试发送：${testing ? `${CHANNEL_LABEL[testing.channel]} / ${testing.event}` : ''}`}

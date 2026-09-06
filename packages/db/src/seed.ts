@@ -3,7 +3,7 @@
  * 幂等：按唯一键（slug/code/username/event）存在即跳过。
  * 默认管理员从环境变量读取，首次部署后必须修改密码。
  */
-import { eq } from "drizzle-orm";
+import { and, eq, like } from "drizzle-orm";
 import { getDb, schema } from "./index.js";
 import { hashPassword } from "./seed-argon.js";
 
@@ -149,25 +149,44 @@ async function main() {
   }
 
   // —— 通知模板（zh） ——
+  // 旧签名升级：历史 sms 模板硬编码【拼好机】→ 统一改写为变量【{{site.name}}】（渲染时取 settings.site.siteName）
+  {
+    const legacy = await db
+      .select()
+      .from(schema.notificationTemplates)
+      .where(
+        and(
+          eq(schema.notificationTemplates.channel, "sms"),
+          like(schema.notificationTemplates.body, "【拼好机】%"),
+        ),
+      );
+    for (const t of legacy) {
+      await db
+        .update(schema.notificationTemplates)
+        .set({ body: t.body.replace("【拼好机】", "【{{site.name}}】") })
+        .where(eq(schema.notificationTemplates.id, t.id));
+    }
+    if (legacy.length > 0) console.log("  ~ 短信签名升级:", legacy.length, "条【拼好机】→【{{site.name}}】");
+  }
   const T = (subject: string, body: string, sms?: string) => ({ subject, body, sms });
   const templates: Record<string, ReturnType<typeof T>> = {
     "user.registered": T("欢迎注册拼好机", "您好 {{user.name}}，欢迎注册拼好机！您现在可以选购云服务器并管理您的服务。"),
-    "invoice.created": T("新账单待支付", "您有一张新账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}，请及时支付。", "【拼好机】您有新账单{{invoice.invoiceNo}}，金额{{invoice.totalCny}}，请及时支付。"),
-    "invoice.paid": T("账单支付成功", "账单 {{invoice.invoiceNo}} 已支付成功，感谢您的支持。", "【拼好机】账单{{invoice.invoiceNo}}已支付成功。"),
-    "invoice.reminder": T("账单即将到期提醒", "您的账单 {{invoice.invoiceNo}} 尚未支付，请及时处理以免影响服务。", "【拼好机】账单{{invoice.invoiceNo}}未支付，请及时处理。"),
-    "invoice.overdue": T("账单逾期提醒", "您的账单 {{invoice.invoiceNo}} 已逾期，服务可能被暂停，请尽快支付。", "【拼好机】账单{{invoice.invoiceNo}}已逾期，请尽快支付。"),
-    "service.activated": T("服务开通成功", "您的服务 {{service.name}} 已开通成功，感谢选择拼好机。", "【拼好机】服务{{service.name}}已开通成功。"),
-    "service.suspend_warning": T("服务即将暂停提醒", "服务 {{service.name}} 即将因逾期暂停，请及时续费。", "【拼好机】服务{{service.name}}即将因逾期暂停，请及时续费。"),
-    "service.suspended": T("服务已暂停", "服务 {{service.name}} 因逾期已暂停，续费后自动恢复。", "【拼好机】服务{{service.name}}已暂停，续费后恢复。"),
-    "service.terminated": T("服务已终止", "服务 {{service.name}} 已逾期终止，数据可能已释放。", "【拼好机】服务{{service.name}}已逾期终止。"),
-    "renewal.created": T("服务续费提醒", "服务 {{service.name}} 将于 {{service.nextDueDate}} 到期，已生成续费账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}。", "【拼好机】服务{{service.name}}即将到期，请及时续费。"),
-    "renewal.auto_success": T("自动续费成功", "服务 {{service.name}} 已自动续费成功，扣除 {{service.amountCny}}，新到期日 {{service.nextDueDate}}。", "【拼好机】服务{{service.name}}已自动续费成功，新到期日{{service.nextDueDate}}。"),
-    "renewal.auto_failed": T("自动续费失败", "服务 {{service.name}} 自动续费失败：余额不足，请充值以免服务暂停。", "【拼好机】服务{{service.name}}自动续费失败：余额不足，请充值以免服务暂停。"),
-    "ticket.replied": T("工单新回复", "您的工单「{{ticket.subject}}」有新的回复，请登录门户查看。", "【拼好机】您的工单有新回复，请登录查看。"),
+    "invoice.created": T("新账单待支付", "您有一张新账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}，请及时支付。", "【{{site.name}}】您有新账单{{invoice.invoiceNo}}，金额{{invoice.totalCny}}，请及时支付。"),
+    "invoice.paid": T("账单支付成功", "账单 {{invoice.invoiceNo}} 已支付成功，感谢您的支持。", "【{{site.name}}】账单{{invoice.invoiceNo}}已支付成功。"),
+    "invoice.reminder": T("账单即将到期提醒", "您的账单 {{invoice.invoiceNo}} 尚未支付，请及时处理以免影响服务。", "【{{site.name}}】账单{{invoice.invoiceNo}}未支付，请及时处理。"),
+    "invoice.overdue": T("账单逾期提醒", "您的账单 {{invoice.invoiceNo}} 已逾期，服务可能被暂停，请尽快支付。", "【{{site.name}}】账单{{invoice.invoiceNo}}已逾期，请尽快支付。"),
+    "service.activated": T("服务开通成功", "您的服务 {{service.name}} 已开通成功，感谢选择拼好机。", "【{{site.name}}】服务{{service.name}}已开通成功。"),
+    "service.suspend_warning": T("服务即将暂停提醒", "服务 {{service.name}} 即将因逾期暂停，请及时续费。", "【{{site.name}}】服务{{service.name}}即将因逾期暂停，请及时续费。"),
+    "service.suspended": T("服务已暂停", "服务 {{service.name}} 因逾期已暂停，续费后自动恢复。", "【{{site.name}}】服务{{service.name}}已暂停，续费后恢复。"),
+    "service.terminated": T("服务已终止", "服务 {{service.name}} 已逾期终止，数据可能已释放。", "【{{site.name}}】服务{{service.name}}已逾期终止。"),
+    "renewal.created": T("服务续费提醒", "服务 {{service.name}} 将于 {{service.nextDueDate}} 到期，已生成续费账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}。", "【{{site.name}}】服务{{service.name}}即将到期，请及时续费。"),
+    "renewal.auto_success": T("自动续费成功", "服务 {{service.name}} 已自动续费成功，扣除 {{service.amountCny}}，新到期日 {{service.nextDueDate}}。", "【{{site.name}}】服务{{service.name}}已自动续费成功，新到期日{{service.nextDueDate}}。"),
+    "renewal.auto_failed": T("自动续费失败", "服务 {{service.name}} 自动续费失败：余额不足，请充值以免服务暂停。", "【{{site.name}}】服务{{service.name}}自动续费失败：余额不足，请充值以免服务暂停。"),
+    "ticket.replied": T("工单新回复", "您的工单「{{ticket.subject}}」有新的回复，请登录门户查看。", "【{{site.name}}】您的工单有新回复，请登录查看。"),
     "ticket.created_admin": T("新工单待处理", "客户 {{user.name}} 提交了新工单「{{ticket.subject}}」，请及时处理。"),
-    "credit.recharged": T("充值到账", "您的余额充值已到账，金额 {{credit.amountCny}}。", "【拼好机】充值{{credit.amountCny}}已到账。"),
-    "refund.completed": T("退款已处理", "您的退款 {{refund.amountCny}} 已原路退回，请注意查收。", "【拼好机】退款{{refund.amountCny}}已原路退回。"),
-    "fapiao.status_changed": T("发票申请进度更新", "您的开票申请状态已更新为「{{fapiao.status}}」{{fapiao.fapiaoNo}}，关联账单 {{fapiao.invoiceNo}}，请登录门户查看详情。", "【拼好机】您的开票申请已更新为「{{fapiao.status}}」，请登录查看。"),
+    "credit.recharged": T("充值到账", "您的余额充值已到账，金额 {{credit.amountCny}}。", "【{{site.name}}】充值{{credit.amountCny}}已到账。"),
+    "refund.completed": T("退款已处理", "您的退款 {{refund.amountCny}} 已原路退回，请注意查收。", "【{{site.name}}】退款{{refund.amountCny}}已原路退回。"),
+    "fapiao.status_changed": T("发票申请进度更新", "您的开票申请状态已更新为「{{fapiao.status}}」{{fapiao.fapiaoNo}}，关联账单 {{fapiao.invoiceNo}}，请登录门户查看详情。", "【{{site.name}}】您的开票申请已更新为「{{fapiao.status}}」，请登录查看。"),
     "admin.task_failed": T("供应任务失败告警", "供应任务 #{{task.id}}（{{task.action}}）执行失败：{{task.error}}，请登录后台处理。"),
     "payment.alert": T("支付异常告警", "支付事件异常：{{payment.reason}}（事件 {{payment.eventId}}），请登录后台核查。"),
   };

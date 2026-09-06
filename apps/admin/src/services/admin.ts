@@ -30,6 +30,7 @@ import type {
   RoleItem,
   ServiceListItem,
   SettingsMap,
+  SmsSignatureResult,
   TemplateItem,
   TicketDetail,
   TicketListItem,
@@ -381,6 +382,13 @@ export async function createTemplate(data: Record<string, unknown>) {
 
 export async function updateTemplate(id: number, data: Record<string, unknown>) {
   return request<TemplateItem>(`${BASE}/templates/${id}`, { method: 'PUT', data });
+}
+
+export async function setSmsSignature(signature: string) {
+  return request<SmsSignatureResult>(`${BASE}/templates/signature`, {
+    method: 'POST',
+    data: { signature },
+  });
 }
 
 // ============ 管理员 / 角色 ============

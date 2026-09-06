@@ -111,6 +111,30 @@ adminTemplateRoutes.put("/templates/:id", requireAdmin("templates.manage"), asyn
   return c.json({ ok: true });
 });
 
+/** 批量设置短信签名：全部 sms 模板 body 以【signature】开头（原【...】签名被替换，无签名则前插） */
+const signatureSchema = z.object({ signature: z.string().trim().min(1).max(20) });
+
+adminTemplateRoutes.post("/templates/signature", requireAdmin("templates.manage"), async (c) => {
+  const { signature } = signatureSchema.parse(await c.req.json());
+  const admin = c.get("admin");
+  const db = getDb();
+  const rows = await db.select().from(notificationTemplates).where(eq(notificationTemplates.channel, "sms"));
+  const prefix = `【${signature}】`;
+  let updated = 0;
+  for (const t of rows) {
+    const next = /^【[^】]*】/.test(t.body) ? t.body.replace(/^【[^】]*】/, prefix) : prefix + t.body;
+    if (next === t.body) continue;
+    await db.update(notificationTemplates).set({ body: next }).where(eq(notificationTemplates.id, t.id));
+    updated += 1;
+  }
+  await writeAdminAudit(c, admin, {
+    action: "template.signature.batch",
+    targetType: "notification_template",
+    after: { signature, updated },
+  });
+  return c.json({ updated });
+});
+
 async function assertChannelEventFree(
   db: ReturnType<typeof getDb>,
   channel: "email" | "sms" | "inapp",
