@@ -14,7 +14,7 @@ const Settings: ProLayoutProps & {
   fixSiderbar: true,
   colorWeak: false,
   title: '拼好机管理后台',
-  logo: '/logo.svg',
+  logo: '/logo-horizontal.png',
   iconfontUrl: '',
   token: {},
 };
