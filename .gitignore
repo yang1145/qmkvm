@@ -1,12 +1,19 @@
 # dependencies
-/node_modules
+node_modules/
 
 # next.js
-/.next/
-/out/
+.next/
+out/
 
 # production
-/build
+build/
+dist/
+
+# turbo
+.turbo/
+
+# test
+coverage/
 
 # misc
 .DS_Store
@@ -16,6 +23,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # env files
 .env*
@@ -28,3 +36,9 @@ next-env.d.ts
 # vercel / edgeone
 .vercel
 .edgeone
+
+# uploads
+uploads/
+
+# pnpm 本地 store（用户手动安装产物，勿入库）
+.pnpm-store/
