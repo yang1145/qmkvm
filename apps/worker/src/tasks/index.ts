@@ -3,6 +3,7 @@
  * BullMQ repeatable（UTC cron）+ `pnpm --filter @pinhaoji/worker task -- <name>` 手动执行共用。
  */
 import { renewalInvoicesTask } from "./renewal-invoices.js";
+import { renewalAutoTask } from "./renewal-auto.js";
 import { serviceRemindersTask } from "./service-reminders.js";
 import { serviceSuspendOverdueTask } from "./service-suspend-overdue.js";
 import { serviceTerminateOverdueTask } from "./service-terminate-overdue.js";
@@ -15,6 +16,7 @@ import type { TaskDef } from "./framework.js";
 
 export const TASKS: readonly TaskDef[] = [
   renewalInvoicesTask,
+  renewalAutoTask,
   serviceRemindersTask,
   serviceSuspendOverdueTask,
   serviceTerminateOverdueTask,

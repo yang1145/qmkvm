@@ -22,6 +22,7 @@ function svcPayload(s: typeof schema.services.$inferSelect, productName: string)
     renewalAmount: s.renewalAmount,
     nextDueDate: s.nextDueDate,
     cancelAtPeriodEnd: s.cancelAtPeriodEnd,
+    autoRenew: s.autoRenew,
     config: s.config,
     deliverInfo: s.deliverInfo,
     createdAt: s.createdAt instanceof Date ? s.createdAt.toISOString() : String(s.createdAt),
@@ -230,4 +231,36 @@ portalServiceRoutes.post("/services/:id/cancel", async (c) => {
   }
   await db.update(schema.services).set({ cancelAtPeriodEnd: true }).where(eq(schema.services.id, s.id));
   return c.json({ ok: true, mode: "period_end", nextDueDate: s.nextDueDate });
+});
+
+/** 自动续费开关：到期后由定时任务（renewal.auto）从余额扣款续费 */
+portalServiceRoutes.patch("/services/:id/auto-renew", async (c) => {
+  const user = c.get("user") as User;
+  const db = getDb();
+  const id = z.coerce.number().int().positive().parse(c.req.param("id"));
+  const body = z.object({ enabled: z.boolean() }).parse(await c.req.json());
+
+  const rows = await db
+    .select()
+    .from(schema.services)
+    .where(and(eq(schema.services.id, id), eq(schema.services.userId, user.id)))
+    .limit(1);
+  const s = rows[0];
+  if (!s) throw appError("SVC_NOT_FOUND", "服务不存在");
+  if (s.status !== "active") throw appError("SVC_STATUS_INVALID", "仅运行中的服务可设置自动续费");
+  if (s.cycle === "onetime") throw appError("VALIDATION_FAILED", "一次性商品无需自动续费");
+
+  if (s.autoRenew !== body.enabled) {
+    await db.update(schema.services).set({ autoRenew: body.enabled }).where(eq(schema.services.id, s.id));
+    await db.insert(schema.auditLogs).values({
+      actorType: "user",
+      actorId: user.id,
+      action: "service.auto_renew_changed",
+      targetType: "service",
+      targetId: String(s.id),
+      before: { autoRenew: s.autoRenew },
+      after: { autoRenew: body.enabled },
+    });
+  }
+  return c.json({ ok: true, serviceId: s.id, autoRenew: body.enabled });
 });

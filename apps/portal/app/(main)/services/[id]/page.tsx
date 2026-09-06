@@ -37,6 +37,11 @@ import { cn } from "@/lib/utils";
 
 type UpgradeQuote = z.infer<typeof upgradeQuoteSchema>;
 
+/** 服务详情 DTO（contracts serviceDto 基础上补充本地字段，避免改动契约包） */
+const serviceDetailDto = serviceDto.extend({
+  autoRenew: z.boolean().default(false),
+});
+
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 py-1.5 text-sm">
@@ -53,7 +58,7 @@ export default function ServiceDetailPage() {
   const { toast, success } = useToast();
 
   const state = useApiData(
-    () => api.get(`/services/${encodeURIComponent(id)}`, { parse: serviceDto }),
+    () => api.get(`/services/${encodeURIComponent(id)}`, { parse: serviceDetailDto }),
     [id],
   );
   const service = state.data;
@@ -79,6 +84,27 @@ export default function ServiceDetailPage() {
   const [cancelOpen, setCancelOpen] = React.useState(false);
   const [cancelWhen, setCancelWhen] = React.useState<"now" | "period_end">("period_end");
   const [cancelSubmitting, setCancelSubmitting] = React.useState(false);
+
+  // —— 自动续费开关 ——
+  const [autoRenewSaving, setAutoRenewSaving] = React.useState(false);
+
+  const toggleAutoRenew = async () => {
+    if (!service) return;
+    const next = !service.autoRenew;
+    setAutoRenewSaving(true);
+    try {
+      await api.patch(`/services/${service.id}/auto-renew`, { enabled: next });
+      success(
+        "自动续费已更新",
+        next ? "到期后将自动从账户余额扣款续费" : "到期后不再自动续费",
+      );
+      state.reload();
+    } catch {
+      // Toast 已由 api 层弹出
+    } finally {
+      setAutoRenewSaving(false);
+    }
+  };
 
   const handleRenew = async () => {
     if (!service || !renewCycle) return;
@@ -182,6 +208,7 @@ export default function ServiceDetailPage() {
   }
 
   const isActive = service.status === "active";
+  const autoRenewAllowed = isActive && service.cycle !== "onetime";
   const productOptions = (catalogState.data ?? []).flatMap((g) =>
     g.products
       .filter((p) => p.id !== service.productId)
@@ -256,6 +283,38 @@ export default function ServiceDetailPage() {
               ) : (
                 "-"
               )}
+            </InfoRow>
+            <InfoRow label="自动续费">
+              <span className="inline-flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {service.cycle === "onetime"
+                    ? "一次性商品不支持"
+                    : service.autoRenew
+                      ? "到期自动从余额扣款续费"
+                      : "到期需手动续费"}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={service.autoRenew}
+                  aria-label="自动续费"
+                  disabled={!autoRenewAllowed || autoRenewSaving}
+                  onClick={() => void toggleAutoRenew()}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    service.autoRenew ? "bg-primary" : "bg-muted-foreground/30",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
+                      service.autoRenew ? "translate-x-6" : "translate-x-1",
+                    )}
+                  />
+                </button>
+              </span>
             </InfoRow>
             <InfoRow label="创建时间">{formatDateTime(service.createdAt)}</InfoRow>
           </CardContent>

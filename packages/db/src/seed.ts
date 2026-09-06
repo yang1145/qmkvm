@@ -161,10 +161,13 @@ async function main() {
     "service.suspended": T("服务已暂停", "服务 {{service.name}} 因逾期已暂停，续费后自动恢复。", "【拼好机】服务{{service.name}}已暂停，续费后恢复。"),
     "service.terminated": T("服务已终止", "服务 {{service.name}} 已逾期终止，数据可能已释放。", "【拼好机】服务{{service.name}}已逾期终止。"),
     "renewal.created": T("服务续费提醒", "服务 {{service.name}} 将于 {{service.nextDueDate}} 到期，已生成续费账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}。", "【拼好机】服务{{service.name}}即将到期，请及时续费。"),
+    "renewal.auto_success": T("自动续费成功", "服务 {{service.name}} 已自动续费成功，扣除 {{service.amountCny}}，新到期日 {{service.nextDueDate}}。", "【拼好机】服务{{service.name}}已自动续费成功，新到期日{{service.nextDueDate}}。"),
+    "renewal.auto_failed": T("自动续费失败", "服务 {{service.name}} 自动续费失败：余额不足，请充值以免服务暂停。", "【拼好机】服务{{service.name}}自动续费失败：余额不足，请充值以免服务暂停。"),
     "ticket.replied": T("工单新回复", "您的工单「{{ticket.subject}}」有新的回复，请登录门户查看。", "【拼好机】您的工单有新回复，请登录查看。"),
     "ticket.created_admin": T("新工单待处理", "客户 {{user.name}} 提交了新工单「{{ticket.subject}}」，请及时处理。"),
     "credit.recharged": T("充值到账", "您的余额充值已到账，金额 {{credit.amountCny}}。", "【拼好机】充值{{credit.amountCny}}已到账。"),
     "refund.completed": T("退款已处理", "您的退款 {{refund.amountCny}} 已原路退回，请注意查收。", "【拼好机】退款{{refund.amountCny}}已原路退回。"),
+    "fapiao.status_changed": T("发票申请进度更新", "您的开票申请状态已更新为「{{fapiao.status}}」{{fapiao.fapiaoNo}}，关联账单 {{fapiao.invoiceNo}}，请登录门户查看详情。", "【拼好机】您的开票申请已更新为「{{fapiao.status}}」，请登录查看。"),
     "admin.task_failed": T("供应任务失败告警", "供应任务 #{{task.id}}（{{task.action}}）执行失败：{{task.error}}，请登录后台处理。"),
     "payment.alert": T("支付异常告警", "支付事件异常：{{payment.reason}}（事件 {{payment.eventId}}），请登录后台核查。"),
   };

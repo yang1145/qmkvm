@@ -6,6 +6,7 @@ export * from "./services.js";
 export * from "./billing.js";
 export * from "./payments.js";
 export * from "./promotions.js";
+export * from "./fapiao.js";
 export * from "./support.js";
 export * from "./notifications.js";
 export * from "./admin.js";

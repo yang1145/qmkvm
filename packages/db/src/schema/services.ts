@@ -61,6 +61,8 @@ export const services = mysqlTable(
     deliverInfo: json("deliver_info").$type<Json>(),
     /** 用户申请到期取消：不生成续费账单，到期后走终止流程 */
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    /** 余额自动续费开关（opt-in，默认关） */
+    autoRenew: boolean("auto_renew").notNull().default(false),
     suspendedAt: datetime("suspended_at", { mode: "date" }),
     terminatedAt: datetime("terminated_at", { mode: "date" }),
     cancelledAt: datetime("cancelled_at", { mode: "date" }),
