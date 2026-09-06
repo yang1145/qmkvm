@@ -15,7 +15,9 @@ export const siteConfig = {
     contact: "#contact",
   },
   links: {
-    console: undefined as string | undefined,
+    // 控制台/门户地址：由部署环境变量注入（NEXT_PUBLIC_PORTAL_URL），
+    // 未配置时不渲染入口（PRD 9.2：未配置的入口不得渲染为可点击死链）
+    console: (process.env.NEXT_PUBLIC_PORTAL_URL as string | undefined) ?? undefined,
     docs: undefined as string | undefined,
     status: undefined as string | undefined,
   },

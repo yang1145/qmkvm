@@ -1,21 +1,16 @@
 {
-  "name": "pinhaoji-web",
+  "name": "@pinhaoji/www",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "拼好机官网 Landing Page",
+  "type": "module",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "private": "true",
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@radix-ui/react-accordion": "^1.2.20",
