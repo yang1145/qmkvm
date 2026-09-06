@@ -417,3 +417,31 @@ export type FapiaoRequestListItem = {
   issuedAt: string | null;
   createdAt: string;
 };
+
+// ============ 知识库 ============
+
+export type KbCategoryItem = {
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  articleCount: number;
+  createdAt?: string;
+};
+
+export type KbArticleListItem = {
+  id: number;
+  categoryId: number;
+  categoryName: string | null;
+  title: string;
+  slug: string;
+  visibility: 'public' | 'login';
+  views: number;
+  published: boolean;
+  updatedAt: string;
+  createdAt: string;
+};
+
+export type KbArticleDetail = KbArticleListItem & {
+  contentHtml: string;
+};

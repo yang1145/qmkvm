@@ -13,6 +13,7 @@ import { portalFapiaoRoutes } from "./fapiao.js";
 import { portalServiceRoutes } from "./services.js";
 import { portalCreditRoutes } from "./credits.js";
 import { portalTicketRoutes } from "./tickets.js";
+import { portalKbRoutes } from "./kb.js";
 import { portalNotificationRoutes } from "./notifications.js";
 import { portalDevRoutes } from "./dev.js";
 import { requireAuth } from "../../middleware/auth.js";
@@ -78,6 +79,9 @@ portalRoutes.get("/me/summary", requireAuth(), async (c) => {
     ticketsAwaitingReply: openTickets.length,
   });
 });
+
+/** 知识库公开读（免登录），必须挂在 requireAuth 之前 */
+portalRoutes.route("/kb", portalKbRoutes);
 
 portalRoutes.use("*", requireAuth());
 portalRoutes.route("/account", portalAccountRoutes);

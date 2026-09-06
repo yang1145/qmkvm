@@ -13,6 +13,9 @@ import type {
   FapiaoRequestListItem,
   FapiaoTitleSnapshot,
   InvoiceListItem,
+  KbArticleDetail,
+  KbArticleListItem,
+  KbCategoryItem,
   OrderListItem,
   Paginated,
   ProductGroupItem,
@@ -217,7 +220,8 @@ export async function createRefund(data: { transactionId: number; amount: number
 // ============ 商品 ============
 
 export async function getProductGroups() {
-  return request<ProductGroupItem[]>(`${BASE}/product-groups`);
+  const res = await request<{ items: ProductGroupItem[] }>(`${BASE}/product-groups`);
+  return res.items ?? [];
 }
 
 export async function createProductGroup(data: Partial<ProductGroupItem>) {
@@ -318,7 +322,8 @@ export async function setTicketStatus(id: number, status: string) {
 // ============ 部门 / 模板 ============
 
 export async function getDepartments() {
-  return request<DepartmentItem[]>(`${BASE}/departments`);
+  const res = await request<{ items: DepartmentItem[] }>(`${BASE}/departments`);
+  return res.items ?? [];
 }
 
 export async function createDepartment(data: Partial<DepartmentItem>) {
@@ -356,7 +361,8 @@ export async function updateAdmin(id: number, data: Record<string, unknown>) {
 }
 
 export async function getRoles() {
-  return request<RoleItem[]>(`${BASE}/roles`);
+  const res = await request<{ items: RoleItem[] }>(`${BASE}/roles`);
+  return res.items ?? [];
 }
 
 export async function createRole(data: { name: string; permissions: string[]; isSuper?: boolean }) {
@@ -382,3 +388,88 @@ export async function getSettings() {
 export async function putSettings(values: SettingsMap) {
   return request<{ ok: boolean }>(`${BASE}/settings`, { method: 'PUT', data: { values } });
 }
+// ============ 知识库 ============
+
+export async function getKbCategories() {
+  return request<Paginated<KbCategoryItem>>(`${BASE}/kb/categories`);
+}
+
+export async function createKbCategory(data: { name: string; slug?: string; sortOrder?: number }) {
+  return request<{ id: number }>(`${BASE}/kb/categories`, { method: 'POST', data });
+}
+
+export async function updateKbCategory(id: number, data: { name?: string; slug?: string; sortOrder?: number }) {
+  return request<{ ok: boolean }>(`${BASE}/kb/categories/${id}`, { method: 'PUT', data });
+}
+
+export async function deleteKbCategory(id: number) {
+  return request<{ ok: boolean }>(`${BASE}/kb/categories/${id}`, { method: 'DELETE' });
+}
+
+export async function getKbArticles(params: Record<string, unknown>) {
+  return request<Paginated<KbArticleListItem>>(`${BASE}/kb/articles`, { params });
+}
+
+export async function getKbArticle(id: number) {
+  return request<KbArticleDetail>(`${BASE}/kb/articles/${id}`);
+}
+
+export async function createKbArticle(data: Record<string, unknown>) {
+  return request<{ id: number }>(`${BASE}/kb/articles`, { method: 'POST', data });
+}
+
+export async function updateKbArticle(id: number, data: Record<string, unknown>) {
+  return request<{ ok: boolean }>(`${BASE}/kb/articles/${id}`, { method: 'PUT', data });
+}
+
+export async function deleteKbArticle(id: number) {
+  return request<{ ok: boolean }>(`${BASE}/kb/articles/${id}`, { method: 'DELETE' });
+}
+
+// ============ 报表与数据导出（F12） ============
+
+export type RevenuePoint = { date: string; gmv: string; orders: number };
+export type ProductStat = { productId: number | null; name: string; count: number; revenue: string };
+export type RetentionPoint = { date: string; newServices: number; renewals: number };
+export type UserGrowthPoint = { date: string; count: number };
+
+export type ReportRange = { from?: string; to?: string };
+
+function rangeParams(range?: ReportRange): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (range?.from) params.from = range.from;
+  if (range?.to) params.to = range.to;
+  return params;
+}
+
+export async function getRevenueReport(range?: ReportRange) {
+  return request<{ items: RevenuePoint[]; from: string; to: string }>(`${BASE}/reports/revenue`, {
+    params: rangeParams(range),
+  });
+}
+
+export async function getProductReport(range?: ReportRange) {
+  return request<{ items: ProductStat[]; from: string; to: string }>(`${BASE}/reports/products`, {
+    params: rangeParams(range),
+  });
+}
+
+export async function getRetentionReport(range?: ReportRange) {
+  return request<{ items: RetentionPoint[]; from: string; to: string }>(`${BASE}/reports/retention`, {
+    params: rangeParams(range),
+  });
+}
+
+export async function getUserReport(range?: ReportRange) {
+  return request<{ items: UserGrowthPoint[]; from: string; to: string }>(`${BASE}/reports/users`, {
+    params: rangeParams(range),
+  });
+}
+
+/** 数据导出（CSV）：走原生下载，非 XHR */
+export const EXPORT_PATHS = {
+  customers: `${BASE}/export/customers`,
+  orders: `${BASE}/export/orders`,
+  invoices: `${BASE}/export/invoices`,
+  transactions: `${BASE}/export/transactions`,
+} as const;

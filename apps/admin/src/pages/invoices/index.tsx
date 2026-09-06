@@ -7,7 +7,8 @@ import { useAccess } from '@umijs/max';
 import { App, Button, Input, InputNumber, Modal, Space, Typography } from 'antd';
 import { useRef, useState } from 'react';
 import type React from 'react';
-import { createInvoice, getInvoices, voidInvoice } from '@/services/admin';
+import { createInvoice, getInvoices, voidInvoice, EXPORT_PATHS } from '@/services/admin';
+import { DownloadOutlined } from '@ant-design/icons';
 import type { InvoiceListItem } from '@/services/types';
 import { tableRequestAdapter, toQuery } from '@/utils/table';
 import { cny, formatDateTime, yuanToFen } from '@/utils/format';
@@ -20,6 +21,16 @@ const InvoiceList: React.FC = () => {
   const actionRef = useRef<ActionType | undefined>(undefined);
   const access = useAccess();
   const { message, modal } = App.useApp();
+  // 记录最近一次表格查询参数，供导出 CSV 复用筛选条件
+  const lastParams = useRef<Record<string, unknown>>({});
+
+  const doExportCsv = () => {
+    const p = lastParams.current;
+    const qs = new URLSearchParams();
+    if (p.status) qs.set('status', String(p.status));
+    if (p.type) qs.set('type', String(p.type));
+    window.open(`${EXPORT_PATHS.invoices}?${qs.toString()}`, '_blank');
+  };
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<{ userId: string; note: string; items: DraftItem[] }>({
     userId: '',
@@ -123,12 +134,16 @@ const InvoiceList: React.FC = () => {
         columns={columns}
         cardBordered
         request={async (params) => {
+          lastParams.current = params;
           const res = await getInvoices(toQuery(params));
           return tableRequestAdapter(res);
         }}
         pagination={{ defaultPageSize: 20 }}
         search={{ labelWidth: 'auto' }}
         toolBarRender={() => [
+          <Button key="export-csv" icon={<DownloadOutlined />} onClick={doExportCsv}>
+            导出 CSV
+          </Button>,
           access.canInvoicesManage && (
             <Button
               key="create"

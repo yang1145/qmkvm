@@ -7,7 +7,8 @@ import { useAccess } from '@umijs/max';
 import { App, Button, Popconfirm, Space } from 'antd';
 import { useRef } from 'react';
 import type React from 'react';
-import { cancelOrder, getOrders, markOrderPaid } from '@/services/admin';
+import { cancelOrder, getOrders, markOrderPaid, EXPORT_PATHS } from '@/services/admin';
+import { DownloadOutlined } from '@ant-design/icons';
 import type { OrderListItem } from '@/services/types';
 import { tableRequestAdapter } from '@/utils/table';
 import { cny, formatDateTime } from '@/utils/format';
@@ -18,6 +19,16 @@ const OrderList: React.FC = () => {
   const actionRef = useRef<ActionType | undefined>(undefined);
   const access = useAccess();
   const { message, modal } = App.useApp();
+  // 记录最近一次表格查询参数，供导出 CSV 复用筛选条件
+  const lastParams = useRef<Record<string, unknown>>({});
+
+  const doExportCsv = () => {
+    const p = lastParams.current;
+    const qs = new URLSearchParams();
+    if (p.status) qs.set('status', String(p.status));
+    if (p.type) qs.set('type', String(p.type));
+    window.open(`${EXPORT_PATHS.orders}?${qs.toString()}`, '_blank');
+  };
 
   const doMarkPaid = async (row: OrderListItem) => {
     modal.confirm({
@@ -127,12 +138,18 @@ const OrderList: React.FC = () => {
         columns={columns}
         cardBordered
         request={async (params) => {
+          lastParams.current = params;
           const { current, pageSize, ...rest } = params;
           const res = await getOrders({ page: current ?? 1, pageSize: pageSize ?? 20, ...rest });
           return tableRequestAdapter(res);
         }}
         pagination={{ defaultPageSize: 20 }}
         search={{ labelWidth: 'auto' }}
+        toolBarRender={() => [
+          <Button key="export-csv" icon={<DownloadOutlined />} onClick={doExportCsv}>
+            导出 CSV
+          </Button>,
+        ]}
       />
     </PageContainer>
   );

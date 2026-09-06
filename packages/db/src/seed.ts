@@ -192,6 +192,66 @@ async function main() {
   }
   console.log("  + 通知模板:", Object.keys(templates).length, "个事件");
 
+  // —— 知识库（分类 + 示例文章，幂等按 slug） ——
+  const kbCatDefs = [
+    { name: "开户与账号", slug: "getting-started", sortOrder: 0 },
+    { name: "支付与账单", slug: "billing", sortOrder: 1 },
+  ];
+  for (const cat of kbCatDefs) {
+    const exists = await db.select().from(schema.kbCategories).where(eq(schema.kbCategories.slug, cat.slug)).limit(1);
+    if (exists.length === 0) {
+      await db.insert(schema.kbCategories).values(cat);
+      console.log("  + 知识库分类:", cat.name);
+    }
+  }
+
+  const kbArticleDefs: {
+    categorySlug: string; title: string; slug: string; contentHtml: string;
+    visibility?: "public" | "login";
+  }[] = [
+    {
+      categorySlug: "getting-started",
+      title: "如何注册并完成实名认证",
+      slug: "kb-register-and-verify",
+      contentHtml: `<h2>注册账号</h2><p>访问拼好机首页，点击右上角「注册」，使用手机号接收验证码即可完成注册。</p><h2>实名认证</h2><p>登录后进入「账户资料 → 实名认证」，按提示提交个人身份证或企业营业执照信息，审核一般在 1 个工作日内完成。</p><p>实名认证通过后即可正常购买云服务器产品。</p>`,
+    },
+    {
+      categorySlug: "getting-started",
+      title: "如何提交工单获得技术支持",
+      slug: "kb-submit-ticket",
+      contentHtml: `<h2>提交工单</h2><p>登录门户后进入「工单」页面，选择对应部门（售前咨询 / 技术支持 / 财务与发票）并填写问题描述，可附带截图等附件。</p><h2>处理时效</h2><p>客服会在工作时间 2 小时内首次回复；您可以在工单会话中继续追问或补充资料。</p>`,
+    },
+    {
+      categorySlug: "billing",
+      title: "支持哪些支付方式",
+      slug: "kb-payment-methods",
+      contentHtml: `<h2>在线支付</h2><p>目前支持支付宝、微信扫码以及账户余额支付。订单生成后 30 分钟内完成支付，超时订单将自动关闭。</p><h2>余额充值</h2><p>进入「余额充值」页面即可在线充值，充值金额实时到账，可用于支付账单与自动续费。</p>`,
+    },
+    {
+      categorySlug: "billing",
+      title: "如何给服务续费与查看续费账单",
+      slug: "kb-renewal-guide",
+      contentHtml: `<h2>续费方式</h2><p>在「服务」列表中选择目标实例，点击「续费」并选择时长即可生成续费账单，支付后到期日自动顺延。</p><h2>自动续费</h2><p>账户余额充足时，系统会在到期前自动扣费续费并生成相应账单，扣费结果会以站内信通知。</p>`,
+      visibility: "login",
+    },
+  ];
+  for (const a of kbArticleDefs) {
+    const exists = await db.select().from(schema.kbArticles).where(eq(schema.kbArticles.slug, a.slug)).limit(1);
+    if (exists.length > 0) continue;
+    const cat = (await db.select().from(schema.kbCategories).where(eq(schema.kbCategories.slug, a.categorySlug)).limit(1))[0];
+    if (!cat) continue;
+    await db.insert(schema.kbArticles).values({
+      categoryId: cat.id,
+      title: a.title,
+      slug: a.slug,
+      contentHtml: a.contentHtml,
+      visibility: a.visibility ?? "public",
+      views: 0,
+      published: true,
+    });
+    console.log("  + 知识库文章:", a.title);
+  }
+
   console.log("== 种子数据完成 ==");
   process.exit(0);
 }

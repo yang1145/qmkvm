@@ -62,6 +62,13 @@ export default [
     ],
   },
   {
+    path: '/reports',
+    name: '数据中心',
+    icon: 'FundOutlined',
+    access: 'canReportsRead',
+    component: './reports',
+  },
+  {
     path: '/products',
     name: '商品管理',
     icon: 'AppstoreOutlined',
@@ -89,6 +96,7 @@ export default [
       { path: '/tickets/:id', name: '工单会话', hideInMenu: true, component: './tickets/detail' },
       { path: '/tickets/departments', name: '部门管理', component: './departments', access: 'canTicketsManage' },
       { path: '/tickets/templates', name: '通知模板', component: './templates', access: 'canTemplatesManage' },
+      { path: '/tickets/kb', name: '知识库', component: './kb', access: 'canKbManage' },
     ],
   },
   {

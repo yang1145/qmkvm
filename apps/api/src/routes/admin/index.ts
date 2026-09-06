@@ -20,10 +20,13 @@ import { adminProductRoutes } from "./products.js";
 import { adminPromotionRoutes } from "./promotions.js";
 import { adminTicketRoutes } from "./tickets.js";
 import { adminDepartmentRoutes } from "./departments.js";
+import { adminKbRoutes } from "./kb.js";
 import { adminTemplateRoutes } from "./templates.js";
 import { adminAuditLogRoutes } from "./audit-logs.js";
 import { adminSettingRoutes } from "./settings.js";
 import { adminAdminRoutes } from "./admins.js";
+import { adminReportRoutes } from "./reports.js";
+import { adminExportRoutes } from "./export.js";
 
 export const adminRoutes = new Hono();
 
@@ -46,7 +49,10 @@ adminRoutes.route("/", adminProductRoutes);
 adminRoutes.route("/", adminPromotionRoutes);
 adminRoutes.route("/", adminTicketRoutes);
 adminRoutes.route("/", adminDepartmentRoutes);
+adminRoutes.route("/", adminKbRoutes);
 adminRoutes.route("/", adminTemplateRoutes);
 adminRoutes.route("/", adminAuditLogRoutes);
 adminRoutes.route("/", adminSettingRoutes);
 adminRoutes.route("/", adminAdminRoutes);
+adminRoutes.route("/", adminReportRoutes);
+adminRoutes.route("/", adminExportRoutes);

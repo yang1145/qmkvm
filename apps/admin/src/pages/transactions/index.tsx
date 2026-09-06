@@ -4,7 +4,9 @@
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ProColumns } from '@ant-design/pro-components';
 import React from 'react';
-import { getTransactions } from '@/services/admin';
+import { Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
+import { getTransactions, EXPORT_PATHS } from '@/services/admin';
 import type { TransactionItem } from '@/services/types';
 import { tableRequestAdapter, toQuery } from '@/utils/table';
 import { cny, formatDateTime } from '@/utils/format';
@@ -12,6 +14,9 @@ import { StatusTag } from '@/utils/status';
 import { TRANSACTION_STATUS_LABEL, TRANSACTION_TYPE_LABEL } from '@/services/enums';
 
 const TransactionList: React.FC = () => {
+  const doExportCsv = () => {
+    window.open(EXPORT_PATHS.transactions, '_blank');
+  };
   const columns: ProColumns<TransactionItem>[] = [
     { title: 'ID', dataIndex: 'id', width: 70, search: false },
     { title: '客户 ID', dataIndex: 'userId', width: 90, search: false },
@@ -69,6 +74,11 @@ const TransactionList: React.FC = () => {
           return tableRequestAdapter(res);
         }}
         pagination={{ defaultPageSize: 20 }}
+        toolBarRender={() => [
+          <Button key="export-csv" icon={<DownloadOutlined />} onClick={doExportCsv}>
+            导出 CSV
+          </Button>,
+        ]}
       />
     </PageContainer>
   );

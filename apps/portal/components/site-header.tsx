@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
+  BookOpen,
   ClipboardList,
   FileText,
   LayoutDashboard,
@@ -40,6 +41,7 @@ const NAV_ITEMS = [
   { href: "/services", label: "服务", icon: Server, exact: false },
   { href: "/invoices", label: "账单", icon: FileText, exact: false },
   { href: "/tickets", label: "工单", icon: LifeBuoy, exact: false },
+  { href: "/kb", label: "帮助中心", icon: BookOpen, exact: false },
 ] as const;
 
 function isActive(pathname: string, href: string, exact: boolean) {

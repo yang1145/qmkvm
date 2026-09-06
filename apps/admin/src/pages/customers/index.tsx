@@ -4,9 +4,11 @@
 import { history } from '@umijs/max';
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
+import { Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useRef } from 'react';
 import type React from 'react';
-import { getCustomers } from '@/services/admin';
+import { getCustomers, EXPORT_PATHS } from '@/services/admin';
 import type { CustomerListItem } from '@/services/types';
 import { tableRequestAdapter, toQuery } from '@/utils/table';
 import { formatDateTime } from '@/utils/format';
@@ -15,6 +17,17 @@ import { USER_STATUS_LABEL } from '@/services/enums';
 
 const CustomerList: React.FC = () => {
   const actionRef = useRef<ActionType | undefined>(undefined);
+  // 记录最近一次表格查询参数，供导出 CSV 复用筛选条件
+  const lastParams = useRef<Record<string, unknown>>({});
+
+  const doExportCsv = () => {
+    const p = lastParams.current;
+    const qs = new URLSearchParams();
+    const q = p.q ?? p.name ?? p.phone ?? p.keyword;
+    if (q) qs.set('q', String(q));
+    if (p.status) qs.set('status', String(p.status));
+    window.open(`${EXPORT_PATHS.customers}?${qs.toString()}`, '_blank');
+  };
 
   const columns: ProColumns<CustomerListItem>[] = [
     { title: 'ID', dataIndex: 'id', width: 70, search: false },
@@ -71,12 +84,17 @@ const CustomerList: React.FC = () => {
         columns={columns}
         cardBordered
         request={async (params) => {
+          lastParams.current = params;
           const res = await getCustomers(toQuery(params, { q: params.keyword, status: params.status }));
           return tableRequestAdapter(res);
         }}
         pagination={{ defaultPageSize: 20 }}
         search={{ labelWidth: 'auto' }}
-        toolBarRender={() => []}
+        toolBarRender={() => [
+          <Button key="export-csv" icon={<DownloadOutlined />} onClick={doExportCsv}>
+            导出 CSV
+          </Button>,
+        ]}
       />
     </PageContainer>
   );
