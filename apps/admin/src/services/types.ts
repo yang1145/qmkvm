@@ -264,6 +264,13 @@ export type ProductListItem = {
   moduleCode: string;
   /** 供应模块配置 JSON（商品详情返回，连接测试用） */
   moduleConfig?: Record<string, unknown> | null;
+  descriptionHtml?: string | null;
+  /** 购买需实名 */
+  requiresIdentity?: boolean;
+  /** 允许升级 */
+  allowUpgrade?: boolean;
+  /** 允许降级 */
+  allowDowngrade?: boolean;
   stockTotal: number | null;
   stockUsed: number;
   inStock: boolean;

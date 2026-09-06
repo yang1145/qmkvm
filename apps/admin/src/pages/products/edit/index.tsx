@@ -16,12 +16,19 @@ import {
   deleteConfigOption,
   getProduct,
   getProductGroups,
+  getProvisionModules,
   testProvisionModule,
   updateConfigGroup,
   updateConfigOption,
   updateProduct,
 } from '@/services/admin';
-import type { ConfigGroup, ConfigOption, ProductGroupItem, ProductPricing } from '@/services/types';
+import type {
+  ConfigGroup,
+  ConfigOption,
+  ProductGroupItem,
+  ProductPricing,
+  ProvisionModuleItem,
+} from '@/services/types';
 import { yuanToFen } from '@/utils/format';
 import { BILLING_CYCLE, BILLING_CYCLE_LABEL } from '@/services/enums';
 
@@ -48,6 +55,7 @@ const ProductEdit: React.FC = () => {
     name: '',
     slug: '',
     tagline: '',
+    descriptionHtml: '',
     moduleCode: 'manual',
     groupId: undefined as number | undefined,
     stockEnabled: false,
@@ -55,15 +63,20 @@ const ProductEdit: React.FC = () => {
     status: 'active' as 'active' | 'inactive',
     hidden: false,
     sortOrder: 0,
+    requiresIdentity: false,
+    allowUpgrade: true,
+    allowDowngrade: false,
   });
   const [pricing, setPricing] = useState<PricingDraft[]>([]);
   const [configGroups, setConfigGroups] = useState<ConfigGroup[]>([]);
+  const [modules, setModules] = useState<ProvisionModuleItem[]>([]);
   /** 供应模块配置 JSON（详情接口返回，用于「测试连接」） */
   const [moduleConfig, setModuleConfig] = useState<Record<string, unknown> | null>(null);
   const [testingConn, setTestingConn] = useState(false);
 
   useEffect(() => {
     getProductGroups().then(setGroups).catch(() => {});
+    getProvisionModules().then(setModules).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -75,6 +88,7 @@ const ProductEdit: React.FC = () => {
           name: p.name,
           slug: p.slug,
           tagline: p.tagline ?? '',
+          descriptionHtml: p.descriptionHtml ?? '',
           moduleCode: p.moduleCode,
           groupId: p.groupId,
           stockEnabled: p.stockTotal !== null,
@@ -82,6 +96,9 @@ const ProductEdit: React.FC = () => {
           status: p.status,
           hidden: p.hidden,
           sortOrder: p.sortOrder,
+          requiresIdentity: p.requiresIdentity ?? false,
+          allowUpgrade: p.allowUpgrade ?? true,
+          allowDowngrade: p.allowDowngrade ?? false,
         });
         setPricing(
           (p.pricing ?? []).map((c: ProductPricing) => ({
@@ -113,12 +130,16 @@ const ProductEdit: React.FC = () => {
         name: base.name.trim(),
         slug: base.slug.trim(),
         tagline: base.tagline || null,
+        descriptionHtml: base.descriptionHtml || null,
         moduleCode: base.moduleCode,
         groupId: base.groupId,
         stockTotal: base.stockEnabled ? base.stockTotal : null,
         status: base.status,
         hidden: base.hidden,
         sortOrder: base.sortOrder,
+        requiresIdentity: base.requiresIdentity,
+        allowUpgrade: base.allowUpgrade,
+        allowDowngrade: base.allowDowngrade,
         pricing: pricing.map((c) => ({
           cycle: c.cycle,
           firstPrice: yuanToFen(c.firstPriceYuan),
@@ -305,13 +326,24 @@ const ProductEdit: React.FC = () => {
           </div>
           <div>
             供应模块：
-            <Input
+            <Select
               style={{ width: '50%' }}
-              value={base.moduleCode}
+              value={modules.some((m) => m.code === base.moduleCode) ? base.moduleCode : undefined}
               disabled={readOnly}
-              onChange={(e) => setBase({ ...base, moduleCode: e.target.value })}
-              placeholder="如 manual / demo / http-api"
+              onChange={(v) => setBase({ ...base, moduleCode: v })}
+              placeholder="选择供应模块"
+              optionFilterProp="label"
+              options={modules.map((m) => ({
+                value: m.code,
+                label: `${m.name}（${m.code}）`,
+                title: m.description ?? m.code,
+              }))}
             />
+            {!modules.some((m) => m.code === base.moduleCode) && (
+              <Tag color="orange" style={{ marginLeft: 8 }}>
+                未知模块：{base.moduleCode}
+              </Tag>
+            )}
             <Button
               size="small"
               style={{ marginLeft: 8 }}
@@ -321,6 +353,29 @@ const ProductEdit: React.FC = () => {
             >
               测试连接
             </Button>
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Checkbox
+              checked={base.requiresIdentity}
+              disabled={readOnly}
+              onChange={(e) => setBase({ ...base, requiresIdentity: e.target.checked })}
+            >
+              购买需实名
+            </Checkbox>
+            <Checkbox
+              checked={base.allowUpgrade}
+              disabled={readOnly}
+              onChange={(e) => setBase({ ...base, allowUpgrade: e.target.checked })}
+            >
+              允许升级
+            </Checkbox>
+            <Checkbox
+              checked={base.allowDowngrade}
+              disabled={readOnly}
+              onChange={(e) => setBase({ ...base, allowDowngrade: e.target.checked })}
+            >
+              允许降级
+            </Checkbox>
           </div>
           <div>
             排序：
@@ -373,6 +428,19 @@ const ProductEdit: React.FC = () => {
             </Checkbox>
           </div>
         </div>
+      </ProCard>
+
+      <ProCard title="商品详情" style={{ marginTop: 16 }}>
+        <Input.TextArea
+          rows={6}
+          maxLength={50000}
+          showCount
+          value={base.descriptionHtml}
+          disabled={readOnly}
+          onChange={(e) => setBase({ ...base, descriptionHtml: e.target.value })}
+          placeholder="<p>商品详细介绍（HTML），展示在门户商品页。</p>"
+        />
+        <div style={{ color: '#999', marginTop: 8 }}>支持 HTML 标签；随「保存」按钮一并提交。</div>
       </ProCard>
 
       <ProCard title="周期定价" style={{ marginTop: 16 }} extra={
