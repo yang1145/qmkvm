@@ -10,6 +10,8 @@ import type {
   CustomerListItem,
   DashboardDto,
   DepartmentItem,
+  FapiaoRequestListItem,
+  FapiaoTitleSnapshot,
   InvoiceListItem,
   OrderListItem,
   Paginated,
@@ -156,6 +158,46 @@ export async function createInvoice(data: {
 
 export async function voidInvoice(id: number, reason: string) {
   return request<{ ok: boolean }>(`${BASE}/invoices/${id}/void`, { method: 'POST', data: { reason } });
+}
+
+// ============ 发票（开票申请） ============
+
+export async function getFapiaoRequests(params: Record<string, unknown>) {
+  return request<Paginated<FapiaoRequestListItem>>(`${BASE}/fapiao`, { params });
+}
+
+export async function getFapiaoRequest(id: number) {
+  return request<FapiaoRequestListItem & { title: FapiaoTitleSnapshot | null }>(`${BASE}/fapiao/${id}`);
+}
+
+export async function approveFapiaoRequest(id: number) {
+  return request<{ ok: boolean }>(`${BASE}/fapiao/${id}/approve`, { method: 'POST' });
+}
+
+export async function rejectFapiaoRequest(id: number, reason: string) {
+  return request<{ ok: boolean }>(`${BASE}/fapiao/${id}/reject`, { method: 'POST', data: { reason } });
+}
+
+export async function issueFapiaoRequest(id: number, data: { fapiaoNo: string; fapiaoUrl?: string }) {
+  return request<{ ok: boolean }>(`${BASE}/fapiao/${id}/issue`, { method: 'POST', data });
+}
+
+/** 导出发票 CSV（带 Cookie 下载为 Blob） */
+export async function exportFapiaoCsv(status?: string) {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  const res = await fetch(`${BASE}/fapiao/export${query}`, { credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`导出失败（HTTP ${res.status}）`);
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get('content-disposition') ?? '';
+  const match = /filename="?([^";]+)"?/.exec(disposition);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = match?.[1] ?? 'fapiao.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ============ 交易 / 退款 ============

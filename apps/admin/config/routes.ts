@@ -56,6 +56,7 @@ export default [
     access: 'canBillingRead',
     routes: [
       { path: '/billing/invoices', name: '账单管理', component: './invoices', access: 'canInvoicesRead' },
+      { path: '/billing/fapiao', name: '发票管理', component: './fapiao', access: 'canInvoicesRead' },
       { path: '/billing/transactions', name: '交易流水', component: './transactions', access: 'canTransactionsRead' },
       { path: '/billing/refunds', name: '退款管理', component: './refunds', access: 'canTransactionsRead' },
     ],

@@ -249,6 +249,83 @@ export const ticketReplyDto = z.object({
   createdAt: z.string(),
 });
 
+/** —— 发票（抬头 / 开票申请） DTO —— */
+
+export const fapiaoTypeEnum = z.enum(["electronic", "special"]);
+export const fapiaoStatusEnum = z.enum(["pending", "approved", "issued", "rejected"]);
+export type FapiaoType = z.infer<typeof fapiaoTypeEnum>;
+export type FapiaoStatus = z.infer<typeof fapiaoStatusEnum>;
+
+/** 抬头视图（taxNo 脱敏：中间打码） */
+export const fapiaoTitleDto = z.object({
+  id: z.number(),
+  type: z.enum(["personal", "enterprise"]),
+  name: z.string(),
+  taxNo: z.string().nullable(),
+  email: z.string().nullable(),
+  bankName: z.string().nullable(),
+  bankAccount: z.string().nullable(),
+  companyAddress: z.string().nullable(),
+  companyPhone: z.string().nullable(),
+  isDefault: z.boolean(),
+  createdAt: z.string(),
+});
+
+export const fapiaoTitleCreateSchema = z.object({
+  type: z.enum(["personal", "enterprise"]),
+  /** 个人姓名或企业名称 */
+  name: z.string().min(1).max(200),
+  /** 纳税人识别号（enterprise 必填） */
+  taxNo: z.string().max(50).optional(),
+  email: z.email().max(255).optional(),
+  // 专票补充信息（可选）
+  bankName: z.string().max(200).optional(),
+  bankAccount: z.string().max(64).optional(),
+  companyAddress: z.string().max(300).optional(),
+  companyPhone: z.string().max(30).optional(),
+  isDefault: z.boolean().optional().default(false),
+});
+
+/** 抬头更新：字段均可选；taxNo 传脱敏值视为未修改 */
+export const fapiaoTitleUpdateSchema = fapiaoTitleCreateSchema.partial();
+
+export const fapiaoTitleListDto = z.object({
+  items: z.array(fapiaoTitleDto),
+});
+
+export const fapiaoRequestCreateSchema = z.object({
+  invoiceId: z.number().int().positive(),
+  titleId: z.number().int().positive(),
+  type: fapiaoTypeEnum,
+  remark: z.string().max(255).optional(),
+});
+
+/** 开票申请视图（含抬头快照与账单号） */
+export const fapiaoRequestDto = z.object({
+  id: z.number(),
+  userId: z.number().optional(),
+  invoiceId: z.number(),
+  invoiceNo: z.string().nullable(),
+  titleId: z.number(),
+  title: z
+    .object({
+      type: z.enum(["personal", "enterprise"]),
+      name: z.string(),
+      taxNo: z.string().nullable(),
+      email: z.string().nullable(),
+    })
+    .nullable(),
+  amount: z.number(),
+  type: fapiaoTypeEnum,
+  status: fapiaoStatusEnum,
+  remark: z.string().nullable(),
+  rejectReason: z.string().nullable(),
+  fapiaoNo: z.string().nullable(),
+  fapiaoUrl: z.string().nullable(),
+  issuedAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
 /** —— 供应任务 DTO（后台） —— */
 
 export const provisionTaskDto = z.object({

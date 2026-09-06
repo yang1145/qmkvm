@@ -155,3 +155,14 @@ export const PRODUCT_STATUS_LABEL: Record<'active' | 'inactive', string> = {
   active: '上架',
   inactive: '下架',
 };
+export const FAPIAO_STATUS_LABEL: Record<string, string> = {
+  pending: '待审核',
+  approved: '已审批',
+  issued: '已开票',
+  rejected: '已驳回',
+};
+
+export const FAPIAO_TYPE_LABEL: Record<string, string> = {
+  electronic: '电子普票',
+  special: '增值税专票',
+};

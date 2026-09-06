@@ -384,3 +384,36 @@ export type AuditLogItem = {
 // ============ 系统设置 ============
 
 export type SettingsMap = Record<string, unknown>;
+// ============ 发票（开票申请） ============
+
+export type FapiaoTitleSnapshot = {
+  type: 'personal' | 'enterprise';
+  name: string;
+  taxNo: string | null;
+  email: string | null;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  companyAddress?: string | null;
+  companyPhone?: string | null;
+};
+
+export type FapiaoRequestListItem = {
+  id: number;
+  userId: number;
+  user: { name: string | null; phone: string | null; email: string | null } | null;
+  invoiceId: number;
+  invoiceNo: string | null;
+  titleId: number;
+  title: FapiaoTitleSnapshot | null;
+  /** 金额（分） */
+  amount: number;
+  type: 'electronic' | 'special';
+  status: 'pending' | 'approved' | 'issued' | 'rejected';
+  remark: string | null;
+  rejectReason: string | null;
+  fapiaoNo: string | null;
+  fapiaoUrl: string | null;
+  approvedById: number | null;
+  issuedAt: string | null;
+  createdAt: string;
+};
