@@ -1,0 +1,30 @@
+{
+  "name": "@pinhaoji/worker",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/index.ts",
+    "start": "tsx --env-file=../../.env src/index.ts",
+    "task": "tsx --env-file=../../.env src/run-task.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pinhaoji/contracts": "workspace:*",
+    "@pinhaoji/core": "workspace:*",
+    "@pinhaoji/db": "workspace:*",
+    "@pinhaoji/logger": "workspace:*",
+    "@pinhaoji/notifications": "workspace:*",
+    "@pinhaoji/payments": "workspace:*",
+    "@pinhaoji/provisioning": "workspace:*",
+    "bullmq": "^6.3.4",
+    "drizzle-orm": "^0.45.2",
+    "ioredis": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3"
+  }
+}
