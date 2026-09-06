@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1788658949372,
+      "tag": "0000_wooden_leopardon",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788665539430,
+      "tag": "0001_sticky_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788678300138,
+      "tag": "0002_small_exodus",
+      "breakpoints": true
+    }
+  ]
+}
