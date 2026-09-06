@@ -1,0 +1,114 @@
+# 生产部署编排：docker compose -f docker/docker-compose.prod.yml up -d
+# 前置：仓库根 .env 已配置（DATABASE_URL 指向可写 MySQL、REDIS_URL、APP_KEY、CORS_ORIGINS 等）
+# 首次部署：先执行迁移与种子（见 README 部署方案）
+name: pinhaoji
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+      MYSQL_DATABASE: pinhaoji
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    # 建议不暴露公网端口；如需外访走 SSH 隧道
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # BullMQ 依赖持久化 key，必须 noeviction
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: api }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      API_PORT: "4000"
+      NODE_ENV: production
+      DEV_MOCK_PAYMENTS: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    # 仅在内网暴露；公网经宿主机反向代理
+    ports:
+      - "127.0.0.1:4000:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  portal:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.next
+      args: { APP: portal }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:3001:3000"
+
+  www:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.next
+      args: { APP: www }
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-}
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      # 管理后台建议只走反代 + IP 白名单 / VPN
+      - "127.0.0.1:8000:80"
+
+volumes:
+  mysql-data:
+  redis-data:

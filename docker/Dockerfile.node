@@ -1,0 +1,27 @@
+# API / Worker 共用镜像：ARG APP=api|worker
+# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.node --build-arg APP=api -t phj-api .
+FROM node:22-alpine AS base
+RUN corepack enable
+WORKDIR /app
+
+# 依赖层（lockfile 不变时命中缓存）
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY packages/db/package.json packages/db/
+COPY packages/logger/package.json packages/logger/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/core/package.json packages/core/
+COPY packages/auth/package.json packages/auth/
+COPY packages/payments/package.json packages/payments/
+COPY packages/provisioning/package.json packages/provisioning/
+COPY packages/notifications/package.json packages/notifications/
+COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json
+RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts
+
+# 源码层
+COPY packages ./packages
+COPY apps/${APP} ./apps/${APP}
+RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts
+
+WORKDIR /app/apps/${APP}
+# 环境变量由 compose env_file 注入；迁移在部署流程中执行（pnpm --filter @pinhaoji/db migrate）
+CMD ["pnpm", "start"]

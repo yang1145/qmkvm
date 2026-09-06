@@ -1,0 +1,78 @@
+# 宿主机反向代理示例（Nginx）：四子域名 + TLS
+# 安装 certbot 后运行：certbot --nginx -d pinhaoji1.cn -d www.pinahaoji1.cn ... 自动补 443 配置
+# 按实际域名替换下方 server_name 与证书路径
+
+# ---------- 官网 ----------
+server {
+    listen 80;
+    server_name pinhaoji1.cn www.pinhaoji1.cn;
+    return 301 https://www.pinhaoji1.cn$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    server_name www.pinhaoji1.cn;
+    ssl_certificate     /etc/letsencrypt/live/pinhaoji1.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pinhaoji1.cn/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ---------- 客户门户 ----------
+server {
+    listen 443 ssl http2;
+    server_name portal.pinhaoji1.cn;
+    ssl_certificate     /etc/letsencrypt/live/pinhaoji1.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pinhaoji1.cn/privkey.pem;
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ---------- API（portal 跨子域调用 + 支付回调）----------
+server {
+    listen 443 ssl http2;
+    server_name api.pinhaoji1.cn;
+    ssl_certificate     /etc/letsencrypt/live/pinhaoji1.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pinhaoji1.cn/privkey.pem;
+    client_max_body_size 10m;
+    location / {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ---------- 管理后台（建议叠加 IP 白名单）----------
+server {
+    listen 443 ssl http2;
+    server_name admin.pinhaoji1.cn;
+    ssl_certificate     /etc/letsencrypt/live/pinhaoji1.cn/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pinhaoji1.cn/privkey.pem;
+    # allow 1.2.3.4/32;
+    # deny all;
+    location /api/ {
+        proxy_pass http://127.0.0.1:4000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
