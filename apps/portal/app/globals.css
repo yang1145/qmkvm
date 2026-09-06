@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/*
+ * 拼好机云业务系统 · 客户门户
+ * 设计基准与官网（apps/www）一致：浅色简约画布、卡片圆角 ≤ 8px、品牌蓝强调色。
+ * 中文字体使用系统字体栈，避免外部字体请求。
+ */
+:root {
+  --radius: 0.5rem;
+
+  --background: hsl(220 33% 99%);
+  --foreground: hsl(224 40% 12%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(224 40% 12%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(224 40% 12%);
+  --primary: hsl(224 90% 55%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(224 32% 96%);
+  --secondary-foreground: hsl(224 40% 20%);
+  --muted: hsl(224 30% 96%);
+  --muted-foreground: hsl(224 15% 46%);
+  --accent: hsl(224 55% 95%);
+  --accent-foreground: hsl(224 70% 30%);
+  --destructive: hsl(0 72% 51%);
+  --border: hsl(224 22% 90%);
+  --input: hsl(224 22% 88%);
+  --ring: hsl(224 90% 55%);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-primary) 18%, transparent);
+  }
+}

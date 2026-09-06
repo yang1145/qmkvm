@@ -1,0 +1,2 @@
+# 构建时生成的 contracts 兼容副本（见 next.config.ts）
+contracts-compat/
