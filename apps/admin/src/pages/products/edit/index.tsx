@@ -726,15 +726,29 @@ const ProductEdit: React.FC = () => {
           <Space size={8}>
             <Button
               type="primary"
-              disabled={readOnly || isNew}
+              disabled={readOnly}
               onClick={() => {
+                if (isNew) {
+                  message.warning('请先填写基本信息并点击「保存」生成商品后，再使用弹性套餐向导');
+                  return;
+                }
                 setWizardGroups(defaultWizardGroups());
                 setWizardOpen(true);
               }}
             >
               弹性套餐向导
             </Button>
-            <Button size="small" disabled={readOnly || isNew} onClick={addConfigGroup}>
+            <Button
+              size="small"
+              disabled={readOnly}
+              onClick={() => {
+                if (isNew) {
+                  message.warning('请先保存商品后再添加配置组');
+                  return;
+                }
+                addConfigGroup();
+              }}
+            >
               添加配置组
             </Button>
           </Space>

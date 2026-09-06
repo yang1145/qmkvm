@@ -4,11 +4,6 @@
  */
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
-import {
-  ApiOutlined,
-  ExclamationCircleOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
 import { useAccess } from '@umijs/max';
 import {
   Alert,
@@ -244,7 +239,6 @@ const ProvisionModulesPage: React.FC = () => {
         <Button
           key="products"
           size="small"
-          icon={<UnorderedListOutlined />}
           onClick={() => {
             setProductsDrawerCode(row.code);
             productsActionRef.current?.reload();
@@ -256,7 +250,6 @@ const ProvisionModulesPage: React.FC = () => {
           <Button
             key="test"
             size="small"
-            icon={<ApiOutlined />}
             onClick={() => openTestModal(row)}
           >
             连接测试
@@ -265,7 +258,6 @@ const ProvisionModulesPage: React.FC = () => {
         <Button
           key="failures"
           size="small"
-          icon={<ExclamationCircleOutlined />}
           onClick={() => openFailures(row.code)}
         >
           失败记录
