@@ -262,6 +262,8 @@ export type ProductListItem = {
   slug: string;
   tagline: string | null;
   moduleCode: string;
+  /** 供应模块配置 JSON（商品详情返回，连接测试用） */
+  moduleConfig?: Record<string, unknown> | null;
   stockTotal: number | null;
   stockUsed: number;
   inStock: boolean;
@@ -278,6 +280,44 @@ export type ProductGroupItem = {
   slug: string;
   description: string | null;
   products: ProductListItem[];
+};
+
+// ============ 供应模块 ============
+
+/** GET /provision-modules 列表项 */
+export type ProvisionModuleItem = {
+  code: string;
+  name: string;
+  description: string | null;
+  actions: string[];
+  /** 使用该模块的商品数（含下架） */
+  productCount: number;
+};
+
+/** GET /provision-modules/:code/products 分页项 */
+export type ProvisionModuleProductItem = {
+  id: number;
+  name: string;
+  slug: string;
+  status: 'active' | 'inactive';
+  /** moduleConfig 摘要（baseUrl / 顶层键，不含敏感值） */
+  moduleConfigSummary: string | null;
+};
+
+/** GET /provision-modules/:code/failures 列表项 */
+export type ProvisionModuleFailureItem = {
+  taskId: number;
+  serviceName: string;
+  action: ProvisionAction;
+  status: 'failed' | 'dead';
+  error: string | null;
+  createdAt: string;
+};
+
+/** POST /provision-modules/test 响应 */
+export type ProvisionModuleTestResult = {
+  ok: boolean;
+  message: string | null;
 };
 
 // ============ 优惠码 ============

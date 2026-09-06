@@ -24,6 +24,7 @@
  */
 import { createHmac } from "node:crypto";
 import type { ServiceRow } from "@pinhaoji/core";
+import { STANDARD_MODULE_ACTIONS } from "../types.js";
 import type {
   ChangePackageTarget,
   ModuleCtx,
@@ -204,6 +205,8 @@ function pickChangePackageKey(config: HttpApiConfig): string {
 export const httpApiModule: ProvisionModule = {
   code: "http-api",
   name: "HTTP API 通用模块",
+  description: "把供应动作映射为对外部系统 HTTP 接口的调用，动作由商品 moduleConfig.actions 驱动",
+  supportedActions: [...STANDARD_MODULE_ACTIONS],
 
   async testConnection(config: ModuleConfig | null): Promise<TestConnectionResult> {
     let cfg: HttpApiConfig;

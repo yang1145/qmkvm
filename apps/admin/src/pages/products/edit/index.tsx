@@ -16,6 +16,7 @@ import {
   deleteConfigOption,
   getProduct,
   getProductGroups,
+  testProvisionModule,
   updateConfigGroup,
   updateConfigOption,
   updateProduct,
@@ -57,6 +58,9 @@ const ProductEdit: React.FC = () => {
   });
   const [pricing, setPricing] = useState<PricingDraft[]>([]);
   const [configGroups, setConfigGroups] = useState<ConfigGroup[]>([]);
+  /** 供应模块配置 JSON（详情接口返回，用于「测试连接」） */
+  const [moduleConfig, setModuleConfig] = useState<Record<string, unknown> | null>(null);
+  const [testingConn, setTestingConn] = useState(false);
 
   useEffect(() => {
     getProductGroups().then(setGroups).catch(() => {});
@@ -88,6 +92,7 @@ const ProductEdit: React.FC = () => {
           })),
         );
         setConfigGroups(p.configGroups ?? []);
+        setModuleConfig(p.moduleConfig ?? null);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -135,6 +140,28 @@ const ProductEdit: React.FC = () => {
   };
 
   // ============ 配置组操作 ============
+
+  /** 用表单当前的 moduleCode + moduleConfig 调模块连接测试接口 */
+  const doTestConnection = async () => {
+    const code = base.moduleCode.trim();
+    if (!code) {
+      message.warning('请先填写供应模块 code');
+      return;
+    }
+    setTestingConn(true);
+    try {
+      const res = await testProvisionModule(code, moduleConfig);
+      if (res.ok) {
+        message.success(res.message ?? '连接成功');
+      } else {
+        message.error(res.message ?? '连接失败');
+      }
+    } catch {
+      // 请求失败（如无权限）由统一 errorHandler 提示
+    } finally {
+      setTestingConn(false);
+    }
+  };
 
   const addConfigGroup = async () => {
     if (isNew) {
@@ -279,12 +306,21 @@ const ProductEdit: React.FC = () => {
           <div>
             供应模块：
             <Input
-              style={{ width: '70%' }}
+              style={{ width: '50%' }}
               value={base.moduleCode}
               disabled={readOnly}
               onChange={(e) => setBase({ ...base, moduleCode: e.target.value })}
-              placeholder="如 manual / vps"
+              placeholder="如 manual / demo / http-api"
             />
+            <Button
+              size="small"
+              style={{ marginLeft: 8 }}
+              loading={testingConn}
+              disabled={readOnly}
+              onClick={() => void doTestConnection()}
+            >
+              测试连接
+            </Button>
           </div>
           <div>
             排序：

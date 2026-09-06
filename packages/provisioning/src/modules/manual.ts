@@ -2,6 +2,7 @@
  * 人工开通模块（manual）：所有动作直接返回 { ok: true, manual: true }。
  * 任务标记 succeeded，服务状态由后台人工操作推进（「标记已开通」等）。
  */
+import { STANDARD_MODULE_ACTIONS } from "../types.js";
 import type {
   ChangePackageTarget,
   ModuleCtx,
@@ -20,6 +21,8 @@ const okManual = (action: string): ModuleResult => ({
 export const manualModule: ProvisionModule = {
   code: "manual",
   name: "人工开通",
+  description: "所有动作由后台人工处理推进，任务直接成功，无外部依赖",
+  supportedActions: [...STANDARD_MODULE_ACTIONS],
 
   async testConnection(_config: ModuleConfig | null): Promise<TestConnectionResult> {
     return { ok: true, message: "人工开通模块无外部依赖，无需连接测试" };

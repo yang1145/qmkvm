@@ -21,6 +21,10 @@ import type {
   ProductGroupItem,
   ProductListItem,
   PromotionItem,
+  ProvisionModuleFailureItem,
+  ProvisionModuleItem,
+  ProvisionModuleProductItem,
+  ProvisionModuleTestResult,
   ProvisionTaskItem,
   RefundItem,
   RoleItem,
@@ -283,6 +287,34 @@ export async function updateConfigOption(id: number, data: Record<string, unknow
 
 export async function deleteConfigOption(id: number) {
   return request<{ ok: boolean }>(`${BASE}/config-options/${id}`, { method: 'DELETE' });
+}
+
+// ============ 供应模块 ============
+
+export async function getProvisionModules() {
+  const res = await request<{ items: ProvisionModuleItem[] }>(`${BASE}/provision-modules`);
+  return res.items ?? [];
+}
+
+export async function getProvisionModuleProducts(code: string, params: Record<string, unknown>) {
+  return request<Paginated<ProvisionModuleProductItem>>(
+    `${BASE}/provision-modules/${encodeURIComponent(code)}/products`,
+    { params },
+  );
+}
+
+export async function getProvisionModuleFailures(code: string) {
+  const res = await request<{ items: ProvisionModuleFailureItem[] }>(
+    `${BASE}/provision-modules/${encodeURIComponent(code)}/failures`,
+  );
+  return res.items ?? [];
+}
+
+export async function testProvisionModule(code: string, config: Record<string, unknown> | null) {
+  return request<ProvisionModuleTestResult>(`${BASE}/provision-modules/test`, {
+    method: 'POST',
+    data: { code, config },
+  });
 }
 
 // ============ 优惠码 ============

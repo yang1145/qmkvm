@@ -4,6 +4,7 @@
  * 用于全链路联调（下单 → 支付 → 供应 → 门户展示交付信息）。
  */
 import { randomInt } from "node:crypto";
+import { STANDARD_MODULE_ACTIONS } from "../types.js";
 import type {
   ChangePackageTarget,
   ModuleCtx,
@@ -32,6 +33,8 @@ export function generateRandomIp(): string {
 export const demoModule: ProvisionModule = {
   code: "demo",
   name: "演示模块（无外部调用）",
+  description: "模拟开通并回填随机 IP/密码交付信息，用于全链路联调，不调用外部系统",
+  supportedActions: [...STANDARD_MODULE_ACTIONS],
 
   async testConnection(_config: ModuleConfig | null): Promise<TestConnectionResult> {
     return { ok: true, message: "演示模块无外部依赖，连接测试恒通过" };

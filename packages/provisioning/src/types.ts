@@ -44,12 +44,25 @@ export interface TestConnectionResult {
   message?: string;
 }
 
+/** 标准供应动作（ProvisionModule.supportedActions 缺省即为全部） */
+export const STANDARD_MODULE_ACTIONS = [
+  "provision",
+  "suspend",
+  "unsuspend",
+  "terminate",
+  "change_package",
+] as const;
+
 /**
  * 供应模块接口：新增模块 = 实现本接口 + registerModule 注册，不改既有代码。
  */
 export interface ProvisionModule {
   code: string;
   name: string;
+  /** 模块描述（后台「供应模块」管理页展示用，可选） */
+  description?: string;
+  /** 模块支持的动作（缺省视为支持全部标准动作；http-api 以商品 moduleConfig.actions 实际配置为准） */
+  supportedActions?: string[];
   testConnection(config: ModuleConfig | null): Promise<TestConnectionResult>;
   provision(ctx: ModuleCtx, service: ServiceRow): Promise<ModuleResult>;
   suspend(ctx: ModuleCtx, service: ServiceRow): Promise<ModuleResult>;
