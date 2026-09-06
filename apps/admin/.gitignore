@@ -1,0 +1,29 @@
+# dependencies
+node_modules
+
+# production
+/dist
+/build
+
+# misc
+.DS_Store
+npm-debug.log*
+*.log
+
+/coverage
+.idea
+
+# umi
+.umi
+.umi-production
+.umi-test
+.umi-undefined
+.turbopack
+
+# pnpm local store (CI/沙箱临时使用)
+.pnpm-store
+
+# editor
+.history
+.vscode
+*bak
