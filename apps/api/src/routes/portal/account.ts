@@ -130,7 +130,9 @@ portalAccountRoutes.get("/identity", async (c) => {
     idNumberMasked,
     companyName: p.companyName,
     creditCode: p.creditCode ? `${p.creditCode.slice(0, 6)}****${p.creditCode.slice(-4)}` : null,
+    rejectReason: p.rejectReason,
     verifiedAt: p.verifiedAt instanceof Date ? p.verifiedAt.toISOString() : null,
+    updatedAt: p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt ?? ""),
   });
 });
 
@@ -150,6 +152,7 @@ portalAccountRoutes.post("/identity", async (c) => {
     creditCode: body.type === "enterprise" ? body.creditCode : null,
     status: "pending" as const,
     verifiedAt: null,
+    rejectReason: null,
   };
   const existing = await db
     .select({ id: schema.userProfiles.id })

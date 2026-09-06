@@ -166,3 +166,15 @@ export const FAPIAO_TYPE_LABEL: Record<string, string> = {
   electronic: '电子普票',
   special: '增值税专票',
 };
+
+export const IDENTITY_STATUS_LABEL: Record<string, string> = {
+  unverified: '未认证',
+  pending: '待审核',
+  verified: '已认证',
+  rejected: '已驳回',
+};
+
+export const IDENTITY_TYPE_LABEL: Record<string, string> = {
+  personal: '个人',
+  enterprise: '企业',
+};

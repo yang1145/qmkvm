@@ -17,9 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  none: { label: "未认证", className: "bg-muted text-muted-foreground" },
+  unverified: { label: "未认证", className: "bg-muted text-muted-foreground" },
   pending: { label: "审核中", className: "bg-blue-50 text-blue-700" },
-  approved: { label: "已认证", className: "bg-emerald-50 text-emerald-700" },
+  verified: { label: "已认证", className: "bg-emerald-50 text-emerald-700" },
   rejected: { label: "已驳回", className: "bg-red-50 text-red-700" },
 };
 
@@ -39,7 +39,8 @@ export default function IdentityPage() {
   const [creditCode, setCreditCode] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
-  const canSubmit = !identity || identity.status === "none" || identity.status === "rejected";
+  const canSubmit =
+    !identity || identity.status === "unverified" || identity.status === "rejected";
 
   const submit = async (payload: Record<string, unknown>, okMsg: string) => {
     setSubmitting(true);
@@ -81,7 +82,11 @@ export default function IdentityPage() {
     );
   }
 
-  const status = STATUS_MAP[identity?.status ?? "none"] ?? { label: "未认证", className: "bg-muted text-muted-foreground" };
+  const status =
+    STATUS_MAP[identity?.status ?? "unverified"] ?? {
+      label: "未认证",
+      className: "bg-muted text-muted-foreground",
+    };
   const showForm = canSubmit && identity?.status !== "pending";
 
   return (
@@ -102,7 +107,7 @@ export default function IdentityPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1.5 text-sm">
-          {identity && identity.status !== "none" ? (
+          {identity && identity.status !== "unverified" ? (
             <>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">类型</span>
@@ -145,6 +150,11 @@ export default function IdentityPage() {
             <CardTitle className="text-sm">提交认证</CardTitle>
           </CardHeader>
           <CardContent>
+            {identity?.status === "rejected" ? (
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                驳回原因：{identity.rejectReason || "未说明"}。请核实信息后重新提交。
+              </div>
+            ) : null}
             <Tabs defaultValue="personal">
               <TabsList className="w-full">
                 <TabsTrigger value="personal" className="flex-1">

@@ -1,0 +1,1 @@
+ALTER TABLE `user_profiles` ADD `reject_reason` varchar(255);

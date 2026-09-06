@@ -25,6 +25,7 @@ export default [
     access: 'canCustomersRead',
     routes: [
       { path: '/customers', name: '客户列表', component: './customers' },
+      { path: '/customers/identities', name: '实名管理', component: './identities' },
       { path: '/customers/:id', name: '客户详情', hideInMenu: true, component: './customers/detail' },
     ],
   },

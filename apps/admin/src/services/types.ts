@@ -497,3 +497,27 @@ export type KbArticleListItem = {
 export type KbArticleDetail = KbArticleListItem & {
   contentHtml: string;
 };
+
+// ============ 实名审核 ============
+
+export type IdentityListItem = {
+  id: number;
+  userId: number;
+  user: { name: string | null; phone: string | null; email: string | null } | null;
+  type: 'personal' | 'enterprise';
+  realName: string | null;
+  companyName: string | null;
+  creditCode: string | null;
+  status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  statusLabel: string;
+  rejectReason: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** 审核详情：证件号解密返回完整值（仅审核用，禁止落日志） */
+export type IdentityDetail = IdentityListItem & {
+  idNumber: string | null;
+  user: { name: string | null; phone: string | null; email: string | null; createdAt: string | null } | null;
+};

@@ -12,6 +12,8 @@ import type {
   DepartmentItem,
   FapiaoRequestListItem,
   FapiaoTitleSnapshot,
+  IdentityDetail,
+  IdentityListItem,
   InvoiceListItem,
   KbArticleDetail,
   KbArticleListItem,
@@ -211,6 +213,23 @@ export async function exportFapiaoCsv(status?: string) {
   a.download = match?.[1] ?? 'fapiao.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ============ 实名审核 ============
+
+export async function getIdentities(params: Record<string, unknown>) {
+  return request<Paginated<IdentityListItem>>(`${BASE}/identities`, { params });
+}
+
+export async function getIdentity(id: number) {
+  return request<IdentityDetail>(`${BASE}/identities/${id}`);
+}
+
+export async function reviewIdentity(id: number, action: 'approve' | 'reject', reason?: string) {
+  return request<{ ok: boolean; status: string }>(`${BASE}/identities/${id}/review`, {
+    method: 'POST',
+    data: { action, reason },
+  });
 }
 
 // ============ 交易 / 退款 ============

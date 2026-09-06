@@ -109,7 +109,7 @@ export type AccountSession = z.infer<typeof accountSessionDtoSchema>;
 /** GET /account/identity */
 export const identitySchema = z.object({
   type: z.enum(["personal", "enterprise"]).nullable(),
-  status: z.enum(["none", "pending", "approved", "rejected"]),
+  status: z.enum(["unverified", "pending", "verified", "rejected"]).catch("unverified"),
   realName: z.string().nullable().catch(null),
   idNumber: z.string().nullable().catch(null),
   companyName: z.string().nullable().catch(null),

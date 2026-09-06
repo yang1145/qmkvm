@@ -51,6 +51,8 @@ export const userProfiles = mysqlTable(
     status: mysqlEnum("status", ["unverified", "pending", "verified", "rejected"])
       .notNull()
       .default("unverified"),
+    /** 审核驳回原因（rejected 时有值，重新提交后清空） */
+    rejectReason: varchar("reject_reason", { length: 255 }),
     verifiedAt: datetime("verified_at", { mode: "date" }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
