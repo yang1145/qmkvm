@@ -5,7 +5,7 @@
 import { history, useParams } from '@umijs/max';
 import { PageContainer, ProCard } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
-import { App, Button, Card, Checkbox, Divider, Input, InputNumber, Modal, Select, Space, Spin, Tag } from 'antd';
+import { Alert, App, Button, Card, Checkbox, Divider, Input, InputNumber, Modal, Select, Space, Spin, Switch, Tag } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -37,6 +37,80 @@ const GROUP_TYPES = [
   { value: 'radio', label: '单选' },
   { value: 'checkbox', label: '多选' },
   { value: 'quantity', label: '数量' },
+];
+
+// ============ 弹性套餐向导 ============
+
+type TierDraft = { label: string; value: string; deltaYuan: number; isDefault: boolean };
+type WizardGroup = {
+  key: string;
+  include: boolean;
+  name: string;
+  type: 'radio' | 'quantity';
+  required: boolean;
+  /** radio 档位 */
+  tiers: TierDraft[];
+  /** quantity 每单位加价（元/周期） */
+  unitPriceYuan: number;
+  /** quantity 默认数量 */
+  defaultQty: number;
+};
+
+const defaultWizardGroups = (): WizardGroup[] => [
+  {
+    key: 'cpu', include: true, name: 'CPU', type: 'radio', required: true, unitPriceYuan: 0, defaultQty: 1,
+    tiers: [
+      { label: '2 核', value: '2c', deltaYuan: 0, isDefault: true },
+      { label: '4 核', value: '4c', deltaYuan: 40, isDefault: false },
+      { label: '8 核', value: '8c', deltaYuan: 120, isDefault: false },
+      { label: '16 核', value: '16c', deltaYuan: 280, isDefault: false },
+    ],
+  },
+  {
+    key: 'ram', include: true, name: '内存', type: 'radio', required: true, unitPriceYuan: 0, defaultQty: 1,
+    tiers: [
+      { label: '4GB', value: '4g', deltaYuan: 0, isDefault: true },
+      { label: '8GB', value: '8g', deltaYuan: 60, isDefault: false },
+      { label: '16GB', value: '16g', deltaYuan: 180, isDefault: false },
+      { label: '32GB', value: '32g', deltaYuan: 420, isDefault: false },
+    ],
+  },
+  {
+    key: 'disk', include: true, name: '系统盘', type: 'radio', required: true, unitPriceYuan: 0, defaultQty: 1,
+    tiers: [
+      { label: '40GB SSD', value: '40g', deltaYuan: 0, isDefault: true },
+      { label: '80GB SSD', value: '80g', deltaYuan: 60, isDefault: false },
+      { label: '160GB SSD', value: '160g', deltaYuan: 180, isDefault: false },
+    ],
+  },
+  {
+    key: 'bandwidth', include: true, name: '公网带宽（Mbps）', type: 'quantity', required: true,
+    tiers: [], unitPriceYuan: 15, defaultQty: 3,
+  },
+  {
+    key: 'datadisk', include: true, name: '数据盘（10GB）', type: 'quantity', required: true,
+    tiers: [], unitPriceYuan: 10, defaultQty: 0,
+  },
+  {
+    key: 'ip', include: true, name: '公网 IP（个）', type: 'quantity', required: true,
+    tiers: [], unitPriceYuan: 20, defaultQty: 1,
+  },
+  {
+    key: 'region', include: true, name: '地域', type: 'radio', required: true, unitPriceYuan: 0, defaultQty: 1,
+    tiers: [
+      { label: '华东-上海', value: 'cn-shanghai', deltaYuan: 0, isDefault: true },
+      { label: '华北-北京', value: 'cn-beijing', deltaYuan: 0, isDefault: false },
+    ],
+  },
+  {
+    key: 'os', include: true, name: '操作系统', type: 'radio', required: true, unitPriceYuan: 0, defaultQty: 1,
+    tiers: [
+      { label: 'Ubuntu 22.04', value: 'ubuntu22.04', deltaYuan: 0, isDefault: true },
+      { label: 'Debian 12', value: 'debian12', deltaYuan: 0, isDefault: false },
+      { label: 'CentOS Stream 9', value: 'centos9', deltaYuan: 0, isDefault: false },
+      { label: 'Windows Server 2022', value: 'win2022', deltaYuan: 80, isDefault: false },
+    ],
+  },
 ];
 
 type PricingDraft = { cycle: string; firstPriceYuan: number; renewalPriceYuan: number; setupFeeYuan: number };
@@ -73,6 +147,9 @@ const ProductEdit: React.FC = () => {
   /** 供应模块配置 JSON（详情接口返回，用于「测试连接」） */
   const [moduleConfig, setModuleConfig] = useState<Record<string, unknown> | null>(null);
   const [testingConn, setTestingConn] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardGroups, setWizardGroups] = useState<WizardGroup[]>(defaultWizardGroups);
+  const [wizardSaving, setWizardSaving] = useState(false);
 
   useEffect(() => {
     getProductGroups().then(setGroups).catch(() => {});
@@ -157,6 +234,79 @@ const ProductEdit: React.FC = () => {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ============ 弹性套餐向导 ============
+
+  const patchWizard = (key: string, patch: Partial<WizardGroup>) =>
+    setWizardGroups((prev) => prev.map((g) => (g.key === key ? { ...g, ...patch } : g)));
+
+  const generateElastic = async () => {
+    const included = wizardGroups.filter((g) => g.include);
+    if (included.length === 0) {
+      message.warning('请至少选择一个配置组');
+      return;
+    }
+    for (const g of included) {
+      if (g.type === 'radio' && g.tiers.filter((t) => t.label.trim() && t.value.trim()).length === 0) {
+        message.warning(`「${g.name}」至少需要一个有效档位（名称与值）`);
+        return;
+      }
+      if (g.type === 'radio' && !g.tiers.some((t) => t.isDefault && t.label.trim())) {
+        message.warning(`「${g.name}」请设置一个默认档位`);
+        return;
+      }
+    }
+    const existingNames = new Set(configGroups.map((g) => g.name));
+    const duplicated = included.filter((g) => existingNames.has(g.name));
+    if (duplicated.length > 0) {
+      message.warning(`配置组已存在，请先删除重复项：${duplicated.map((g) => g.name).join('、')}`);
+      return;
+    }
+
+    setWizardSaving(true);
+    try {
+      let order = configGroups.length;
+      let optionCount = 0;
+      for (const g of included) {
+        const created = await createConfigGroup(idNum, { name: g.name, type: g.type, required: g.required });
+        const gid = created.id;
+        if (g.type === 'radio') {
+          const tiers = g.tiers.filter((t) => t.label.trim() && t.value.trim());
+          for (const [i, t] of tiers.entries()) {
+            await createConfigOption(gid, {
+              label: t.label.trim(),
+              value: t.value.trim(),
+              priceDelta: yuanToFen(t.deltaYuan),
+              setupDelta: 0,
+              isDefault: t.isDefault,
+              sortOrder: i,
+            });
+            optionCount++;
+          }
+        } else {
+          await createConfigOption(gid, {
+            label: g.name,
+            value: g.key,
+            priceDelta: yuanToFen(g.unitPriceYuan),
+            setupDelta: 0,
+            isDefault: true,
+            sortOrder: 0,
+          });
+          optionCount++;
+        }
+        order++;
+        void order;
+      }
+      const list = await getProduct(idNum);
+      setConfigGroups(list.configGroups ?? []);
+      message.success(`已生成 ${included.length} 个配置组、${optionCount} 个选项（价格档位可继续手动微调）`);
+      setWizardOpen(false);
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : '生成失败');
+    } finally {
+      setWizardSaving(false);
     }
   };
 
@@ -520,12 +670,24 @@ const ProductEdit: React.FC = () => {
         title="可配置选项组"
         style={{ marginTop: 16 }}
         extra={
-          <Button size="small" disabled={readOnly || isNew} onClick={addConfigGroup}>
-            添加配置组
-          </Button>
+          <Space size={8}>
+            <Button
+              type="primary"
+              disabled={readOnly || isNew}
+              onClick={() => {
+                setWizardGroups(defaultWizardGroups());
+                setWizardOpen(true);
+              }}
+            >
+              弹性套餐向导
+            </Button>
+            <Button size="small" disabled={readOnly || isNew} onClick={addConfigGroup}>
+              添加配置组
+            </Button>
+          </Space>
         }
       >
-        {isNew && <div style={{ color: '#999' }}>请先保存商品后再编辑配置组。</div>}
+        {isNew && <div style={{ color: '#999' }}>请先保存商品后再编辑配置组。推荐使用「弹性套餐向导」一键生成 CPU / 内存 / 硬盘 / 带宽 / IP 等弹性配置。</div>}
         {!isNew && configGroups.length === 0 && <div style={{ color: '#999' }}>暂无配置组</div>}
         {configGroups.map((g) => (
           <Card key={g.id} size="small" title={g.name} style={{ marginBottom: 12 }}
@@ -659,6 +821,166 @@ const ProductEdit: React.FC = () => {
           </Card>
         ))}
       </ProCard>
+
+      <Modal
+        title="弹性套餐向导"
+        width={880}
+        open={wizardOpen}
+        onCancel={() => setWizardOpen(false)}
+        okText={`生成 ${wizardGroups.filter((g) => g.include).length} 个配置组`}
+        okButtonProps={{ loading: wizardSaving }}
+        onOk={() => void generateElastic()}
+      >
+        <Alert
+          style={{ marginBottom: 12 }}
+          type="info"
+          showIcon
+          message="按需勾选配置组；档位加价为每周期增量（元），叠加在周期定价基础价之上； quantity 型按数量 × 单价计费。生成后可继续手动微调。"
+        />
+        {wizardGroups.map((g, gi) => (
+          <Card
+            key={g.key}
+            size="small"
+            style={{ marginBottom: 12, opacity: g.include ? 1 : 0.55 }}
+            title={
+              <Space>
+                <Switch
+                  size="small"
+                  checked={g.include}
+                  onChange={(v) => patchWizard(g.key, { include: v })}
+                />
+                {g.name}
+                <Tag>{g.type === 'quantity' ? '按数量' : '单选'}</Tag>
+                {g.required && <Tag color="blue">必选</Tag>}
+              </Space>
+            }
+            extra={
+              !readOnly && (
+                <Button
+                  size="small"
+                  onClick={() =>
+                    patchWizard(g.key, {
+                      tiers: [...g.tiers, { label: '', value: '', deltaYuan: 0, isDefault: false }],
+                    })
+                  }
+                >
+                  加档位
+                </Button>
+              )
+            }
+          >
+            {g.type === 'quantity' ? (
+              <Space wrap>
+                <span>
+                  单价（元/单位/周期）：
+                  <InputNumber
+                    min={0}
+                    precision={2}
+                    style={{ width: 110 }}
+                    value={g.unitPriceYuan}
+                    disabled={readOnly}
+                    onChange={(v) => patchWizard(g.key, { unitPriceYuan: v ?? 0 })}
+                  />
+                </span>
+                <span>
+                  默认数量：
+                  <InputNumber
+                    min={0}
+                    precision={0}
+                    style={{ width: 90 }}
+                    value={g.defaultQty}
+                    disabled={readOnly}
+                    onChange={(v) => patchWizard(g.key, { defaultQty: v ?? 0 })}
+                  />
+                </span>
+              </Space>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#fafafa' }}>
+                    {['档位名称', '值', '加价（元/周期）', '默认', '操作'].map((h) => (
+                      <th key={h} style={{ padding: '4px 8px', border: '1px solid #f0f0f0', textAlign: 'left' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.tiers.map((t, ti) => (
+                    <tr key={ti}>
+                      <td style={{ padding: '2px 6px', border: '1px solid #f0f0f0' }}>
+                        <Input
+                          size="small"
+                          variant="borderless"
+                          value={t.label}
+                          placeholder="如 4 核"
+                          onChange={(e) =>
+                            patchWizard(g.key, {
+                              tiers: g.tiers.map((x, i) => (i === ti ? { ...x, label: e.target.value } : x)),
+                            })
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: '2px 6px', border: '1px solid #f0f0f0' }}>
+                        <Input
+                          size="small"
+                          variant="borderless"
+                          value={t.value}
+                          placeholder="如 4c"
+                          onChange={(e) =>
+                            patchWizard(g.key, {
+                              tiers: g.tiers.map((x, i) => (i === ti ? { ...x, value: e.target.value } : x)),
+                            })
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: '2px 6px', border: '1px solid #f0f0f0' }}>
+                        <InputNumber
+                          size="small"
+                          min={0}
+                          precision={2}
+                          style={{ width: 100 }}
+                          value={t.deltaYuan}
+                          onChange={(v) =>
+                            patchWizard(g.key, {
+                              tiers: g.tiers.map((x, i) => (i === ti ? { ...x, deltaYuan: v ?? 0 } : x)),
+                            })
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: '2px 6px', border: '1px solid #f0f0f0', textAlign: 'center' }}>
+                        <input
+                          type="radio"
+                          name={`wiz_${g.key}`}
+                          checked={t.isDefault}
+                          onChange={() =>
+                            patchWizard(g.key, {
+                              tiers: g.tiers.map((x, i) => ({ ...x, isDefault: i === ti })),
+                            })
+                          }
+                        />
+                      </td>
+                      <td style={{ padding: '2px 6px', border: '1px solid #f0f0f0', textAlign: 'center' }}>
+                        <a style={{ color: '#ff4d4f' }} onClick={() => patchWizard(g.key, { tiers: g.tiers.filter((_, i) => i !== ti) })}>
+                          删除
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                  {g.tiers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ padding: 8, color: '#999' }}>
+                        暂无档位，点击「加档位」
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+            {gi === wizardGroups.length - 1 && null}
+          </Card>
+        ))}
+      </Modal>
     </PageContainer>
   );
 };
