@@ -61,7 +61,12 @@ export function handleApiError(error: any): boolean {
     const issues = (body?.details as any)?.issues;
     if (Array.isArray(issues) && issues.length > 0) {
       const lines = issues
-        .map((i: any) => (typeof i === 'string' ? i : `${(i.path ?? []).join('.') || i.field || ''}: ${i.message ?? ''}`))
+        .map((i: any) => {
+          if (typeof i === 'string') return i;
+          // 后端已将 path 拼接为字符串（"body.slug"），兼容数组形态
+          const path = Array.isArray(i.path) ? i.path.join('.') : String(i.path ?? '');
+          return `${path || i.field || ''}: ${i.message ?? ''}`.replace(/^:\s*/, '');
+        })
         .filter(Boolean);
       showError(lines.join('；'));
     } else {
