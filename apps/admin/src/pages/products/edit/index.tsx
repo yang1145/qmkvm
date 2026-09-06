@@ -146,6 +146,8 @@ const ProductEdit: React.FC = () => {
   const [modules, setModules] = useState<ProvisionModuleItem[]>([]);
   /** 供应模块配置 JSON（详情接口返回，用于「测试连接」） */
   const [moduleConfig, setModuleConfig] = useState<Record<string, unknown> | null>(null);
+  /** 供应模块配置 JSON 文本（http-api / pve 模块显示编辑框，随「保存」提交） */
+  const [moduleConfigText, setModuleConfigText] = useState('{}');
   const [testingConn, setTestingConn] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardGroups, setWizardGroups] = useState<WizardGroup[]>(defaultWizardGroups);
@@ -187,10 +189,29 @@ const ProductEdit: React.FC = () => {
         );
         setConfigGroups(p.configGroups ?? []);
         setModuleConfig(p.moduleConfig ?? null);
+        setModuleConfigText(JSON.stringify(p.moduleConfig ?? {}, null, 2));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [idNum, isNew]);
+
+  /** 当前模块是否显示 moduleConfig JSON 编辑框（仅 http-api / pve 需要商品级 JSON 配置） */
+  const showModuleConfig = base.moduleCode === 'http-api' || base.moduleCode === 'pve';
+
+  /** 解析 moduleConfig 编辑框内容为对象；非法返回 null 并提示 */
+  const parseModuleConfigText = (): Record<string, unknown> | null => {
+    try {
+      const parsed: unknown = JSON.parse(moduleConfigText);
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        message.warning('供应模块配置必须为 JSON 对象');
+        return null;
+      }
+      return parsed as Record<string, unknown>;
+    } catch {
+      message.warning('供应模块配置不是合法 JSON，请检查后重试');
+      return null;
+    }
+  };
 
   const doSaveBase = async () => {
     if (!base.name.trim() || !base.slug.trim()) {
@@ -200,6 +221,13 @@ const ProductEdit: React.FC = () => {
     if (!base.groupId) {
       message.warning('请选择商品分组');
       return;
+    }
+    // moduleConfig 随基本信息一并提交（仅 http-api / pve 模块显示编辑框时）
+    let moduleConfigValue: Record<string, unknown> | undefined;
+    if (showModuleConfig) {
+      const parsed = parseModuleConfigText();
+      if (parsed === null) return;
+      moduleConfigValue = parsed;
     }
     setSaving(true);
     try {
@@ -223,6 +251,7 @@ const ProductEdit: React.FC = () => {
           renewalPrice: yuanToFen(c.renewalPriceYuan),
           setupFee: yuanToFen(c.setupFeeYuan),
         })),
+        ...(moduleConfigValue !== undefined ? { moduleConfig: moduleConfigValue } : {}),
       };
       if (isNew) {
         const created = await createProduct(payload);
@@ -312,16 +341,23 @@ const ProductEdit: React.FC = () => {
 
   // ============ 配置组操作 ============
 
-  /** 用表单当前的 moduleCode + moduleConfig 调模块连接测试接口 */
+  /** 用表单当前的 moduleCode + moduleConfig 调模块连接测试接口（编辑框内容未保存也可测试） */
   const doTestConnection = async () => {
     const code = base.moduleCode.trim();
     if (!code) {
       message.warning('请先填写供应模块 code');
       return;
     }
+    // http-api / pve：优先使用编辑框当前内容；其他模块用详情返回的配置
+    let config: Record<string, unknown> | null = moduleConfig;
+    if (showModuleConfig) {
+      const parsed = parseModuleConfigText();
+      if (parsed === null) return;
+      config = parsed;
+    }
     setTestingConn(true);
     try {
-      const res = await testProvisionModule(code, moduleConfig);
+      const res = await testProvisionModule(code, config);
       if (res.ok) {
         message.success(res.message ?? '连接成功');
       } else {
@@ -579,6 +615,23 @@ const ProductEdit: React.FC = () => {
           </div>
         </div>
       </ProCard>
+
+      {showModuleConfig && (
+        <ProCard title="供应模块配置（moduleConfig）" style={{ marginTop: 16 }}>
+          <Input.TextArea
+            rows={12}
+            spellCheck={false}
+            style={{ fontFamily: 'monospace', fontSize: 12 }}
+            value={moduleConfigText}
+            disabled={readOnly}
+            onChange={(e) => setModuleConfigText(e.target.value)}
+            placeholder={'{\n  "host": "https://1.2.3.4:8006",\n  "auth": { ... }\n}'}
+          />
+          <div style={{ color: '#999', marginTop: 8 }}>
+            JSON 对象，作为商品级供应模块配置（service 侧快照优先）。随上方「保存」按钮一并提交；「测试连接」使用当前编辑内容（无需先保存）。字段说明见供应模块文档（packages/provisioning/README.md）。
+          </div>
+        </ProCard>
+      )}
 
       <ProCard title="商品详情" style={{ marginTop: 16 }}>
         <Input.TextArea

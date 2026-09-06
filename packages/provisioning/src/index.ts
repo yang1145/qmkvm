@@ -9,4 +9,5 @@ export * from "./registry.js";
 export * from "./modules/manual.js";
 export * from "./modules/demo.js";
 export * from "./modules/http-api.js";
+export * from "./modules/pve.js";
 export * from "./runner.js";

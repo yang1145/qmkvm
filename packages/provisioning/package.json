@@ -16,7 +16,8 @@
     "@pinhaoji/core": "workspace:*",
     "@pinhaoji/db": "workspace:*",
     "@pinhaoji/logger": "workspace:*",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "undici": "^6.28.1"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",

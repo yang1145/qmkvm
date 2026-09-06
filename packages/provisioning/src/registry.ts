@@ -1,11 +1,12 @@
 /**
  * 供应模块注册表：code → ProvisionModule。
- * 内置 manual / demo / http-api；自定义模块经 registerModule 扩展，无需改既有代码。
+ * 内置 manual / demo / http-api / pve；自定义模块经 registerModule 扩展，无需改既有代码。
  */
 import type { ProvisionModule } from "./types.js";
 import { manualModule } from "./modules/manual.js";
 import { demoModule } from "./modules/demo.js";
 import { httpApiModule } from "./modules/http-api.js";
+import { pveModule } from "./modules/pve.js";
 
 const modules = new Map<string, ProvisionModule>();
 
@@ -31,3 +32,4 @@ export function listModules(): ProvisionModule[] {
 registerModule(manualModule);
 registerModule(demoModule);
 registerModule(httpApiModule);
+registerModule(pveModule);
