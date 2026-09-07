@@ -1,0 +1,476 @@
+# =====================================================================
+# QmKvm 集群版编排（架构演进 #6，单机多容器模拟集群样例）
+# =====================================================================
+# 用途：docker compose -f docker/docker-compose.cluster.yml up -d
+# 前置：仓库根 .env 已配置（见 docker/README-cluster.md 的变量清单）
+#
+# 与 docker-compose.prod.yml 的关系：
+#   - prod 版是"单实例生产编排"（1 API + 1 worker），集群版在同一套
+#     Dockerfile.node / Dockerfile.next / Dockerfile.admin 构建之上，
+#     增加 LB、API 多副本、worker 四分组、S3 对象存储（MinIO）。
+#   - 代码与镜像完全同源，差别只在副本数与编排拓扑。
+#
+# 重要：单机 docker compose（无 Swarm）下 deploy.replicas 无效，
+#   API 多副本用显式服务 api-1/api-2/api-3（container_name 固定，
+#   供 lb upstream 引用）实现；生产 K8s/多机对应关系见 README-cluster.md。
+#
+# 本文件不声明 ports 到宿主机（除 lb 80），所有流量经 lb 进入；
+# 调试单个服务时可用 docker compose -f 本文件 exec / port 进入。
+# =====================================================================
+name: qmkvm-cluster
+
+services:
+  # ------------------------------------------------------------------
+  # LB：nginx 反代（对应架构图"L7 负载均衡"节点）
+  # ------------------------------------------------------------------
+  # - /api 轮询（round-robin）到 api-1/api-2/api-3
+  # - 不启用 sticky session：API 无状态（会话在 Redis / 签名 Cookie），
+  #   任何副本均可处理任意请求；限流依赖 X-Forwarded-For 透传真实 IP
+  # - TLS 终结留给宿主机外层（如云 LB / 宿主 nginx/caddy 做 443 → 本 LB:80），
+  #   因此本容器只监听 80
+  # ------------------------------------------------------------------
+  lb:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    container_name: qmkvm-cluster-lb
+    ports:
+      # 唯一对外入口
+      - "80:80"
+    # 内联配置（避免依赖宿主文件路径；修改后 docker compose restart lb 生效）
+    command: |
+      sh -c "cat > /etc/nginx/conf.d/default.conf <<'NGINX'
+      # ---- upstreams（container_name 固定，compose 网络内可解析）----
+      upstream api_pool {
+          # 轮询（缺省）；不启用 ip_hash / sticky cookie —— API 无状态
+          server api-1:4000;
+          server api-2:4000;
+          server api-3:4000;
+          keepalive 32;
+      }
+      upstream portal_pool { server portal:3000; }
+      upstream www_pool    { server www:3000; }
+      upstream admin_pool  { server admin:80; }
+
+      server {
+          listen 80;
+          server_name _;
+
+          # 上传体积与 admin 反代一致
+          client_max_body_size 10m;
+
+          # ---- API：轮询到多副本 ----
+          location /api/ {
+              proxy_pass http://api_pool;
+              proxy_http_version 1.1;
+              proxy_set_header Host $$host;
+              proxy_set_header X-Real-IP $$remote_addr;
+              # 限流（API 按此头取真实 IP）与审计日志依赖本头
+              proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $$scheme;
+          }
+          # /healthz 经 lb 随机命中任一 API 副本，用于验证后端池
+          location = /healthz {
+              proxy_pass http://api_pool;
+              proxy_http_version 1.1;
+              proxy_set_header Host $$host;
+              proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+          }
+
+          # ---- 三个前端：按路径前缀反代（生产建议静态走 CDN/对象存储）----
+          location /portal/ {
+              proxy_pass http://portal_pool/;
+              proxy_http_version 1.1;
+              proxy_set_header Host $$host;
+              proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+          }
+          location / {
+              proxy_pass http://www_pool;
+              proxy_http_version 1.1;
+              proxy_set_header Host $$host;
+              proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+          }
+          location /admin/ {
+              proxy_pass http://admin_pool/;
+              proxy_http_version 1.1;
+              proxy_set_header Host $$host;
+              proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+          }
+      }
+      NGINX
+      exec nginx -g 'daemon off;'"
+    depends_on:
+      - api-1
+      - api-2
+      - api-3
+      - portal
+      - www
+      - admin
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      # 依赖的后端较多，放宽启动宽限期
+      start_period: 20s
+
+  # ------------------------------------------------------------------
+  # API 副本 ×3（对应架构图"API 副本 ×N"，无状态，水平扩）
+  # ------------------------------------------------------------------
+  # 单机模拟：deploy.replicas 在无 Swarm 时无效，用显式三服务；
+  # 扩容到 N 副本 = 追加 api-N 服务 + lb upstream 增一行（生产 K8s 直接 replicas: N）。
+  # 环境变量来自 env_file ../.env；此处仅覆盖集群形态差异项。
+  # ------------------------------------------------------------------
+  api-1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: api }
+    image: qmkvm-api:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-api-1
+    env_file: ../.env
+    environment:
+      API_PORT: "4000"
+      NODE_ENV: production
+      DEV_MOCK_PAYMENTS: "false"
+      # 集群形态启用对象存储（.env 里的 STORAGE_S3_* 指向下方 minio）
+      STORAGE_PROVIDER: s3
+      STORAGE_S3_ENDPOINT: http://minio:9000
+      # 队列分组路由：集群样例默认启用四组分流
+      # （不设置则全部任务走主队列 kvm、由 tx 组消费，与 prod 版行为一致）
+      QUEUE_ROUTING: split
+      # CORS：经 lb 同源访问时无需额外配置；跨子域部署时在 .env 中
+      # 设置 CORS_ORIGINS（前端来源白名单）与 COOKIE_DOMAIN（.example.com 形式，
+      # 用于 portal/www/admin 跨子域共享会话 Cookie；同源单域名留空）
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    # 不对宿主机暴露端口（调试时临时加 127.0.0.1:4001:4000）
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  api-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: api }
+    image: qmkvm-api:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-api-2
+    env_file: ../.env
+    environment:
+      API_PORT: "4000"
+      NODE_ENV: production
+      DEV_MOCK_PAYMENTS: "false"
+      STORAGE_PROVIDER: s3
+      STORAGE_S3_ENDPOINT: http://minio:9000
+      QUEUE_ROUTING: split
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  api-3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: api }
+    image: qmkvm-api:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-api-3
+    env_file: ../.env
+    environment:
+      API_PORT: "4000"
+      NODE_ENV: production
+      DEV_MOCK_PAYMENTS: "false"
+      STORAGE_PROVIDER: s3
+      STORAGE_S3_ENDPOINT: http://minio:9000
+      QUEUE_ROUTING: split
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ------------------------------------------------------------------
+  # Worker 四组（对应架构图 Worker-交易/通知/供应/OCR 组）
+  # ------------------------------------------------------------------
+  # 同一 worker 镜像不同启动参数：--group tx|notify|supply|ocr
+  # （argv 解析见 apps/worker/src/groups.ts parseWorkerGroup；缺省 tx）。
+  # 镜像 CMD 是 ["pnpm","start"]，start 脚本 = tsx --env-file=../../.env src/index.ts，
+  # compose 追加参数后即 pnpm start --group <组名> → tsx src/index.ts --group <组名>。
+  # 各组只订阅本组队列（QUEUE_ROUTING=split 时 api 按 job 路由分流）。
+  # 心跳：启动后每 30s 上报 worker_heartbeats，admin /admin/system/status 查看。
+  # ------------------------------------------------------------------
+
+  # 交易组：主队列 kvm + queue.tx（供应事件/续费/逾期/对账/支付关单/cron）
+  # 注意：repeatable 定时任务调度器只由 tx 组注册，四组模式至少保留 1 个 tx 副本
+  worker-tx:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    image: qmkvm-worker:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-worker-tx
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      QUEUE_ROUTING: split
+      # 供应/PVE 凭据为 env 级隔离：PVE_* 只配给 worker-supply（见下方说明），
+      # 本组不配置 PVE_*，即使误收到供应 job 也无法触达真实宿主机
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["pnpm", "start", "--group", "tx"]
+
+  # 通知组：queue.notify（短信/邮件渲染，独立重试节奏，按短信配额伸缩）
+  worker-notify:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    image: qmkvm-worker:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-worker-notify
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      QUEUE_ROUTING: split
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["pnpm", "start", "--group", "notify"]
+
+  # 供应组：queue.supply（PVE clone/resize/start）
+  # 凭据隔离域：PVE_* 环境变量（PVE_HOST/PVE_TOKEN 等，见 .env）只配给本组——
+  # 在 .env 中配置后经 env_file 注入所有服务，因此 api 与其余 worker 进程
+  # 同样看得到该变量（env_file 是全量的）；生产 K8s 中应把 PVE_* 收进
+  # 仅供 worker-supply 的 Secret/Deployment（本文件边界内不改 apps 代码，
+  # 进程级读取路径无法收敛，故在手册标注此差异）。
+  worker-supply:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    image: qmkvm-worker:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-worker-supply
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      QUEUE_ROUTING: split
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: ["pnpm", "start", "--group", "supply"]
+
+  # OCR 组：queue.ocr（证件照识别，重 CPU——按图片量伸缩；CPU 限制示例）
+  worker-ocr:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    image: qmkvm-worker:cluster
+    restart: unless-stopped
+    container_name: qmkvm-cluster-worker-ocr
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      QUEUE_ROUTING: split
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    # 重 CPU 隔离示例：OCR 识别限 1.5 核 / 1G，避免拖垮同机 MySQL/Redis
+    # （单机模拟有效；生产 K8s 对应 resources.limits）
+    # deploy.resources 在 compose v2 下被识别为资源限制（非 swarm 专属）
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1G
+    command: ["pnpm", "start", "--group", "ocr"]
+
+  # ------------------------------------------------------------------
+  # 对象存储 MinIO（对应架构图"S3/OSS/MinIO"节点；生产推荐云上 S3 兼容存储）
+  # ------------------------------------------------------------------
+  # STORAGE_S3_* 指向 http://minio:9000；桶由 minio-init 一次性创建。
+  # 生产替换：删掉 minio/minio-init 两服务，.env 中 STORAGE_S3_ENDPOINT 改为
+  # 云厂商端点（阿里 OSS/腾讯 COS 等），本编排其余部分不变。
+  # ------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    container_name: qmkvm-cluster-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-qmkvm}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?请在 .env 设置 MINIO_ROOT_PASSWORD（即 STORAGE_S3_SECRET）}
+    ports:
+      # Console 仅内网调试用；S3 API 9000 不对宿主机暴露（仅集群网络内）
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # 一次性建桶任务：STORAGE_S3_BUCKET 指定的桶不存在时创建
+  minio-init:
+    image: minio/mc:latest
+    container_name: qmkvm-cluster-minio-init
+    environment:
+      MC_HOST_local: http://${MINIO_ROOT_USER:-qmkvm}:${MINIO_ROOT_PASSWORD:?请在 .env 设置 MINIO_ROOT_PASSWORD}@minio:9000
+    depends_on:
+      minio:
+        condition: service_healthy
+    # 幂等建桶：桶已存在时 --ignore-existing 直接通过。
+    # 不设匿名读策略：读取走 presigned GET URL（私有桶，证件照/工单附件更安全）
+    entrypoint: |
+      sh -c "mc mb --ignore-existing local/${STORAGE_S3_BUCKET:?请在 .env 设置 STORAGE_S3_BUCKET}"
+
+  # ------------------------------------------------------------------
+  # MySQL 主库（对应架构图"MySQL 主"）
+  # ------------------------------------------------------------------
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    container_name: qmkvm-cluster-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+      MYSQL_DATABASE: qmkvm
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ------------------------------------------------------------------
+  # MySQL 只读副本 —— 可选项（默认注释掉，启用后 .env 中 DATABASE_URL_RO
+  # 指向 mysql-readonly 即可让报表/导出/审计/dashboard 走从库）
+  # ------------------------------------------------------------------
+  # 单机模拟限制：真实主从需要主库开 binlog + GTID、从库 CHANGE REPLICATION SOURCE
+  # 并复制初始数据，单容器无法用同一 data 卷同时充当主从（会互相覆盖）。
+  # 下方注释块给出的是"独立空从库"形态：仅满足 DATABASE_URL_RO 连通性验证
+  # （从库无业务数据，读路由返回空结果），完整主从的生产做法见 README-cluster.md。
+  # mysql-readonly:
+  #   image: mysql:8.4
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+  #     MYSQL_DATABASE: qmkvm
+  #     TZ: Asia/Shanghai
+  #   command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  #     --read-only=1
+  #   volumes:
+  #     - mysql-readonly-data:/var/lib/mysql
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+
+  # ------------------------------------------------------------------
+  # Redis（复用 prod 版：BullMQ 依赖持久化 key，必须 noeviction）
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    container_name: qmkvm-cluster-redis
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+
+  # ------------------------------------------------------------------
+  # 三个前端（复用 prod 版构建：Next SSR portal/www + 静态 admin）
+  # ------------------------------------------------------------------
+  portal:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.next
+      args: { APP: portal }
+    restart: unless-stopped
+    container_name: qmkvm-cluster-portal
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    depends_on:
+      - api-1
+    # 不暴露宿主机端口，统一经 lb /portal/ 进入
+
+  www:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.next
+      args: { APP: www }
+    restart: unless-stopped
+    container_name: qmkvm-cluster-www
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-/portal}
+    # 不暴露宿主机端口，统一经 lb / 进入
+
+  admin:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.admin
+    restart: unless-stopped
+    container_name: qmkvm-cluster-admin
+    depends_on:
+      - api-1
+    # 不暴露宿主机端口，统一经 lb /admin/ 进入（管理后台建议叠加 IP 白名单/VPN）
+
+networks:
+  default:
+    name: qmkvm-cluster
+    # 显式声明便于多机扩展时改为 overlay（生产多机场景）
+
+volumes:
+  mysql-data:
+  redis-data:
+  minio-data:
+  # mysql-readonly-data:（启用 mysql-readonly 时取消注释）

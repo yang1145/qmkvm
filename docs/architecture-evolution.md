@@ -76,10 +76,10 @@
 | 3 | worker 分组参数 | `apps/worker/src/groups.ts`（--group 解析）+ `handlers/{index,ocr}.ts`（半差异化：handler 按域分文件，每组注册全量 handler，隔离靠队列路由而非删代码）；ocr 工具下沉 `packages/core/src/ocr/`（API/worker 共用） | — | ✅ 已完成 |
 | 4 | OCR 异步化 | 提交侧 `account.ts` 落盘后入队 `ocr.verify`（立即返回，不再同步识别）；回写侧 worker `handlers/ocr.ts` 与 API inline 降级 `inline/ocr-verify.ts` 双路径一致；`ocr_status` 枚举加 `processing`（迁移 0006，已执行）；预填端点保持同步 | — | ✅ 已完成（E2E 验证：提交→入队→消费→回写 unavailable 降级链路全通） |
 | 5 | 读写分离 | `packages/db`：`getDbRO()` + `DATABASE_URL_RO`（未配置回落主库，单机零配置兼容）；admin 纯读路由切换（reports/dashboard/export/audit-logs 四文件全部端点）；强一致读始终走主库 | — | ✅ 已完成 |
-| 6 | 部署编排 | `docker/docker-compose.cluster.yml` 新建（LB+API×N+worker 分组+Redis Cluster+MinIO 样例） | 1 天 | 待做 |
+| 6 | 部署编排 | `docker/docker-compose.cluster.yml`（15 服务：lb 轮询 API×3 + worker 四组 `--group` + MinIO 建桶 + 三前端；nginx 无 sticky、XFF 透传）+ `docker/README-cluster.md` 部署手册（compose→K8s 映射、切换阈值、MinIO 降级路径） | — | ✅ 已完成（静态校验通过；本机无 Docker，起停验证四步见手册） |
 | 7 | 压测验证 | `scripts/loadtest/`（k6 脚本：登录/下单/回调/实名四链路） | 1 天 | 待做 |
 
-**剩余合计：约 3~4 个工作日**。全部改造不引入服务间 HTTP 调用——服务边界靠"队列分组 + 无状态副本"实现，
+**剩余合计：约 2~3 个工作日（仅 #7 压测脚本）**。全部改造不引入服务间 HTTP 调用——服务边界靠"队列分组 + 无状态副本"实现，
 这是维护难度不上升的关键。
 
 > 实施备注（半差异化的一个关键取舍）：每组 worker 都注册全量 handler（注册本身无副作用），
