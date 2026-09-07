@@ -72,14 +72,21 @@ pnpm dev:worker           # 定时任务（需 Redis）
 
 ### 架构
 
+微服务化高并发形态：API 无状态多副本，任务按域分组独立伸缩（交易 / 通知 / 供应 / OCR 四个 worker 组，同一镜像不同启动参数），用户资产走对象存储。完整架构图、改造点与实施顺序见 `docs/architecture-evolution.md`。
+
 ```text
-                    ┌────────────── 宿主机 Nginx / Caddy（TLS 终结）──────────────┐
-                    │  www 域名      portal 域名     admin 域名      api 域名      │
-                    └──────┬──────────────┬──────────────┬──────────────┬─────────┘
-                           ▼              ▼              ▼              ▼
-                     www:3000       portal:3001    admin(nginx)     api:4000 ──► worker
-                           └──────────────┴──────┬───────┴──────────────┘
-                                           MySQL 8 · Redis 7（volume 持久化）
+                 ┌────────── L7 负载均衡（Nginx/云 LB，健康检查 /healthz）──────────┐
+                 │      www 域名        portal 域名      admin 域名     api 域名     │
+                 └───────┬──────────────────┬────────────────┬──────────┬─────────┘
+                         ▼                  ▼                ▼          ▼
+                    www(CDN)           portal(CDN)      admin(nginx)  API 副本 ×N（无状态）
+                                                                           │
+                                              ┌────────────────┬───────────┤
+                                              ▼                ▼           ▼
+                                     MySQL 主 + 只读副本   Redis Cluster   对象存储(S3/OSS/MinIO)
+                                              ▲                │           证件照/工单附件
+                                              └── worker ×N ───┘
+                                       交易组 | 通知组 | 供应组(PVE 凭据隔离) | OCR 组
 ```
 
 ### 方式 A：Docker Compose（推荐）
