@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { pageQuerySchema, ticketCreateSchema, ticketReplySchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
+import { pageQuerySchema, ticketCreateSchema, ticketReplySchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalTicketRoutes = new Hono();
@@ -108,7 +108,7 @@ portalTicketRoutes.post("/tickets", async (c) => {
 
   // 通知部门邮箱（如配置）
   if (deptRows[0].emailTo) {
-    const { sendNotification } = await import("@pinhaoji/notifications");
+    const { sendNotification } = await import("@qmkvm/notifications");
     await sendNotification(db, {
       channel: "email",
       event: "ticket.created_admin",

@@ -15,8 +15,8 @@
 
 import { createHash, createPublicKey, createPrivateKey, type KeyObject } from "node:crypto";
 import { Aes, Formatter, Rsa, Wechatpay } from "wechatpay-axios-plugin";
-import { AppError, appError } from "@pinhaoji/core";
-import { logger } from "@pinhaoji/logger";
+import { AppError, appError } from "@qmkvm/core";
+import { logger } from "@qmkvm/logger";
 import type {
   CallbackVerifyResult,
   CreatePaymentInput,

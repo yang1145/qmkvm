@@ -12,5 +12,5 @@ export const env = {
   uploadDir: process.env.UPLOAD_DIR ?? "./uploads",
 } as const;
 
-export const COOKIE_PORTAL = "phj_session";
-export const COOKIE_ADMIN = "phj_admin";
+export const COOKIE_PORTAL = "kvm_session";
+export const COOKIE_ADMIN = "kvm_admin";

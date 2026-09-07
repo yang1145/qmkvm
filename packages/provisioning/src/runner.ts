@@ -11,14 +11,14 @@
  * 注意：模块调用含外部 IO，不在事务内；模块成功后的服务/任务更新顺序执行。
  */
 import { and, asc, eq, inArray, lt, lte, sql } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
-import { billingCycleEnum, type BillingCycle } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
-import { enqueueJob, emitEvent, EVENT_NAMES } from "@pinhaoji/core";
-import { completeOrder, updateServiceStatus } from "@pinhaoji/core";
-import { addCycle, todayStr } from "@pinhaoji/core/date-utils";
-import { logger } from "@pinhaoji/logger";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
+import { billingCycleEnum, type BillingCycle } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
+import { enqueueJob, emitEvent, EVENT_NAMES } from "@qmkvm/core";
+import { completeOrder, updateServiceStatus } from "@qmkvm/core";
+import { addCycle, todayStr } from "@qmkvm/core/date-utils";
+import { logger } from "@qmkvm/logger";
 import { getModule } from "./registry.js";
 import type {
   ChangePackageTarget,

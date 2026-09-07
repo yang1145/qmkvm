@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { and, eq, gte, lte } from "drizzle-orm";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
 import { portalAuthRoutes, userPayload } from "./auth.js";

@@ -1,16 +1,52 @@
 import { Hono } from "hono";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { updateProfileSchema } from "@pinhaoji/contracts";
-import { aesDecrypt, aesEncrypt, revokeAllPortalSessions } from "@pinhaoji/auth";
+import { updateProfileSchema } from "@qmkvm/contracts";
+import { aesDecrypt, aesEncrypt, revokeAllPortalSessions } from "@qmkvm/auth";
 import { requireAuth, clearPortalCookie } from "../../middleware/auth.js";
-import { appError } from "@pinhaoji/core";
+import { appError } from "@qmkvm/core";
+import { ocrIdCardFront } from "../../utils/ocr.js";
 
 export const portalAccountRoutes = new Hono();
 portalAccountRoutes.use("*", requireAuth());
+
+/** 证件照约束：仅 JPG/PNG/WebP，单张 ≤10MB */
+const ID_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ID_IMAGE_MAX_SIZE = 10 * 1024 * 1024;
+
+function validateIdImage(file: unknown, label: string): asserts file is File {
+  if (!(file instanceof File)) throw appError("IDENTITY_IMAGE_INVALID", `缺少${label}`);
+  if (!ID_IMAGE_TYPES.includes(file.type)) {
+    throw appError("IDENTITY_IMAGE_INVALID", `${label}仅支持 JPG/PNG/WebP 格式`);
+  }
+  if (file.size > ID_IMAGE_MAX_SIZE) {
+    throw appError("IDENTITY_IMAGE_INVALID", `${label}不能超过 10MB`);
+  }
+}
+
+async function saveIdImage(userId: number, kind: string, file: File): Promise<string> {
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  const path = await import("node:path");
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
+  const dir = path.join(uploadDir, `identity/${userId}`);
+  await mkdir(dir, { recursive: true });
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const stored = path.join(dir, `${kind}-${Date.now()}.${ext}`);
+  await writeFile(stored, Buffer.from(await file.arrayBuffer()));
+  return stored;
+}
+
+async function removeFileQuiet(p: string | null | undefined) {
+  if (!p) return;
+  try {
+    await (await import("node:fs/promises")).unlink(p);
+  } catch {
+    // 文件已不存在等情况忽略
+  }
+}
 
 portalAccountRoutes.get("/profile", (c) => {
   const u = c.get("user") as User;
@@ -131,16 +167,92 @@ portalAccountRoutes.get("/identity", async (c) => {
     companyName: p.companyName,
     creditCode: p.creditCode ? `${p.creditCode.slice(0, 6)}****${p.creditCode.slice(-4)}` : null,
     rejectReason: p.rejectReason,
+    images: {
+      front: !!p.idFrontPath,
+      back: !!p.idBackPath,
+      handheld: !!p.idHandheldPath,
+    },
+    ocrStatus: p.ocrStatus ?? null,
     verifiedAt: p.verifiedAt instanceof Date ? p.verifiedAt.toISOString() : null,
     updatedAt: p.updatedAt instanceof Date ? p.updatedAt.toISOString() : String(p.updatedAt ?? ""),
   });
 });
 
-/** 提交实名信息 */
+/** 提交实名信息（个人需上传身份证正反面照，手持照选填；OCR 仅识别正面） */
 portalAccountRoutes.post("/identity", async (c) => {
-  const body = z_identity.parse(await c.req.json());
   const userId = (c.get("user") as User).id;
   const db = getDb();
+  const contentType = c.req.header("content-type") ?? "";
+
+  let body: z.infer<typeof z_identity>;
+  let front: File | undefined;
+  let back: File | undefined;
+  let handheld: File | undefined;
+
+  if (contentType.includes("multipart/form-data")) {
+    const form = await c.req.parseBody();
+    body = z_identity.parse({
+      type: form["type"],
+      realName: form["realName"] || undefined,
+      idNumber: form["idNumber"] || undefined,
+      companyName: form["companyName"] || undefined,
+      creditCode: form["creditCode"] || undefined,
+    });
+    if (body.type === "personal") {
+      validateIdImage(form["idFront"], "身份证正面照");
+      validateIdImage(form["idBack"], "身份证反面照");
+      front = form["idFront"];
+      back = form["idBack"];
+      if (form["idHandheld"] instanceof File) {
+        validateIdImage(form["idHandheld"], "手持身份证照");
+        handheld = form["idHandheld"];
+      }
+    }
+  } else {
+    body = z_identity.parse(await c.req.json());
+    if (body.type === "personal") {
+      throw appError("IDENTITY_IMAGE_REQUIRED", "请上传身份证正反面照片");
+    }
+  }
+
+  // 重新提交时清理旧证件照
+  const existing = await db
+    .select()
+    .from(schema.userProfiles)
+    .where(eq(schema.userProfiles.userId, userId))
+    .limit(1);
+  if (existing[0]) {
+    await Promise.all([
+      removeFileQuiet(existing[0].idFrontPath),
+      removeFileQuiet(existing[0].idBackPath),
+      removeFileQuiet(existing[0].idHandheldPath),
+    ]);
+  }
+
+  // 保存证件照并 OCR 正面：提取证件号与用户填写值核对（校验码验证通过才阻断）
+  let frontPath: string | null = null;
+  let backPath: string | null = null;
+  let handheldPath: string | null = null;
+  let ocrIdNumber: string | null = null;
+  let ocrStatus: "matched" | "unavailable" = "unavailable";
+  if (front) {
+    frontPath = await saveIdImage(userId, "front", front);
+    [backPath, handheldPath] = await Promise.all([
+      back ? saveIdImage(userId, "back", back) : Promise.resolve(null),
+      handheld ? saveIdImage(userId, "handheld", handheld) : Promise.resolve(null),
+    ]);
+    const ocr = await ocrIdCardFront(frontPath);
+    const submitted = body.idNumber?.trim().toUpperCase();
+    if (ocr.idNumber) {
+      ocrIdNumber = ocr.idNumber;
+      if (ocr.verified && submitted && ocr.idNumber !== submitted) {
+        throw appError("IDENTITY_OCR_MISMATCH", "身份证号与正面照片识别结果不一致，请核对后重新提交");
+      }
+      ocrStatus =
+        ocr.verified && submitted && ocr.idNumber === submitted ? "matched" : "unavailable";
+    }
+  }
+
   const encrypted =
     body.type === "personal" && body.idNumber ? aesEncrypt(body.idNumber) : null;
   const values = {
@@ -150,21 +262,30 @@ portalAccountRoutes.post("/identity", async (c) => {
     idNumberEnc: encrypted,
     companyName: body.type === "enterprise" ? body.companyName : null,
     creditCode: body.type === "enterprise" ? body.creditCode : null,
+    idFrontPath: frontPath,
+    idBackPath: backPath,
+    idHandheldPath: handheldPath,
+    ocrIdNumber,
+    ocrStatus,
     status: "pending" as const,
     verifiedAt: null,
     rejectReason: null,
   };
-  const existing = await db
-    .select({ id: schema.userProfiles.id })
-    .from(schema.userProfiles)
-    .where(eq(schema.userProfiles.userId, userId))
-    .limit(1);
   if (existing[0]) {
     await db.update(schema.userProfiles).set(values).where(eq(schema.userProfiles.userId, userId));
   } else {
     await db.insert(schema.userProfiles).values(values);
   }
   return c.json({ ok: true, status: "pending" });
+});
+
+/** 正面照 OCR 预填：仅提取证件号供表单预填，不保存图片 */
+portalAccountRoutes.post("/identity/ocr", async (c) => {
+  const form = await c.req.parseBody();
+  validateIdImage(form["file"], "身份证正面照");
+  const file = form["file"];
+  const ocr = await ocrIdCardFront(Buffer.from(await file.arrayBuffer()));
+  return c.json({ available: ocr.available, idNumber: ocr.idNumber, verified: ocr.verified });
 });
 
 const z_identity = z.object({

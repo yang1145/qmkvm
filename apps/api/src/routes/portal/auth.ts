@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { getDb, users as usersTable } from "@pinhaoji/db";
+import { getDb, users as usersTable } from "@qmkvm/db";
 
 type User = typeof usersTable.$inferSelect;
 import {
@@ -13,7 +13,7 @@ import {
   resetPasswordByTokenSchema,
   changePasswordSchema,
   bindPhoneSchema,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 import {
   issueSmsCode,
   verifySmsCode,
@@ -27,8 +27,8 @@ import {
   bindPhone,
   createPortalSession,
   revokePortalSession,
-} from "@pinhaoji/auth";
-import { sendSms, sendEmail } from "@pinhaoji/notifications";
+} from "@qmkvm/auth";
+import { sendSms, sendEmail } from "@qmkvm/notifications";
 import { getClientIp } from "../../middleware/request-id.js";
 import { rateLimit, setPortalCookie, clearPortalCookie, requireAuth, getPortalToken } from "../../middleware/auth.js";
 import { env } from "../../env.js";

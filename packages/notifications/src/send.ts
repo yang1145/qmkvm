@@ -2,15 +2,15 @@
 
 import { and, eq } from "drizzle-orm";
 
-import type { Db } from "@pinhaoji/db/client";
+import type { Db } from "@qmkvm/db/client";
 import {
   notificationLogs,
   notificationTemplates,
   settings,
   userNotifications,
   users,
-} from "@pinhaoji/db/schema";
-import { createLogger } from "@pinhaoji/logger";
+} from "@qmkvm/db/schema";
+import { createLogger } from "@qmkvm/logger";
 
 import { sendEmail } from "./providers/email.js";
 import { sendSms } from "./providers/sms.js";
@@ -53,9 +53,9 @@ export interface SendNotificationInput {
   title?: string;
 }
 
-/** 站点变量进程内缓存（60s）：所有模板可用 {{site.name}}，读失败/缺省回退「拼好机」 */
+/** 站点变量进程内缓存（60s）：所有模板可用 {{site.name}}，读失败/缺省回退「启明智联」 */
 const SITE_VARS_TTL_MS = 60_000;
-const DEFAULT_SITE_NAME = "拼好机";
+const DEFAULT_SITE_NAME = "启明智联";
 let siteVarsCache: { value: Record<string, unknown>; at: number } | null = null;
 
 async function getSiteVars(db: Db): Promise<Record<string, unknown>> {

@@ -2,9 +2,9 @@
  * admin 路由共享工具：时间序列化、联系方式脱敏、管理员审计写入。
  */
 import type { Context } from "hono";
-import { getDb, schema } from "@pinhaoji/db";
-import type { Json } from "@pinhaoji/db/schema";
-import { maskEmail, maskPhone } from "@pinhaoji/auth";
+import { getDb, schema } from "@qmkvm/db";
+import type { Json } from "@qmkvm/db/schema";
+import { maskEmail, maskPhone } from "@qmkvm/auth";
 import { getClientIp } from "../../middleware/request-id.js";
 
 /** datetime 列 → ISO 字符串（null 安全） */

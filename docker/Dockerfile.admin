@@ -1,5 +1,5 @@
 # Ant Design Pro 管理后台：构建产物由 nginx 托管，/api 反代到 api 服务
-# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.admin -t phj-admin .
+# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.admin -t kvm-admin .
 FROM node:22-alpine AS builder
 RUN corepack enable
 WORKDIR /app
@@ -7,11 +7,11 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/admin/package.json apps/admin/
 COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/admin --ignore-scripts
+RUN pnpm install --frozen-lockfile --filter @qmkvm/admin --ignore-scripts
 
 COPY apps/admin ./apps/admin
 WORKDIR /app/apps/admin
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/admin --ignore-scripts \
+RUN pnpm install --frozen-lockfile --filter @qmkvm/admin --ignore-scripts \
   && pnpm build
 
 FROM nginx:1.27-alpine AS runner

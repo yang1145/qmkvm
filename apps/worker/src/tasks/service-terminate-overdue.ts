@@ -1,5 +1,5 @@
 /** 欠费终止调度：每日 04:30（UTC）。core 创建 terminate 供应任务（终止前先发最终提醒）。 */
-import { terminateOverdueServices } from "@pinhaoji/core";
+import { terminateOverdueServices } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const serviceTerminateOverdueTask: TaskDef = {

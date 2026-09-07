@@ -1,5 +1,5 @@
 # Next.js 前端镜像（portal / www）：ARG APP=portal|www
-# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.next --build-arg APP=portal -t phj-portal .
+# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.next --build-arg APP=portal -t kvm-portal .
 FROM node:22-alpine AS builder
 RUN corepack enable
 WORKDIR /app
@@ -9,12 +9,12 @@ COPY packages/contracts/package.json packages/contracts/
 COPY apps/www/package.json apps/www/
 COPY apps/portal/package.json apps/portal/
 COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts
+RUN pnpm install --frozen-lockfile --filter @qmkvm/${APP}... --ignore-scripts
 
 COPY packages ./packages
 COPY apps/${APP} ./apps/${APP}
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts \
-  && pnpm --filter @pinhaoji/${APP} build
+RUN pnpm install --frozen-lockfile --filter @qmkvm/${APP}... --ignore-scripts \
+  && pnpm --filter @qmkvm/${APP} build
 
 # 运行层：next start 需要全量 node_modules（workspace 源码包直引）
 FROM node:22-alpine AS runner

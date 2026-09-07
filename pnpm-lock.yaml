@@ -23,7 +23,7 @@ importers:
       '@ant-design/pro-components':
         specifier: ^3.1.14-2
         version: 3.1.14-7(antd@6.6.2(date-fns@2.30.0)(luxon@3.7.2)(moment@2.30.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@8.1.1)
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       antd:
@@ -81,28 +81,28 @@ importers:
       '@hono/zod-openapi':
         specifier: ^1.6.3
         version: 1.6.3(hono@4.13.7)(zod@4.5.4)
-      '@pinhaoji/auth':
+      '@qmkvm/auth':
         specifier: workspace:*
         version: link:../../packages/auth
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@pinhaoji/core':
+      '@qmkvm/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@pinhaoji/notifications':
+      '@qmkvm/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
-      '@pinhaoji/payments':
+      '@qmkvm/payments':
         specifier: workspace:*
         version: link:../../packages/payments
-      '@pinhaoji/provisioning':
+      '@qmkvm/provisioning':
         specifier: workspace:*
         version: link:../../packages/provisioning
       drizzle-orm:
@@ -111,6 +111,9 @@ importers:
       hono:
         specifier: ^4.13.7
         version: 4.13.7
+      node-tesseract-ocr:
+        specifier: ^2.2.1
+        version: 2.2.1
       zod:
         specifier: ^4.4.3
         version: 4.5.4
@@ -127,7 +130,7 @@ importers:
 
   apps/portal:
     dependencies:
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@radix-ui/react-dialog':
@@ -197,25 +200,25 @@ importers:
 
   apps/worker:
     dependencies:
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@pinhaoji/core':
+      '@qmkvm/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@pinhaoji/notifications':
+      '@qmkvm/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
-      '@pinhaoji/payments':
+      '@qmkvm/payments':
         specifier: workspace:*
         version: link:../../packages/payments
-      '@pinhaoji/provisioning':
+      '@qmkvm/provisioning':
         specifier: workspace:*
         version: link:../../packages/provisioning
       bullmq:
@@ -331,16 +334,16 @@ importers:
       '@node-rs/argon2':
         specifier: ^2.2.0
         version: 2.2.0
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@pinhaoji/core':
+      '@qmkvm/core':
         specifier: workspace:*
         version: link:../core
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../logger
       drizzle-orm:
@@ -372,13 +375,13 @@ importers:
 
   packages/core:
     dependencies:
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../logger
       bullmq:
@@ -447,13 +450,13 @@ importers:
       '@alicloud/openapi-core':
         specifier: ^1.0.8
         version: 1.0.8(supports-color@8.1.1)
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../logger
       drizzle-orm:
@@ -472,16 +475,16 @@ importers:
 
   packages/payments:
     dependencies:
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@pinhaoji/core':
+      '@qmkvm/core':
         specifier: workspace:*
         version: link:../core
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../logger
       alipay-sdk:
@@ -503,16 +506,16 @@ importers:
 
   packages/provisioning:
     dependencies:
-      '@pinhaoji/contracts':
+      '@qmkvm/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@pinhaoji/core':
+      '@qmkvm/core':
         specifier: workspace:*
         version: link:../core
-      '@pinhaoji/db':
+      '@qmkvm/db':
         specifier: workspace:*
         version: link:../db
-      '@pinhaoji/logger':
+      '@qmkvm/logger':
         specifier: workspace:*
         version: link:../logger
       drizzle-orm:
@@ -8096,6 +8099,10 @@ packages:
   node-releases@2.0.54:
     resolution: {integrity: sha512-YHs7BmmcsdAI5Ozuf8JZo6PT0mv2GIWC9vMfvUC3dp65M8hn7Ux8CPL+2oBI7juNuj9d0ndhTcznq2ODBps9cQ==}
     engines: {node: '>=18'}
+
+  node-tesseract-ocr@2.2.1:
+    resolution: {integrity: sha512-Q9cD79JGpPNQBxbi1fV+OAsTxYKLpx22sagsxSyKbu1u+t6UarApf5m32uVc8a5QAP1Wk7fIPN0aJFGGEE9DyQ==}
+    engines: {node: '>=10'}
 
   nodemailer@10.0.0:
     resolution: {integrity: sha512-wdv+hXBg0iIPIOf108FaZyTxqjQpCvQeAJt9pHHTooPy/y3vQtI9eiImM9AIVKR3e/0FeMA1oueNfBjFJcaK+Q==}
@@ -19029,6 +19036,8 @@ snapshots:
       vm-browserify: 1.1.2
 
   node-releases@2.0.54: {}
+
+  node-tesseract-ocr@2.2.1: {}
 
   nodemailer@10.0.0: {}
 

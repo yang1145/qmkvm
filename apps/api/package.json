@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/api",
+  "name": "@qmkvm/api",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -12,17 +12,18 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@hono/zod-openapi": "^1.6.3",
-    "@pinhaoji/auth": "workspace:*",
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/core": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
-    "@pinhaoji/notifications": "workspace:*",
-    "@pinhaoji/payments": "workspace:*",
-    "@pinhaoji/provisioning": "workspace:*",
+    "@qmkvm/auth": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/core": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
+    "@qmkvm/notifications": "workspace:*",
+    "@qmkvm/payments": "workspace:*",
+    "@qmkvm/provisioning": "workspace:*",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
-    "zod": "^4.4.3",
-    "drizzle-orm": "^0.45.2"
+    "node-tesseract-ocr": "^2.2.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

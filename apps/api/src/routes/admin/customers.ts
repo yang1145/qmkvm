@@ -2,9 +2,9 @@
 import { Hono } from "hono";
 import { and, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { creditAdjustSchema, idParamSchema, pageQuerySchema } from "@pinhaoji/contracts";
-import { appError, adjustCredit } from "@pinhaoji/core";
+import { getDb, schema } from "@qmkvm/db";
+import { creditAdjustSchema, idParamSchema, pageQuerySchema } from "@qmkvm/contracts";
+import { appError, adjustCredit } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, maskedContact, writeAdminAudit } from "./helpers.js";
 

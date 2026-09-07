@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { pageQuerySchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
+import { pageQuerySchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalCreditRoutes = new Hono();
@@ -49,7 +49,7 @@ portalCreditRoutes.post("/credits/recharge", async (c) => {
     .object({ amount: z.number().int().min(100, "最低充值 ¥1").max(10_000_000) })
     .parse(await c.req.json());
 
-  const { createInvoiceWithItems, generateInvoiceNo } = await import("@pinhaoji/core");
+  const { createInvoiceWithItems, generateInvoiceNo } = await import("@qmkvm/core");
   const invoiceNo = await generateInvoiceNo(db);
   const inserted = await db
     .insert(schema.invoices)
@@ -70,7 +70,7 @@ portalCreditRoutes.post("/credits/recharge", async (c) => {
     amount: body.amount,
   });
 
-  const { getGateway } = await import("@pinhaoji/payments");
+  const { getGateway } = await import("@qmkvm/payments");
   const gatewayCode = (c.req.query("gateway") as "alipay" | "wechat" | "mock" | undefined) ?? "mock";
   const gateway = await getGateway(db, gatewayCode);
   if (!gateway) throw appError("PAY_GATEWAY_UNAVAILABLE", "该支付方式暂不可用");

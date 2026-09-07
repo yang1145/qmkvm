@@ -1,7 +1,7 @@
 /**
- * 拼好机管理后台 API 类型定义
+ * 启明智联业务管理系统 API 类型定义
  *
- * TODO: 类型来源于 packages/contracts（@pinhaoji/contracts）。
+ * TODO: 类型来源于 packages/contracts（@qmkvm/contracts）。
  * 因 contracts 以 TS 源码形式导出（exports 指向 src/*.ts），umi 构建链
  * 默认不编译 node_modules 内 TS 源码，为避免构建问题此处复制所需类型，
  * 字段与 contracts 保持一致，后续可切换为直接 import。

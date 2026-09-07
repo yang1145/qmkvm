@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { pageQuerySchema, billingCycleEnum } from "@pinhaoji/contracts";
-import { appError, addCycle, todayStr } from "@pinhaoji/core";
+import { pageQuerySchema, billingCycleEnum } from "@qmkvm/contracts";
+import { appError, addCycle, todayStr } from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalServiceRoutes = new Hono();
@@ -100,7 +100,7 @@ portalServiceRoutes.post("/services/:id/renew", async (c) => {
   const pricing = pricingRows[0];
   if (!pricing) throw appError("CATALOG_NOT_FOUND", "该商品不支持所选周期");
 
-  const { generateInvoiceNo } = await import("@pinhaoji/core");
+  const { generateInvoiceNo } = await import("@qmkvm/core");
   const invoiceNo = await generateInvoiceNo(db);
   const description = `${s.name}（服务 #${s.id}）续费`;
 
@@ -172,7 +172,7 @@ portalServiceRoutes.post("/services/:id/upgrade", async (c) => {
     .object({ targetProductId: z.number().int().positive(), confirm: z.boolean().optional() })
     .parse(await c.req.json());
 
-  const { quoteUpgrade, createUpgradeOrder } = await import("@pinhaoji/core");
+  const { quoteUpgrade, createUpgradeOrder } = await import("@qmkvm/core");
   if (!body.confirm) {
     const rows = await db
       .select()
@@ -220,7 +220,7 @@ portalServiceRoutes.post("/services/:id/cancel", async (c) => {
   }
 
   if (body.when === "now") {
-    const { createProvisionTask } = await import("@pinhaoji/core");
+    const { createProvisionTask } = await import("@qmkvm/core");
     const task = await createProvisionTask(db, {
       serviceId: s.id,
       action: "terminate",

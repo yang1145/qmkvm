@@ -16,8 +16,8 @@
  */
 
 import { and, eq, gt, inArray } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
 import {
   appError,
   creditUser,
@@ -26,8 +26,8 @@ import {
   markInvoicePaid,
   markOrderPaid,
   registerJobHandler,
-} from "@pinhaoji/core";
-import { logger } from "@pinhaoji/logger";
+} from "@qmkvm/core";
+import { logger } from "@qmkvm/logger";
 import { getGateway } from "./registry.js";
 import type { PaymentGateway } from "./types.js";
 
@@ -369,7 +369,7 @@ export async function processPaymentEvent(db: Db, eventId: number): Promise<void
             }
           }
           if (serviceId !== undefined) {
-            const { applyRenewalPayment } = await import("@pinhaoji/core");
+            const { applyRenewalPayment } = await import("@qmkvm/core");
             await applyRenewalPayment(db, serviceId, (cycle ?? "monthly") as never);
             log.info({ invoiceId: invoice.id, serviceId }, "续费账单已顺延服务到期日");
           } else {

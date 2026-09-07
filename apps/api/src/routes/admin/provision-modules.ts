@@ -9,11 +9,11 @@
 import { Hono } from "hono";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { getModule, listModules, STANDARD_MODULE_ACTIONS } from "@pinhaoji/provisioning";
-import type { ModuleConfig, TestConnectionResult } from "@pinhaoji/provisioning";
-import { appError } from "@pinhaoji/core";
-import { pageQuerySchema } from "@pinhaoji/contracts";
+import { getDb, schema } from "@qmkvm/db";
+import { getModule, listModules, STANDARD_MODULE_ACTIONS } from "@qmkvm/provisioning";
+import type { ModuleConfig, TestConnectionResult } from "@qmkvm/provisioning";
+import { appError } from "@qmkvm/core";
+import { pageQuerySchema } from "@qmkvm/contracts";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 

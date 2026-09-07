@@ -2,14 +2,14 @@
 import { Hono } from "hono";
 import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 import {
   idParamSchema,
   pageQuerySchema,
   ticketPriorityEnum,
   ticketStatusEnum,
-} from "@pinhaoji/contracts";
-import { appError, emitEvent, EVENT_NAMES } from "@pinhaoji/core";
+} from "@qmkvm/contracts";
+import { appError, emitEvent, EVENT_NAMES } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, maskedContact, writeAdminAudit } from "./helpers.js";
 

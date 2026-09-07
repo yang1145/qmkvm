@@ -1,5 +1,5 @@
 /**
- * 任务队列抽象：统一单队列 `phj`（BullMQ，attempts 默认 5 + 指数退避）。
+ * 任务队列抽象：统一单队列 `kvm`（BullMQ，attempts 默认 5 + 指数退避）。
  *
  * - 配置了 REDIS_URL：经 BullMQ 入队，由 worker 进程消费（worker 侧用
  *   processEnqueuedJob 统一分发到 registerJobHandler 注册的 handler）。
@@ -7,11 +7,11 @@
  *   handler 异常仅记日志不抛出（通知/供应等异步动作不阻断主流程）。
  */
 import { Queue } from "bullmq";
-import { getRedis } from "@pinhaoji/db/redis";
-import { logger } from "@pinhaoji/logger";
+import { getRedis } from "@qmkvm/db/redis";
+import { logger } from "@qmkvm/logger";
 
 /** 队列名（worker 侧消费同名队列） */
-export const QUEUE_NAME = "phj";
+export const QUEUE_NAME = "kvm";
 
 export type JobHandler = (data: any) => Promise<void>;
 

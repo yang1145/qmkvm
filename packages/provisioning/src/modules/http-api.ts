@@ -23,7 +23,7 @@
  * 超时经 AbortController 实现，默认 120s（timeoutMs 可覆盖）。
  */
 import { createHmac } from "node:crypto";
-import type { ServiceRow } from "@pinhaoji/core";
+import type { ServiceRow } from "@qmkvm/core";
 import { STANDARD_MODULE_ACTIONS } from "../types.js";
 import type {
   ChangePackageTarget,

@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { getDb, schema, carts, type CartLine } from "@pinhaoji/db";
+import { getDb, schema, carts, type CartLine } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { checkoutSchema } from "@pinhaoji/contracts";
+import { checkoutSchema } from "@qmkvm/contracts";
 import {
   createOrderFromCart,
   appError,
   type CheckoutCartItem,
   type OptionSelection,
   type CheckoutResult,
-} from "@pinhaoji/core";
+} from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalCheckoutRoutes = new Hono();

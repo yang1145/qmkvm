@@ -98,7 +98,7 @@ const Login: React.FC = () => {
       <div style={{ flex: 1, padding: '32px 0' }}>
         <LoginForm
           contentStyle={{ minWidth: 280, maxWidth: '75vw' }}
-          title="拼好机管理后台"
+          title="启明智联业务管理系统"
           subTitle="云业务系统运营管理"
           initialValues={{ autoLogin: true }}
           onFinish={async (values) => {

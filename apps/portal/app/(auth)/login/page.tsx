@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authResultSchema, passwordLoginSchema, phoneSchema, smsLoginSchema } from "@pinhaoji/contracts";
+import { authResultSchema, passwordLoginSchema, phoneSchema, smsLoginSchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";

@@ -1,7 +1,7 @@
 # 生产部署编排：docker compose -f docker/docker-compose.prod.yml up -d
 # 前置：仓库根 .env 已配置（DATABASE_URL 指向可写 MySQL、REDIS_URL、APP_KEY、CORS_ORIGINS 等）
 # 首次部署：先执行迁移与种子（见 README 部署方案）
-name: pinhaoji
+name: qmkvm
 
 services:
   mysql:
@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
-      MYSQL_DATABASE: pinhaoji
+      MYSQL_DATABASE: qmkvm
       TZ: Asia/Shanghai
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:

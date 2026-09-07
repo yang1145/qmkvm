@@ -1,4 +1,6 @@
-# apps/admin 交接文档（拼好机管理后台 · Ant Design Pro）
+# apps/admin 交接文档（启明智联业务管理系统 · Ant Design Pro）
+
+> **注（v2）：品牌已更名为「启明智联」。以下正文为更名前（v1）的历史交接记录，未作改动。**
 
 > 交接时间：2026-09-06。本文件供下一个智能体/开发者接续工作，读完即可动手，无需重读任务全史。
 
@@ -7,12 +9,12 @@
 - 目标：把 `apps/admin` 建成 Ant Design Pro（umi max）管理后台，对接 Hono API 契约（`docs/SPEC-P0.md` §4），覆盖全部 P0 页面，全中文。
 - 边界（违反即失败）：
   1. 只改 `apps/admin/**`；禁改 apps/api、apps/portal、apps/www、packages/**、docs/**、根配置。
-  2. 包名 `@pinhaoji/admin`，只用 pnpm（根目录执行）。
+  2. 包名 `@qmkvm/admin`，只用 pnpm（根目录执行）。
   3. 不引入额外 UI 库（只用 antd + ProComponents）；不手写整体布局。
   4. 不 git commit。
 - 验收标准：
-  1. `pnpm --filter @pinhaoji/admin build` 成功；
-  2. `pnpm --filter @pinhaoji/admin typecheck` 通过（脚本已加 `"typecheck": "tsc --noEmit"`；跑之前先 `pnpm --filter @pinhaoji/admin exec max setup` 生成 .umi 类型）；
+  1. `pnpm --filter @qmkvm/admin build` 成功；
+  2. `pnpm --filter @qmkvm/admin typecheck` 通过（脚本已加 `"typecheck": "tsc --noEmit"`；跑之前先 `pnpm --filter @qmkvm/admin exec max setup` 生成 .umi 类型）；
   3. 14 组页面路由/菜单/权限点齐全；
   4. 汇报：脚手架方式 + 文件清单 + 页面清单 + 遗留问题。
 
@@ -25,9 +27,9 @@
 - routes.ts 404 路由已修正：`{path:'*',component:'./exception/404'}`。
 
 ### 未完成（= 下一步，按顺序）
-1. **build 基线**：`pnpm --filter @pinhaoji/admin build`（依赖已由用户手动装好）。
+1. **build 基线**：`pnpm --filter @qmkvm/admin build`（依赖已由用户手动装好）。
 2. **修 build/TS 报错**（预期少量：18 个新页面是批量手写，可能仍有 strict 模式小错）。
-3. **typecheck**：先 `pnpm --filter @pinhaoji/admin exec max setup`，再 `pnpm --filter @pinhaoji/admin typecheck`，修到 0 错。
+3. **typecheck**：先 `pnpm --filter @qmkvm/admin exec max setup`，再 `pnpm --filter @qmkvm/admin typecheck`，修到 0 错。
 4. **最终汇报**（格式见 §1 验收标准第 4 条）。
 
 ## 3. 环境坑（重要，别踩第二次）
@@ -35,7 +37,7 @@
 - PowerShell 执行策略禁 .ps1：AI 终端里用 `pnpm.cmd` 而非 `pnpm`。
 - 沙箱限制写 `D:\.pnpm-store` 和 D 盘根目录临时文件 → **pnpm install 在 AI 沙箱里跑不完**（三轮均失败于 link 阶段），最后由用户手动执行成功。后续 install/build 若再被沙箱拦截，直接请用户手动跑。
 - lockfile 过期 → `--no-frozen-lockfile`；网络慢 → `--prefer-offline`；store → `--store-dir .pnpm-store`（仓库内）。
-- `@pinhaoji/contracts` 是 TS 源码包，umi 构建不兼容 → **未直接依赖**，已把所需类型复制到 `src/services/types.ts` 和 `src/services/enums.ts`（文件头注明来源 TODO）。packages/contracts 的 package.json 若已改为可被消费则可换回 workspace 依赖（可选优化，非必需）。
+- `@qmkvm/contracts` 是 TS 源码包，umi 构建不兼容 → **未直接依赖**，已把所需类型复制到 `src/services/types.ts` 和 `src/services/enums.ts`（文件头注明来源 TODO）。packages/contracts 的 package.json 若已改为可被消费则可换回 workspace 依赖（可选优化，非必需）。
 
 ## 4. 文件清单
 
@@ -105,16 +107,16 @@
 
 - build/typecheck 尚未跑过，18 个新页面可能有少量 strict TS 报错待修（预期是个别 unused import / 类型收窄，模式已在 §7）。
 - 后端 admin 路由并行开发中，404 正常，不阻塞交付；请求路径/方法/字段已按契约写死。
-- contracts 若后续改为可消费包，可把 src/services/{types,enums}.ts 换回 `@pinhaoji/contracts` 导入（需在 package.json 加依赖 + config 开 srcTranspiler）。
+- contracts 若后续改为可消费包，可把 src/services/{types,enums}.ts 换回 `@qmkvm/contracts` 导入（需在 package.json 加依赖 + config 开 srcTranspiler）。
 - pnpm install 在 AI 沙箱内跑不完，需用户手动执行（已完成）。
 
 ## 9. 下一个智能体的操作序列
 
 ```bash
 # 1. build 基线（若被沙箱拦截请用户手动跑）
-pnpm --filter @pinhaoji/admin build
+pnpm --filter @qmkvm/admin build
 # 2. 修报错后：
-pnpm --filter @pinhaoji/admin exec max setup
-pnpm --filter @pinhaoji/admin typecheck
+pnpm --filter @qmkvm/admin exec max setup
+pnpm --filter @qmkvm/admin typecheck
 # 3. 全绿后按 §1 验收标准第 4 条汇报
 ```

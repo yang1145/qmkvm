@@ -1,5 +1,5 @@
 # API / Worker 共用镜像：ARG APP=api|worker
-# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.node --build-arg APP=api -t phj-api .
+# 构建上下文 = 仓库根：docker build -f docker/Dockerfile.node --build-arg APP=api -t kvm-api .
 FROM node:22-alpine AS base
 RUN corepack enable
 WORKDIR /app
@@ -15,13 +15,13 @@ COPY packages/payments/package.json packages/payments/
 COPY packages/provisioning/package.json packages/provisioning/
 COPY packages/notifications/package.json packages/notifications/
 COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts
+RUN pnpm install --frozen-lockfile --filter @qmkvm/${APP}... --ignore-scripts
 
 # 源码层
 COPY packages ./packages
 COPY apps/${APP} ./apps/${APP}
-RUN pnpm install --frozen-lockfile --filter @pinhaoji/${APP}... --ignore-scripts
+RUN pnpm install --frozen-lockfile --filter @qmkvm/${APP}... --ignore-scripts
 
 WORKDIR /app/apps/${APP}
-# 环境变量由 compose env_file 注入；迁移在部署流程中执行（pnpm --filter @pinhaoji/db migrate）
+# 环境变量由 compose env_file 注入；迁移在部署流程中执行（pnpm --filter @qmkvm/db migrate）
 CMD ["pnpm", "start"]

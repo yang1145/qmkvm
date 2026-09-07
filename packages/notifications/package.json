@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/notifications",
+  "name": "@qmkvm/notifications",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -14,9 +14,9 @@
   "dependencies": {
     "@alicloud/dysmsapi20170525": "^4.6.0",
     "@alicloud/openapi-core": "^1.0.8",
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "nodemailer": "^10.0.0"
   },

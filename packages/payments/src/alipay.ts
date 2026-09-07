@@ -11,7 +11,7 @@
 
 import { createHash } from "node:crypto";
 import { AlipaySdk, type AlipaySdkCommonResult } from "alipay-sdk";
-import { appError } from "@pinhaoji/core";
+import { appError } from "@qmkvm/core";
 import type {
   AlipayGatewayConfig,
   CallbackVerifyResult,

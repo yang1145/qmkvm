@@ -1,6 +1,6 @@
 /** 短信通道：SMS_PROVIDER=aliyun 且 ALIYUN_SMS_* 齐全时走官方 SDK，否则 mock（仅记日志） */
 
-import { createLogger } from "@pinhaoji/logger";
+import { createLogger } from "@qmkvm/logger";
 
 const log = createLogger("notifications:sms");
 

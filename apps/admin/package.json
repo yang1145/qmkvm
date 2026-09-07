@@ -1,8 +1,8 @@
 {
-  "name": "@pinhaoji/admin",
+  "name": "@qmkvm/admin",
   "version": "0.1.0",
   "private": true,
-  "description": "拼好机云业务系统管理后台（Ant Design Pro）",
+  "description": "启明智联业务管理系统管理后台（Ant Design Pro）",
   "scripts": {
     "analyze": "cross-env ANALYZE=1 max build",
     "build": "max build",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@ant-design/pro-components": "^3.1.14-2",
-    "@pinhaoji/contracts": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
     "antd": "^6.6.0",
     "antd-style": "^4.1.0",
     "clsx": "^2.1.1",

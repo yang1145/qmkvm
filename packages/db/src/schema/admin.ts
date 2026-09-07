@@ -14,7 +14,7 @@ import { createdAt, id, updatedAt, type Json } from "./_shared.js";
 export const adminRoles = mysqlTable("admin_roles", {
   id: id(),
   name: varchar("name", { length: 50 }).notNull(),
-  /** 权限点 key 数组，见 @pinhaoji/contracts PERMISSIONS */
+  /** 权限点 key 数组，见 @qmkvm/contracts PERMISSIONS */
   permissions: json("permissions").$type<string[]>(),
   isSuper: boolean("is_super").notNull().default(false),
   createdAt: createdAt(),

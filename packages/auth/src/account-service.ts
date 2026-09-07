@@ -2,12 +2,12 @@
 
 import { and, eq, gt, isNull } from "drizzle-orm";
 
-import { ERR, PHONE_RE } from "@pinhaoji/contracts";
-import { AppError } from "@pinhaoji/core/errors";
-import { enqueueJob } from "@pinhaoji/core/queue";
-import type { Db } from "@pinhaoji/db/client";
-import { passwordResetTokens, users } from "@pinhaoji/db/schema";
-import { createLogger } from "@pinhaoji/logger";
+import { ERR, PHONE_RE } from "@qmkvm/contracts";
+import { AppError } from "@qmkvm/core/errors";
+import { enqueueJob } from "@qmkvm/core/queue";
+import type { Db } from "@qmkvm/db/client";
+import { passwordResetTokens, users } from "@qmkvm/db/schema";
+import { createLogger } from "@qmkvm/logger";
 
 import { maskPhone, randomToken, sha256hex } from "./crypto.js";
 import { hashPassword, verifyPassword } from "./password.js";
@@ -198,13 +198,13 @@ export async function requestPasswordReset(db: Db, input: RequestPasswordResetIn
     if (phone && sendSms) {
       await sendSms(
         phone,
-        `【拼好机】您正在重置登录密码，15 分钟内有效。重置链接：${resetUrl}（如非本人操作请忽略）`,
+        `【启明智联】您正在重置登录密码，15 分钟内有效。重置链接：${resetUrl}（如非本人操作请忽略）`,
       );
     }
     if (email && sendEmail) {
       await sendEmail(
         email,
-        "重置您的拼好机登录密码",
+        "重置您的启明智联登录密码",
         `<p>您好，</p><p>我们收到了您重置密码的请求。请在 15 分钟内点击以下链接完成密码重置：</p>` +
           `<p><a href="${resetUrl}">重置密码</a></p>` +
           `<p>如果链接无法点击，请复制到浏览器打开：<br/>${resetUrl}</p>` +

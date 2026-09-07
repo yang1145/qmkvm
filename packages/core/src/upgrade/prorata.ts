@@ -13,9 +13,9 @@
  *   refund          = max(0, creditFromOld - newFirstAmount) // 差额退余额 upgrade_refund
  */
 import { and, eq } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
-import { CYCLE_MONTHS, type BillingCycle } from "@pinhaoji/contracts";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
+import { CYCLE_MONTHS, type BillingCycle } from "@qmkvm/contracts";
 import { appError } from "../errors.js";
 import {
   addCycle,

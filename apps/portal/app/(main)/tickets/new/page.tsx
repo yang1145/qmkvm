@@ -8,7 +8,7 @@ import {
   serviceDto,
   ticketCreateSchema,
   ticketPriorityEnum,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useApiData } from "@/hooks/use-api";

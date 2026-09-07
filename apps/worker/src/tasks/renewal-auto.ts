@@ -1,5 +1,5 @@
 /** 余额自动续费：每日 00:30（UTC）扫描到期服务并从余额扣款续费。 */
-import { autoRenewDueServices } from "@pinhaoji/core";
+import { autoRenewDueServices } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const renewalAutoTask: TaskDef = {

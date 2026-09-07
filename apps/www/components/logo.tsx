@@ -21,7 +21,7 @@ export function Logo({
       <span className={cn("inline-flex items-center", className)}>
         <Image
           src="/logo-horizontal.png"
-          alt="拼好机"
+          alt="启明智联"
           width={83}
           height={32}
           priority
@@ -35,7 +35,7 @@ export function Logo({
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <Image
         src={variant === "white" ? "/logo-white.png" : "/logo.png"}
-        alt="拼好机"
+        alt="启明智联"
         width={32}
         height={32}
         priority
@@ -43,7 +43,7 @@ export function Logo({
       />
       {showText ? (
         <span className="whitespace-nowrap text-lg font-semibold tracking-tight">
-          拼好机
+          启明智联
         </span>
       ) : null}
     </span>

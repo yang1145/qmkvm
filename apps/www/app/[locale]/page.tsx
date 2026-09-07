@@ -45,7 +45,7 @@ export default async function HomePage({
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "拼好机",
+    name: "启明智联",
     alternateName: siteConfig.nameEn,
     url: `${siteConfig.domain}/`,
     logo: `${siteConfig.domain}/logo.png`,

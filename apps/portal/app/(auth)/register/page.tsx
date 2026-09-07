@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { emailRegisterSchema } from "@pinhaoji/contracts";
+import { emailRegisterSchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
@@ -57,7 +57,7 @@ export default function RegisterPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold">注册账号</h1>
-        <p className="mt-1 text-sm text-muted-foreground">使用邮箱注册拼好机客户中心</p>
+        <p className="mt-1 text-sm text-muted-foreground">使用邮箱注册启明智联客户中心</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>

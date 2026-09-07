@@ -1,11 +1,11 @@
-# 拼好机基础设施（开发/自托管部署）。业务系统无 Docker 环境时也可用远程 MySQL/Redis。
+# 启明智联基础设施（开发/自托管部署）。业务系统无 Docker 环境时也可用远程 MySQL/Redis。
 services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: pinhaoji
+      MYSQL_DATABASE: qmkvm
       TZ: Asia/Shanghai
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:

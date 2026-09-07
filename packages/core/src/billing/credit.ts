@@ -4,8 +4,8 @@
  * （amount 带符号，balanceAfter 回读快照，与最后一条流水一致为对账校验点）。
  */
 import { and, eq, gte, sql } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
 import { appError } from "../errors.js";
 import type { DbLike, Tx } from "../lifecycle/service-actions.js";
 import { markInvoicePaid, type InvoiceRow, type MarkPaidOptions } from "./invoice.js";

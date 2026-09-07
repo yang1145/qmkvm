@@ -1,5 +1,5 @@
 {
-  "name": "pinhaoji",
+  "name": "qmkvm",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -8,18 +8,18 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev:www": "pnpm --filter @pinhaoji/www dev",
-    "dev:portal": "pnpm --filter @pinhaoji/portal dev",
-    "dev:admin": "pnpm --filter @pinhaoji/admin dev",
-    "dev:api": "pnpm --filter @pinhaoji/api dev",
-    "dev:worker": "pnpm --filter @pinhaoji/worker dev",
+    "dev:www": "pnpm --filter @qmkvm/www dev",
+    "dev:portal": "pnpm --filter @qmkvm/portal dev",
+    "dev:admin": "pnpm --filter @qmkvm/admin dev",
+    "dev:api": "pnpm --filter @qmkvm/api dev",
+    "dev:worker": "pnpm --filter @qmkvm/worker dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "db:generate": "pnpm --filter @pinhaoji/db generate",
-    "db:migrate": "pnpm --filter @pinhaoji/db migrate",
-    "db:seed": "pnpm --filter @pinhaoji/db seed"
+    "db:generate": "pnpm --filter @qmkvm/db generate",
+    "db:migrate": "pnpm --filter @qmkvm/db migrate",
+    "db:seed": "pnpm --filter @qmkvm/db seed"
   },
   "devDependencies": {
     "turbo": "^2.10.12",

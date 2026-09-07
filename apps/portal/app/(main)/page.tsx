@@ -6,7 +6,7 @@ import {
   invoiceDto,
   paginated,
   serviceDto,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 import {
   CreditCard,
   LifeBuoy,
@@ -87,7 +87,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={`您好，${user?.name || user?.email || user?.phone || "用户"}`}
-        description="欢迎回到拼好机客户中心"
+        description="欢迎回到启明智联客户中心"
       />
 
       {announcement ? (

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 import { z } from "zod";
-import { formatCny } from "@pinhaoji/core";
+import { formatCny } from "@qmkvm/core";
 
 /**
  * 公开接口：无需登录（目录用于门户商品页，也供官网后续集成）。
@@ -94,7 +94,7 @@ publicRoutes.get("/settings", async (c) => {
   const site = await getSetting<Record<string, unknown>>("site");
   const gateways = await getSetting<Record<string, unknown>>("payment.gateways");
   return c.json({
-    siteName: (site?.["siteName"] as string) ?? "拼好机",
+    siteName: (site?.["siteName"] as string) ?? "启明智联",
     announcement: (site?.["announcement"] as string) ?? null,
     paymentMethods: gateways
       ? Object.entries(gateways)

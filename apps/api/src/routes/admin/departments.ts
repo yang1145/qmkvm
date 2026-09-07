@@ -2,9 +2,9 @@
 import { Hono } from "hono";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { idParamSchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
+import { getDb, schema } from "@qmkvm/db";
+import { idParamSchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { changePasswordSchema } from "@pinhaoji/contracts";
+import { changePasswordSchema } from "@qmkvm/contracts";
 import { z } from "zod";
 
 import { api } from "@/lib/api";

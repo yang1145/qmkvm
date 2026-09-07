@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/core",
+  "name": "@qmkvm/core",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -13,9 +13,9 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
     "bullmq": "^6.3.4",
     "drizzle-orm": "^0.45.2"
   },

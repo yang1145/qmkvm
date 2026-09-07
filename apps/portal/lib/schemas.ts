@@ -14,7 +14,7 @@ import {
   ticketPriorityEnum,
   ticketStatusEnum,
   userProfileSchema,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 
 /** —— contracts zod schema 推导出的领域类型（统一从这里取用） —— */
 export type Product = z.infer<typeof productDto>;
@@ -115,9 +115,21 @@ export const identitySchema = z.object({
   companyName: z.string().nullable().catch(null),
   creditCode: z.string().nullable().catch(null),
   rejectReason: z.string().nullable().catch(null),
+  images: z
+    .object({ front: z.boolean().catch(false), back: z.boolean().catch(false), handheld: z.boolean().catch(false) })
+    .nullable()
+    .catch(null),
+  ocrStatus: z.enum(["matched", "unavailable"]).nullable().catch(null),
   updatedAt: z.string().nullable().catch(null),
 });
 export type Identity = z.infer<typeof identitySchema>;
+
+/** POST /account/identity/ocr */
+export const identityOcrSchema = z.object({
+  available: z.boolean(),
+  idNumber: z.string().nullable(),
+  verified: z.boolean().nullable(),
+});
 
 /** GET /tickets/:id（含回复列表） */
 export const ticketDetailSchema = z.object({

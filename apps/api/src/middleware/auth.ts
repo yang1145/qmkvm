@@ -1,14 +1,14 @@
 import type { MiddlewareHandler } from "hono";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
-import type { schema } from "@pinhaoji/db";
-import type { PermissionKey } from "@pinhaoji/contracts";
+import type { schema } from "@qmkvm/db";
+import type { PermissionKey } from "@qmkvm/contracts";
 import {
   resolvePortalSession,
   resolveAdminSession,
   enforceRateLimit,
-} from "@pinhaoji/auth";
-import { appError } from "@pinhaoji/core";
-import { getDb } from "@pinhaoji/db";
+} from "@qmkvm/auth";
+import { appError } from "@qmkvm/core";
+import { getDb } from "@qmkvm/db";
 import { COOKIE_ADMIN, COOKIE_PORTAL, env } from "../env.js";
 import { getClientIp } from "./request-id.js";
 

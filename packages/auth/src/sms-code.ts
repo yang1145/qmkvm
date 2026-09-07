@@ -4,11 +4,11 @@ import { randomInt } from "node:crypto";
 
 import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 
-import { ERR } from "@pinhaoji/contracts";
-import { AppError } from "@pinhaoji/core/errors";
-import type { Db } from "@pinhaoji/db/client";
-import { smsCodes } from "@pinhaoji/db/schema";
-import { createLogger } from "@pinhaoji/logger";
+import { ERR } from "@qmkvm/contracts";
+import { AppError } from "@qmkvm/core/errors";
+import type { Db } from "@qmkvm/db/client";
+import { smsCodes } from "@qmkvm/db/schema";
+import { createLogger } from "@qmkvm/logger";
 
 import { sha256hex } from "./crypto.js";
 import { checkRateLimit } from "./rate-limit.js";
@@ -74,7 +74,7 @@ export async function issueSmsCode(db: Db, input: IssueSmsCodeInput): Promise<{ 
     expiresAt: new Date(Date.now() + CODE_TTL_MS),
   });
 
-  const text = `【拼好机】验证码 ${code}，5 分钟内有效。为保障账户安全，请勿泄露给他人。`;
+  const text = `【启明智联】验证码 ${code}，5 分钟内有效。为保障账户安全，请勿泄露给他人。`;
   try {
     await send(phone, text);
   } catch (err) {

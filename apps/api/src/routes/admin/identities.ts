@@ -5,13 +5,14 @@
 import { Hono } from "hono";
 import { and, desc, eq, or, like, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
-import { idParamSchema, pageQuerySchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
-import { aesDecrypt } from "@pinhaoji/auth";
+import { idParamSchema, pageQuerySchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
+import { aesDecrypt } from "@qmkvm/auth";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, maskedContact, writeAdminAudit } from "./helpers.js";
+import { isValidIdNumber } from "../../utils/ocr.js";
 
 export const adminIdentityRoutes = new Hono();
 
@@ -120,6 +121,19 @@ adminIdentityRoutes.get("/identities/:id", requireAdmin("customers.manage"), asy
     idNumber: decryptIdNumber(p.idNumberEnc),
     companyName: p.companyName,
     creditCode: p.creditCode,
+    /** 证件照 URL（管理端 <img> 直显；kind: front/back/handheld） */
+    images: {
+      front: p.idFrontPath ? `/api/v1/admin/identities/${p.id}/images/front` : null,
+      back: p.idBackPath ? `/api/v1/admin/identities/${p.id}/images/back` : null,
+      handheld: p.idHandheldPath ? `/api/v1/admin/identities/${p.id}/images/handheld` : null,
+    },
+    /** 正面照 OCR 结果与人工核对状态（unavailable：OCR 不可用/识别号不可靠/与填写不一致） */
+    ocr: {
+      idNumber: p.ocrIdNumber,
+      /** OCR 号是否为合法证件号（校验码通过） */
+      valid: p.ocrIdNumber ? isValidIdNumber(p.ocrIdNumber) : null,
+      status: p.ocrStatus,
+    },
     status: p.status,
     statusLabel: IDENTITY_STATUS_LABEL[p.status] ?? p.status,
     rejectReason: p.rejectReason,
@@ -127,6 +141,42 @@ adminIdentityRoutes.get("/identities/:id", requireAdmin("customers.manage"), asy
     createdAt: iso(p.createdAt),
     updatedAt: iso(p.updatedAt),
   });
+});
+
+/** 证件照查看（customers.manage）：按 profileId + kind 读取存储文件，防路径穿越 */
+adminIdentityRoutes.get("/identities/:id/images/:kind", requireAdmin("customers.manage"), async (c) => {
+  const { id } = idParamSchema.parse({ id: c.req.param("id") });
+  const kind = z.enum(["front", "back", "handheld"]).parse(c.req.param("kind"));
+  const db = getDb();
+  const rows = await db
+    .select({ p: userProfiles })
+    .from(userProfiles)
+    .where(eq(userProfiles.id, id))
+    .limit(1);
+  const p = rows[0]?.p;
+  if (!p) throw appError("NOT_FOUND", `实名信息不存在（#${id}）`);
+  const storedPath =
+    kind === "front" ? p.idFrontPath : kind === "back" ? p.idBackPath : p.idHandheldPath;
+  if (!storedPath) throw appError("NOT_FOUND", "证件照不存在");
+
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
+  const resolved = path.resolve(storedPath);
+  if (!resolved.startsWith(uploadDir + path.sep)) {
+    throw appError("PERM_DENIED", "非法文件路径");
+  }
+  try {
+    const data = await fs.readFile(resolved);
+    const ext = path.extname(resolved).toLowerCase();
+    const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+    return c.body(new Uint8Array(data), 200, {
+      "Content-Type": mime,
+      "Cache-Control": "private, no-store",
+    });
+  } catch {
+    throw appError("NOT_FOUND", "证件照文件已丢失");
+  }
 });
 
 const reviewBody = z.object({

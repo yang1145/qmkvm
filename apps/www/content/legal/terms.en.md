@@ -3,7 +3,7 @@
 
 ## 1. Description of Services
 
-Pinhaoji (Pinhaoji Cloud) provides cloud infrastructure capabilities through this website and its related services (the "Services"). The specific scope, regional availability, and capability list of the Services follow official launch announcements and product documentation.
+QmKvm (QmKvm) provides cloud infrastructure capabilities through this website and its related services (the "Services"). The specific scope, regional availability, and capability list of the Services follow official launch announcements and product documentation.
 
 ## 2. Accounts and Use
 
@@ -23,7 +23,7 @@ Pinhaoji (Pinhaoji Cloud) provides cloud infrastructure capabilities through thi
 
 ## 5. Intellectual Property
 
-- The intellectual property of this website's content, brand marks, and service software belongs to Pinhaoji or its rights holders.
+- The intellectual property of this website's content, brand marks, and service software belongs to QmKvm or its rights holders.
 - Without permission, you may not copy, modify, or distribute protected content.
 
 ## 6. Limitation of Liability
@@ -42,4 +42,4 @@ These Terms are governed by the laws of the People's Republic of China. Disputes
 
 For questions about these Terms, contact:
 
-- Email: sales@pinhaoji1.cn
+- Email: sales@example.com

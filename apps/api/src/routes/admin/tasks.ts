@@ -2,15 +2,15 @@
 import { Hono } from "hono";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 import {
   idParamSchema,
   pageQuerySchema,
   provisionActionEnum,
   provisionStatusEnum,
   provisionTaskDto,
-} from "@pinhaoji/contracts";
-import { retryTask, skipTask } from "@pinhaoji/provisioning";
+} from "@qmkvm/contracts";
+import { retryTask, skipTask } from "@qmkvm/provisioning";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 

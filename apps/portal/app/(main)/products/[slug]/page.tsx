@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   addToCartSchema,
   productGroupDto,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 import { z } from "zod";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 

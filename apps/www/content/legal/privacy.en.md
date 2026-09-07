@@ -3,7 +3,7 @@
 
 ## 1. Information We Collect
 
-Pinhaoji collects the following information on a need-to-know basis when providing services:
+QmKvm collects the following information on a need-to-know basis when providing services:
 
 - **Contact information**: When you contact us through the website form, we collect your name, work email, company name, and any requirements you voluntarily provide.
 - **Usage information**: To keep the website stable and secure, we may collect basic access logs, including access time, source address, and page requests.
@@ -46,4 +46,4 @@ If website analytics or cookies are enabled, we will comply with applicable pers
 
 We may update this policy from time to time and will announce changes on the website. For questions, contact:
 
-- Email: sales@pinhaoji1.cn
+- Email: sales@example.com

@@ -31,11 +31,11 @@ const contractsCompatEntry = generateContractsCompat();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@pinhaoji/contracts"],
+  transpilePackages: ["@qmkvm/contracts"],
   turbopack: {
     resolveAlias: {
       // 相对请求（相对本应用根目录）
-      "@pinhaoji/contracts": "./contracts-compat/index.ts",
+      "@qmkvm/contracts": "./contracts-compat/index.ts",
     },
   },
 };

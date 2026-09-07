@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/provisioning",
+  "name": "@qmkvm/provisioning",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -12,10 +12,10 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/core": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/core": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "undici": "^6.28.1"
   },

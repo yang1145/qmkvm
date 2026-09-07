@@ -2,8 +2,8 @@
 
 import { and, eq, gt, isNull, ne } from "drizzle-orm";
 
-import type { Db } from "@pinhaoji/db/client";
-import { sessions, users } from "@pinhaoji/db/schema";
+import type { Db } from "@qmkvm/db/client";
+import { sessions, users } from "@qmkvm/db/schema";
 
 import { randomToken, sha256hex } from "./crypto.js";
 

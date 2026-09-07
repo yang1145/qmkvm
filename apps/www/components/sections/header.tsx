@@ -55,7 +55,7 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" aria-label="拼好机" onClick={() => setOpen(false)}>
+        <Link href="/" aria-label="启明智联" onClick={() => setOpen(false)}>
           <Logo variant="horizontal" />
         </Link>
 

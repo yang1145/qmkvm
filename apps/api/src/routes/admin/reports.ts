@@ -7,8 +7,8 @@
 import { Hono } from "hono";
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { appError, centsToYuan } from "@pinhaoji/core";
+import { getDb, schema } from "@qmkvm/db";
+import { appError, centsToYuan } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 
 export const adminReportRoutes = new Hono();

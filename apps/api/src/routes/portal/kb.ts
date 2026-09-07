@@ -7,10 +7,10 @@
 import { Hono } from "hono";
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { pageQuerySchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
-import { resolvePortalSession } from "@pinhaoji/auth";
+import { getDb, schema } from "@qmkvm/db";
+import { pageQuerySchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
+import { resolvePortalSession } from "@qmkvm/auth";
 import { getPortalToken, type PortalUser } from "../../middleware/auth.js";
 
 export const portalKbRoutes = new Hono();

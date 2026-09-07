@@ -2,8 +2,8 @@
 import { Hono } from "hono";
 import { and, desc, eq, gte, like, lte, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { pageQuerySchema } from "@pinhaoji/contracts";
+import { getDb, schema } from "@qmkvm/db";
+import { pageQuerySchema } from "@qmkvm/contracts";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso } from "./helpers.js";
 

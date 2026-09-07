@@ -1,5 +1,5 @@
 /** 供应任务兜底扫描：每 10 分钟。failed 退避重投 + queued 滞留补偿。 */
-import { processQueuedTasks } from "@pinhaoji/provisioning";
+import { processQueuedTasks } from "@qmkvm/provisioning";
 import type { TaskDef } from "./framework.js";
 
 interface ScanResult {

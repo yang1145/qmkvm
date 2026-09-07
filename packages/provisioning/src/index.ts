@@ -1,7 +1,7 @@
 /**
- * @pinhaoji/provisioning：供应模块 SDK（manual / demo / http-api）+ 任务执行器。
+ * @qmkvm/provisioning：供应模块 SDK（manual / demo / http-api）+ 任务执行器。
  * 对外入口：getModule / registerModule / runProvisionTask / retryTask / skipTask /
- * processQueuedTasks / manuallyCompleteProvision 复用 @pinhaoji/core 的实现。
+ * processQueuedTasks / manuallyCompleteProvision 复用 @qmkvm/core 的实现。
  */
 export * from "./types.js";
 export * from "./config.js";

@@ -1,4 +1,4 @@
-import { ERR, type ErrorCode } from "@pinhaoji/contracts";
+import { ERR, type ErrorCode } from "@qmkvm/contracts";
 
 /** 业务错误：API 层统一捕获转 HTTP 响应。 */
 const STATUS_MAP: Partial<Record<ErrorCode, number>> = {
@@ -14,6 +14,9 @@ const STATUS_MAP: Partial<Record<ErrorCode, number>> = {
   PERM_DENIED: 403,
   AUTH_DISABLED: 403,
   CATALOG_IDENTITY_REQUIRED: 403,
+  IDENTITY_IMAGE_REQUIRED: 400,
+  IDENTITY_IMAGE_INVALID: 400,
+  IDENTITY_OCR_MISMATCH: 422,
   NOT_FOUND: 404,
   ORDER_NOT_FOUND: 404,
   CATALOG_NOT_FOUND: 404,

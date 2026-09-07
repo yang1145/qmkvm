@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { invoiceDto, paginated } from "@pinhaoji/contracts";
+import { invoiceDto, paginated } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useApiData } from "@/hooks/use-api";

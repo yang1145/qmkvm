@@ -3,7 +3,7 @@
  * 过期支付单关闭（含关联 pending 订单取消与库存释放）。
  */
 import { and, eq, gt, inArray, isNotNull, lt, sql } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
+import { schema, type Db } from "@qmkvm/db/client";
 import { addDays, daysBetween, todayStr } from "../date-utils.js";
 import { createProvisionTask, hasPendingTask, readSettingNumber } from "./service-actions.js";
 

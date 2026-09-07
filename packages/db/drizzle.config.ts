@@ -5,7 +5,7 @@ export default defineConfig({
   schema: "./src/schema/index.ts",
   out: "./drizzle",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "mysql://root:root@localhost:3306/pinhaoji",
+    url: process.env.DATABASE_URL ?? "mysql://root:root@localhost:3306/qmkvm",
   },
   strict: true,
   verbose: true,

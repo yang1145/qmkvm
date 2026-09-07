@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { updateProfileSchema, userProfileSchema } from "@pinhaoji/contracts";
+import { updateProfileSchema, userProfileSchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";

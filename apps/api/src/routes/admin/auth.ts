@@ -1,10 +1,10 @@
 /** 管理后台认证：图形验证码 / 登录（写审计）/ 登出 / 当前会话。 */
 import { Hono } from "hono";
 import { z } from "zod";
-import { adminLoginSchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
-import { adminLogin, resolveAdminSession, revokeAdminSession } from "@pinhaoji/auth";
-import { getDb } from "@pinhaoji/db";
+import { adminLoginSchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
+import { adminLogin, resolveAdminSession, revokeAdminSession } from "@qmkvm/auth";
+import { getDb } from "@qmkvm/db";
 import { consumeCaptcha, generateCaptcha } from "../../utils/captcha.js";
 import {
   rateLimit,

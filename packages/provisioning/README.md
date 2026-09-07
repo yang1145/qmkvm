@@ -1,4 +1,4 @@
-# @pinhaoji/provisioning
+# @qmkvm/provisioning
 
 供应模块 SDK（SPEC-P0 §2.5 / PRD-billing F8）：实现 `ProvisionModule` 接口的适配器集合，
 runner 按服务的 `moduleCode` 调用对应模块完成 开通 / 暂停 / 恢复 / 终止 / 变更套餐。
@@ -18,7 +18,7 @@ runner 按服务的 `moduleCode` 调用对应模块完成 开通 / 暂停 / 恢�
 
 Proxmox VE 供应模块通过 PVE REST API（`/api2/json`）交付实例：
 
-**开通流程**：`/cluster/nextid` 取 vmid → 克隆模板（`POST .../{templateVmId}/clone`，名称 `phj-{service.id}`）
+**开通流程**：`/cluster/nextid` 取 vmid → 克隆模板（`POST .../{templateVmId}/clone`，名称 `kvm-{service.id}`）
 → 写配置（cores / memory / net0 限速；qemu 另带 cloud-init `ipconfig0: ip=dhcp` 与可选 `sshkeys`）
 → 磁盘扩容（**只增不减**，仅当目标盘大于模板盘时 `resize`）→ `start` → 等待 `running`
 → 尽力获取 IP（qemu 走 guest-agent `agent/network-get-interfaces`，lxc 走 `GET /lxc/{vmid}/interfaces`；
@@ -73,7 +73,7 @@ ticket 模式登录 `/access/ticket`，票据缓存于模块进程内存约 90 �
   "diskDevice": "scsi0",
   "bridge": "vmbr0",
   "taskTimeoutSec": 300,
-  "sshKey": "ssh-ed25519 AAAA... admin@pinhaoji"
+  "sshKey": "ssh-ed25519 AAAA... admin@example.com"
 }
 ```
 

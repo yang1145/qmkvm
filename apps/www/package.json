@@ -1,7 +1,7 @@
 {
-  "name": "@pinhaoji/www",
+  "name": "@qmkvm/www",
   "version": "1.0.0",
-  "description": "拼好机官网 Landing Page",
+  "description": "启明智联官网 Landing Page",
   "type": "module",
   "private": true,
   "scripts": {

@@ -7,7 +7,7 @@
  * - 一次性消费：无论对错，校验一次后即作废（错误尝试由调用方计入限流/作废逻辑）。
  */
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { getRedis } from "@pinhaoji/db/redis";
+import { getRedis } from "@qmkvm/db/redis";
 
 const CAPTCHA_TTL_SEC = 5 * 60;
 

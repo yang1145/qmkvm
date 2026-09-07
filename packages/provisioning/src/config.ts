@@ -3,8 +3,8 @@
  * service.moduleConfig 是创建服务时的商品配置快照，商品侧后续更新经此处生效。
  */
 import { eq } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { ServiceRow } from "@pinhaoji/core";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { ServiceRow } from "@qmkvm/core";
 import type { ModuleConfig } from "./types.js";
 
 /**

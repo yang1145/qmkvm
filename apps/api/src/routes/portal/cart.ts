@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { getDb, schema, carts, type CartLine } from "@pinhaoji/db";
+import { getDb, schema, carts, type CartLine } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { addToCartSchema, updateCartItemSchema, cartOptionSelection } from "@pinhaoji/contracts";
-import { quoteProduct, validatePromo, appError, type OptionSelection } from "@pinhaoji/core";
+import { addToCartSchema, updateCartItemSchema, cartOptionSelection } from "@qmkvm/contracts";
+import { quoteProduct, validatePromo, appError, type OptionSelection } from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalCartRoutes = new Hono();

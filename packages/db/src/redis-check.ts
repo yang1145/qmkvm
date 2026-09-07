@@ -6,7 +6,7 @@ if (!r) {
   process.exit(1);
 }
 const pong = await r.ping();
-await r.set("phj:healthcheck", String(Date.now()), "EX", 60);
-const v = await r.get("phj:healthcheck");
+await r.set("kvm:healthcheck", String(Date.now()), "EX", 60);
+const v = await r.get("kvm:healthcheck");
 console.log("Redis PING:", pong, "| set/get:", v ? "OK" : "FAIL");
 r.disconnect();

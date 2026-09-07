@@ -1,7 +1,7 @@
 /** 工作台汇总（dashboardDto）：今日/本月新用户、订单数、GMV（已付账单合计）、支付成功率 + 待办计数。 */
 import { Hono } from "hono";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 import { requireAdmin } from "../../middleware/auth.js";
 
 export const adminDashboardRoutes = new Hono();

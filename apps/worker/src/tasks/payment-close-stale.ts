@@ -1,5 +1,5 @@
 /** 过期支付单关闭：每分钟。core 关闭过期 intent 并释放关联 pending 订单库存。 */
-import { closeStalePaymentIntents } from "@pinhaoji/core";
+import { closeStalePaymentIntents } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const paymentCloseStaleTask: TaskDef = {

@@ -7,9 +7,9 @@
 import { Hono } from "hono";
 import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { appError, enqueueJob } from "@pinhaoji/core";
-import { pageQuerySchema } from "@pinhaoji/contracts";import { requireAdmin } from "../../middleware/auth.js";
+import { getDb, schema } from "@qmkvm/db";
+import { appError, enqueueJob } from "@qmkvm/core";
+import { pageQuerySchema } from "@qmkvm/contracts";import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 
 /** 静态注册表（与 worker/src/tasks 保持同步：name/cron/description 一致） */

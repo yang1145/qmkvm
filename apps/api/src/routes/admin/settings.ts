@@ -11,17 +11,17 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import { settingsUpsertSchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
+import { getDb, schema } from "@qmkvm/db";
+import { settingsUpsertSchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
 import {
   encryptSettingValue,
   isEncryptedSettingValue,
   decodeGatewaySetting,
   PAYMENT_GATEWAYS_SETTING_KEY,
-} from "@pinhaoji/payments";
-import { renderTemplate, sendEmail } from "@pinhaoji/notifications";
-import type { SmtpConfig } from "@pinhaoji/notifications";
+} from "@qmkvm/payments";
+import { renderTemplate, sendEmail } from "@qmkvm/notifications";
+import type { SmtpConfig } from "@qmkvm/notifications";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 
@@ -185,7 +185,7 @@ adminSettingRoutes.post("/settings/smtp/test", requireAdmin("settings.manage"), 
   const { to } = emailTargetSchema.parse(await c.req.json());
   const admin = c.get("admin");
   const cfg = await loadSmtpConfig();
-  const result = await sendEmail(to, "拼好机云业务系统 SMTP 测试邮件", smtpTestHtml(), cfg ?? undefined);
+  const result = await sendEmail(to, "启明智联业务管理系统 SMTP 测试邮件", smtpTestHtml(), cfg ?? undefined);
   await writeAdminAudit(c, admin, {
     action: "settings.smtp.test",
     targetType: "settings",
@@ -216,7 +216,7 @@ adminSettingRoutes.post("/settings/templates/test", requireAdmin("templates.mana
   if (tpl.channel !== "email") throw appError("VALIDATION_FAILED", "仅 email 渠道模板支持邮件测试发送");
 
   const vars = sampleTemplateVars(body.to);
-  const subject = renderTemplate(tpl.subject ?? "拼好机通知", vars);
+  const subject = renderTemplate(tpl.subject ?? "启明智联通知", vars);
   const html = renderTemplate(tpl.body, vars);
   const cfg = await loadSmtpConfig();
   const result = await sendEmail(body.to, subject, html, cfg ?? undefined);
@@ -322,7 +322,7 @@ async function loadSmtpConfig(): Promise<SmtpConfig | null> {
 function smtpTestHtml(): string {
   return [
     "<div style=\"font-family: sans-serif; max-width: 480px;\">",
-    "<h2 style=\"color:#1677ff;\">拼好机云业务系统</h2>",
+    "<h2 style=\"color:#1677ff;\">启明智联业务管理系统</h2>",
     "<p>这是一封 SMTP 配置测试邮件。</p>",
     "<p>收到即说明当前邮件设置（SMTP 服务器）可正常发信。</p>",
     `<p style=\"color:#999;font-size:12px;\">发送时间：${new Date().toISOString()}</p>`,
@@ -333,7 +333,7 @@ function smtpTestHtml(): string {
 /** 模板测试发送的示例变量（覆盖 VARIABLE_HINTS 常用占位符） */
 function sampleTemplateVars(to: string): Record<string, unknown> {
   return {
-    siteName: "拼好机",
+    siteName: "启明智联",
     userName: "测试用户",
     userEmail: to,
     serviceName: "示例云服务器",

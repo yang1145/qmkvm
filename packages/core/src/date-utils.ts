@@ -2,7 +2,7 @@
  * 日期工具：仅处理 "YYYY-MM-DD" 字符串，全部按 UTC 计算，避免时区漂移。
  * 纯函数、无 IO，便于单测（见 tests/date-utils.test.ts）。
  */
-import { CYCLE_MONTHS, type BillingCycle } from "@pinhaoji/contracts";
+import { CYCLE_MONTHS, type BillingCycle } from "@qmkvm/contracts";
 import { appError } from "./errors.js";
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;

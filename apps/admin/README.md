@@ -1,13 +1,13 @@
-# @pinhaoji/admin
+# @qmkvm/admin
 
-拼好机云业务系统管理后台，基于 Ant Design Pro（umi max）。
+启明智联业务管理系统管理后台，基于 Ant Design Pro（umi max）。
 
 ## 开发
 
 ```bash
 # 仓库根目录
 pnpm install
-pnpm --filter @pinhaoji/admin dev
+pnpm --filter @qmkvm/admin dev
 ```
 
 - 开发代理：`/api` → `http://localhost:4000`（见 config/proxy.ts）
@@ -17,6 +17,6 @@ pnpm --filter @pinhaoji/admin dev
 ## 构建 / 类型检查
 
 ```bash
-pnpm --filter @pinhaoji/admin build
-pnpm --filter @pinhaoji/admin typecheck
+pnpm --filter @qmkvm/admin build
+pnpm --filter @qmkvm/admin typecheck
 ```

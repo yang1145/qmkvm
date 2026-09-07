@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { cartQuoteSchema, checkoutResultSchema } from "@pinhaoji/contracts";
+import { cartQuoteSchema, checkoutResultSchema } from "@qmkvm/contracts";
 import { Wallet } from "lucide-react";
 
 import { api } from "@/lib/api";

@@ -7,9 +7,9 @@
  */
 
 import { eq } from "drizzle-orm";
-import { schema } from "@pinhaoji/db/client";
-import { logger } from "@pinhaoji/logger";
-import type { DbLike } from "@pinhaoji/core";
+import { schema } from "@qmkvm/db/client";
+import { logger } from "@qmkvm/logger";
+import type { DbLike } from "@qmkvm/core";
 import type {
   AlipayGatewayConfig,
   MockGatewayConfig,

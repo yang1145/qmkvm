@@ -2,9 +2,9 @@
  * 服务生命周期 · 基础动作：建服务、建供应任务、状态变更（含审计）、后台手工标记开通。
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
-import { billingCycleEnum, type BillingCycle } from "@pinhaoji/contracts";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
+import { billingCycleEnum, type BillingCycle } from "@qmkvm/contracts";
 import { appError } from "../errors.js";
 import { addCycle, todayStr } from "../date-utils.js";
 

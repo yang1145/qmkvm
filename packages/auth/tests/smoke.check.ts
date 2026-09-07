@@ -11,7 +11,7 @@ process.env.APP_KEY = Buffer.from(randomBytes(32)).toString("base64");
 import { aesDecrypt, aesEncrypt, maskEmail, maskPhone, randomToken, sha256hex } from "../src/crypto.js";
 import { hashPassword, verifyPassword } from "../src/password.js";
 import { checkRateLimit, enforceRateLimit } from "../src/rate-limit.js";
-import { AppError } from "@pinhaoji/core/errors";
+import { AppError } from "@qmkvm/core/errors";
 
 let failed = 0;
 

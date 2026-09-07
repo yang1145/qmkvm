@@ -1,6 +1,6 @@
-# 拼好机云业务系统
+# 启明智联业务管理系统
 
-类 WHMCS 的云服务售卖与运营平台，为「拼好机 / Pinhaoji Cloud」提供从**在线销售到自动化交付**的完整闭环。
+类 WHMCS 的云服务售卖与运营平台，为「启明智联 / QmKvm」提供从**在线销售到自动化交付**的完整闭环。
 
 客户在门户选购弹性云服务器 → 支付宝/微信/余额支付 → 系统自动在 Proxmox VE 集群开通虚拟机并回填交付信息 → 到期自动提醒、逾期自动暂停、终止全自动执行 → 全程账单、发票、工单、通知、报表配套。
 
@@ -31,9 +31,9 @@
 | --- | --- |
 | 语言 / 运行时 | TypeScript（严格模式）· Node.js ≥ 20 |
 | Monorepo | pnpm workspaces + Turborepo |
-| API | Hono + @hono/node-server + zod（@pinhaoji/contracts 前后端共享契约） |
+| API | Hono + @hono/node-server + zod（@qmkvm/contracts 前后端共享契约） |
 | 数据库 | MySQL 8（utf8mb4）+ Drizzle ORM + drizzle-kit 迁移 |
-| 缓存 / 队列 | Redis 7 + BullMQ（单队列 `phj`，指数退避，无 Redis 自动降级内存/内联） |
+| 缓存 / 队列 | Redis 7 + BullMQ（单队列 `kvm`，指数退避，无 Redis 自动降级内存/内联） |
 | 前端 | Next.js 16（App Router，portal/www）· React 19 · Tailwind CSS v4 · Ant Design Pro / umi max（admin）· recharts |
 | 认证 | argon2id 密码哈希 · HttpOnly Cookie 会话（服务端 Session）· 图形验证码 · RBAC |
 | 支付 | 支付宝官方 `alipay-sdk` · 微信支付 APIv3 官方 `wechatpay-axios-plugin` · 网关注册器（`registerGateway` 可扩展） |
@@ -92,8 +92,8 @@ cp .env.example .env   # 修改 DATABASE_URL / REDIS_URL / APP_KEY / CORS_ORIGIN
 # 2) 构建并启动（MySQL/Redis 数据落 volume）
 docker compose -f docker/docker-compose.prod.yml build
 docker compose -f docker/docker-compose.prod.yml up -d mysql redis
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @pinhaoji/db migrate
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @pinhaoji/db seed
+docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db migrate
+docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db seed
 docker compose -f docker/docker-compose.prod.yml up -d
 
 # 3) 验证
@@ -108,10 +108,10 @@ curl http://127.0.0.1:4000/healthz
 pnpm install --frozen-lockfile
 pnpm build                      # 三前端产物 + 全仓类型检查
 pnpm db:migrate && pnpm db:seed
-pm2 start "pnpm --filter @pinhaoji/api start"    --name phj-api
-pm2 start "pnpm --filter @pinhaoji/worker start" --name phj-worker
-pm2 start "pnpm --filter @pinhaoji/portal start" --name phj-portal
-pm2 start "pnpm --filter @pinhaoji/www start"    --name phj-www
+pm2 start "pnpm --filter @qmkvm/api start"    --name kvm-api
+pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker
+pm2 start "pnpm --filter @qmkvm/portal start" --name kvm-portal
+pm2 start "pnpm --filter @qmkvm/www start"    --name kvm-www
 # admin 为纯静态产物（apps/admin/dist），由 Nginx 直接托管
 ```
 
@@ -148,7 +148,7 @@ docker compose -f docker/docker-compose.prod.yml up -d --build   # 或 pm2 reloa
 ```bash
 pnpm build / typecheck / test      # 全量构建、类型检查、计费引擎单测
 pnpm db:generate / migrate / seed / reset   # Schema 迁移与种子（reset 清库慎用）
-pnpm --filter @pinhaoji/worker task -- <任务名>   # 手动执行定时任务（如 renewal.invoices）
+pnpm --filter @qmkvm/worker task -- <任务名>   # 手动执行定时任务（如 renewal.invoices）
 pnpm dev:www / dev:portal / dev:admin / dev:api / dev:worker
 ```
 

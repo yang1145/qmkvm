@@ -8,7 +8,7 @@ import { webhookRoutes } from "./routes/webhooks/index.js";
 import { portalRoutes } from "./routes/portal/index.js";
 import { adminRoutes } from "./routes/admin/index.js";
 import { env } from "./env.js";
-import { logger } from "@pinhaoji/logger";
+import { logger } from "@qmkvm/logger";
 import { registerJobHandlers } from "./wiring.js";
 
 const app = new Hono();

@@ -19,7 +19,7 @@ export default defineConfig({
   //============== max 插件配置 ===============
   model: {},
   initialState: {},
-  title: '拼好机管理后台',
+  title: '启明智联业务管理系统',
   layout: {
     locale: false,
     ...defaultSettings,

@@ -1,13 +1,13 @@
 # P0 实现规格（SPEC-P0）
 
-> 本文档是拼好机云业务系统 P0（M1 MVP）实现的**唯一共享契约**。所有子任务在编码前必读。
-> 仓库根：`D:\Documents\GitHub\pinhaoji-web`（Windows / Git Bash / pnpm 11 / Node 22）。
+> 本文档是启明智联业务管理系统 P0（M1 MVP）实现的**唯一共享契约**。所有子任务在编码前必读。
+> 仓库根：本仓库根目录（Windows / Git Bash / pnpm 11 / Node 22）。
 > PRD 见 `PRD-billing.md`；数据库 Schema 见 `packages/db/src/schema/`；共享类型见 `packages/contracts/src/`。
 
 ## 0. 硬性约定
 
 - **语言**：TypeScript 严格模式（`noUncheckedIndexedAccess` 已开启，数组/对象索引访问需判空）。
-- **模块**：ESM（`"type": "module"`）。**相对导入必须带 `.js` 后缀**（如 `import { x } from "./x.js"`）。包间导入用 `@pinhaoji/<pkg>`。
+- **模块**：ESM（`"type": "module"`）。**相对导入必须带 `.js` 后缀**（如 `import { x } from "./x.js"`）。包间导入用 `@qmkvm/<pkg>`。
 - **运行时**：API/Worker 均为 Node 长驻进程（非 Edge）。开发用 `tsx`。
 - **金额**：全链路整数分（`number`，DB 为 BIGINT）。**禁止 float 计算金额**；百分比折扣用整数运算（`Math.round(base * percent / 100)`）。
 - **时间**：DB 用 `datetime`（UTC，`timezone: "Z"`）；API 传输 ISO 8601 字符串；`next_due_date` 为 `date`（"YYYY-MM-DD" 字符串）。
@@ -15,7 +15,7 @@
 - **校验**：所有外部输入（HTTP body/query）用 contracts 中的 zod Schema 校验。
 - **异步**：单实例内优先单事务（`db.transaction`）；跨进程动作通过队列事件。
 - **不修改他人范围**：每个子任务只允许改动指定文件；发现需要改其他包时，在自己的包内用依赖注入/接口解耦，并在最终报告中列出建议。
-- **完成标准**：`pnpm --filter <pkg> typecheck` 通过；core 的 `pnpm --filter @pinhaoji/core test` 通过。不引入 SPEC 之外的运行时依赖（devDep 除外）；如必须新增，先在报告中说明理由。
+- **完成标准**：`pnpm --filter <pkg> typecheck` 通过；core 的 `pnpm --filter @qmkvm/core test` 通过。不引入 SPEC 之外的运行时依赖（devDep 除外）；如必须新增，先在报告中说明理由。
 
 ## 1. 包依赖关系与职责
 
@@ -26,16 +26,16 @@ api = hono 应用，组合以上包；worker = BullMQ 消费者 + 定时任务
 
 | 包 | 职责 | 依赖 |
 | --- | --- | --- |
-| @pinhaoji/contracts | zod DTO、ErrorCode、权限点、枚举 | zod |
-| @pinhaoji/db | schema、client、redis 单例、迁移 | drizzle-orm, mysql2, ioredis |
-| @pinhaoji/logger | pino 封装（脱敏） | pino |
-| @pinhaoji/core | 金额/报价/优惠/账单/余额/订单/服务生命周期/升级折算/事件与队列抽象 | db, contracts, logger |
-| @pinhaoji/auth | 密码、会话、短信验证码、RBAC 会话、限流 | db, contracts, logger |
-| @pinhaoji/notifications | 模板渲染 + 邮件/短信/站内信发送 | db, contracts, logger, nodemailer |
-| @pinhaoji/payments | 支付网关抽象 + 支付宝/微信/mock + 回调处理管线 | db, core, contracts, alipay-sdk |
-| @pinhaoji/provisioning | 供应模块 SDK + manual/http-api/demo + 任务执行器 | db, core, contracts |
-| @pinhaoji/api | HTTP API（Hono） | 全部 |
-| @pinhaoji/worker | 队列消费者 + 定时任务 | core, provisioning, payments, notifications, bullmq |
+| @qmkvm/contracts | zod DTO、ErrorCode、权限点、枚举 | zod |
+| @qmkvm/db | schema、client、redis 单例、迁移 | drizzle-orm, mysql2, ioredis |
+| @qmkvm/logger | pino 封装（脱敏） | pino |
+| @qmkvm/core | 金额/报价/优惠/账单/余额/订单/服务生命周期/升级折算/事件与队列抽象 | db, contracts, logger |
+| @qmkvm/auth | 密码、会话、短信验证码、RBAC 会话、限流 | db, contracts, logger |
+| @qmkvm/notifications | 模板渲染 + 邮件/短信/站内信发送 | db, contracts, logger, nodemailer |
+| @qmkvm/payments | 支付网关抽象 + 支付宝/微信/mock + 回调处理管线 | db, core, contracts, alipay-sdk |
+| @qmkvm/provisioning | 供应模块 SDK + manual/http-api/demo + 任务执行器 | db, core, contracts |
+| @qmkvm/api | HTTP API（Hono） | 全部 |
+| @qmkvm/worker | 队列消费者 + 定时任务 | core, provisioning, payments, notifications, bullmq |
 
 **前端形态**：
 - `apps/portal`：Next.js 客户门户（自研，视觉对齐官网）。
@@ -45,7 +45,7 @@ api = hono 应用，组合以上包；worker = BullMQ 消费者 + 定时任务
 
 ## 2. 包接口契约（必须按此签名实现）
 
-### 2.1 @pinhaoji/core
+### 2.1 @qmkvm/core
 
 ```ts
 // money.ts（已预写，勿改接口）
@@ -74,7 +74,7 @@ validatePromo(db, code, { userId, subtotal, productIds, groupIds, isFirstOrder }
 recordPromoUsage(tx, { promotionId, userId, orderId, discountAmount }): Promise<void>
 
 // billing/invoice.ts
-generateInvoiceNo(db): Promise<string>       // PHJ-YYYYMM-XXXXXX（随机 6 位大写字母数字，查重）
+generateInvoiceNo(db): Promise<string>       // KVM-YYYYMM-XXXXXX（随机 6 位大写字母数字，查重）
 createInvoiceWithItems(tx, { userId, type, orderId?, items: {description, qty, unitPrice}[], discount?, dueAt? }):
   Promise<Invoice>                           // 状态 unpaid
 markInvoicePaid(tx, invoiceId, { gatewayCode?, gatewayTxnId?, balanceUsed?, paymentIntentId? }):
@@ -134,14 +134,14 @@ emitEvent(db, name, payload): Promise<void>   // 写队列入队（notify/provis
 type JobHandler = (data: any) => Promise<void>
 registerJobHandler(job: string, handler: JobHandler): void
 enqueueJob(job: string, data: unknown, opts?: { delayMs?: number; jobId?: string; attempts?: number }): Promise<void>
-  // REDIS_URL 存在 → BullMQ add 到队列 `phj`（attempts 默认 5，指数退避）
+  // REDIS_URL 存在 → BullMQ add 到队列 `kvm`（attempts 默认 5，指数退避）
   // 否则 → inline 降级：setImmediate 执行 registerJobHandler 注册的 handler，异常仅记日志
 processEnvelopedJob(...)                      // worker 侧统一分发到 registerJobHandler 的 handler
 ```
 
 **core 测试（Vitest，`packages/core/tests/`）**：money、addCycle（月末/闰年/跨年）、daysBetween、quoteProduct 选项计价（mock db 或抽纯函数 validateSelection）、promo 折扣边界（percent/fixed/minAmount/不叠加）、prorata 折算、creditLedger 借贷平衡（纯函数部分）。DB 相关逻辑抽成「纯计算 + IO 薄层」以便测试。目标：纯函数覆盖 ≥ 90%。
 
-### 2.2 @pinhaoji/auth
+### 2.2 @qmkvm/auth
 
 ```ts
 // password.ts
@@ -187,7 +187,7 @@ checkRateLimit(key: string, { limit, windowSec }): Promise<{ ok, retryAfterSec? 
 enforceRateLimit(key, opts): Promise<void>  // 超限抛 AppError(RATE_LIMITED, 含 retryAfter)
 ```
 
-### 2.3 @pinhaoji/notifications
+### 2.3 @qmkvm/notifications
 
 ```ts
 // providers/email.ts
@@ -213,7 +213,7 @@ notifyUserAllChannels(db, { user, event, vars }): Promise<void>
 **种子模板事件清单**（seed 用，zh 文案）：
 `user.registered`, `invoice.created`, `invoice.paid`, `invoice.reminder`, `invoice.overdue`, `service.activated`, `service.suspend_warning`, `service.suspended`, `service.terminated`, `renewal.created`, `ticket.replied`, `ticket.created_admin`, `credit.recharged`, `refund.completed`, `admin.task_failed`
 
-### 2.4 @pinhaoji/payments
+### 2.4 @qmkvm/payments
 
 ```ts
 // types.ts
@@ -265,7 +265,7 @@ createRefund(db, adminId, { transactionId, amount, reason }): Promise<Refund>
   // 财务权限；调用网关 refund；成功 → refunds=succeeded + transactions 关联状态 + invoice 部分退款标记 + 通知
 ```
 
-### 2.5 @pinhaoji/provisioning
+### 2.5 @qmkvm/provisioning
 
 ```ts
 // types.ts
@@ -304,7 +304,7 @@ processQueuedTasks(db, limit=50): Promise<{processed, succeeded, failed}>   // c
 
 ## 3. 队列与定时任务
 
-**队列名**：统一 `phj`（BullMQ），job 类型区分：`payment.process_event`、`provision.task`（data={taskId}）、`notify.user`（data={userId, event, vars}）、`provision.retry`（delay 退避）。
+**队列名**：统一 `kvm`（BullMQ），job 类型区分：`payment.process_event`、`provision.task`（data={taskId}）、`notify.user`（data={userId, event, vars}）、`provision.retry`（delay 退避）。
 
 **Worker 定时任务**（BullMQ repeatable cron + `job_runs` 记录；无 Redis 时 `pnpm --filter worker task <name>` 可手动执行）：
 
@@ -324,7 +324,7 @@ processQueuedTasks(db, limit=50): Promise<{processed, succeeded, failed}>   // c
 
 ## 4. API 端点清单
 
-前缀 `/api/v1`。认证：门户 `phj_session` Cookie；后台 `phj_admin` Cookie；webhooks/public 无 Cookie。**写操作统一校验 `Origin` 头**（CORS_ORIGINS 内）防 CSRF。错误体 = `errorResponseSchema`；成功直接返回资源 JSON；列表用 `paginated()`。
+前缀 `/api/v1`。认证：门户 `kvm_session` Cookie；后台 `kvm_admin` Cookie；webhooks/public 无 Cookie。**写操作统一校验 `Origin` 头**（CORS_ORIGINS 内）防 CSRF。错误体 = `errorResponseSchema`；成功直接返回资源 JSON；列表用 `paginated()`。
 
 ### public（限流：IP 60/min）
 - `GET /catalog` → productGroupDto[]（active 且 !hidden，含 pricing+configGroups+options）
@@ -407,12 +407,12 @@ processQueuedTasks(db, limit=50): Promise<{processed, succeeded, failed}>   // c
 ## 5. 环境变量（.env.example 汇总）
 
 ```text
-DATABASE_URL=mysql://user:pass@host:3306/pinhaoji
+DATABASE_URL=mysql://user:pass@host:3306/qmkvm
 REDIS_URL=redis://host:6379/0        # 可选；缺省用内存降级（限流）与 inline 队列
 APP_KEY=<base64 32 字节，AES 主密钥>
 API_PORT=4000
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:8000
-COOKIE_DOMAIN=                       # 生产 .pinhaoji1.cn
+COOKIE_DOMAIN=                       # 生产 .example.com（替换为你的域名）
 PORTAL_URL=http://localhost:3001
 ADMIN_URL=http://localhost:8000
 WWW_URL=http://localhost:3000

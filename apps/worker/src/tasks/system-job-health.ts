@@ -4,8 +4,8 @@
  * 按钉钉机器人格式 POST 告警（text 消息，飞书兼容）。无失败不打扰。
  */
 import { and, gte, lt } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db";
-import { logger } from "@pinhaoji/logger";
+import { schema, type Db } from "@qmkvm/db";
+import { logger } from "@qmkvm/logger";
 import { workerEnv } from "../env.js";
 import type { TaskDef } from "./framework.js";
 
@@ -94,7 +94,7 @@ async function run(db: Db, now: Date): Promise<HealthSummary> {
 
   if (summary.failed > 0) {
     const lines = [
-      `【拼好机】定时任务告警 ${date}`,
+      `【启明智联】定时任务告警 ${date}`,
       `昨日共执行 ${summary.total} 次，失败 ${summary.failed} 次（partial ${summary.partial} 次）`,
       ...summary.failedByTask.map((t) => `- ${t.task}：失败 ${t.count} 次`),
       ...(errorSamples.length > 0 ? ["", "错误样例：", ...errorSamples.map((e) => `- ${e}`)] : []),

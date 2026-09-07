@@ -5,10 +5,10 @@
  * runner（任务执行器）按 service.moduleCode 从 registry 取模块并执行对应动作，
  * 再根据 ModuleResult 推进服务状态（manual 结果除外）。
  */
-import type { BillingCycle } from "@pinhaoji/contracts";
-import type { Db } from "@pinhaoji/db/client";
-import type { Logger } from "@pinhaoji/logger";
-import type { ServiceRow } from "@pinhaoji/core";
+import type { BillingCycle } from "@qmkvm/contracts";
+import type { Db } from "@qmkvm/db/client";
+import type { Logger } from "@qmkvm/logger";
+import type { ServiceRow } from "@qmkvm/core";
 
 /** 模块配置（service.moduleConfig 与商品 moduleConfig 合并后的结果，service 优先） */
 export type ModuleConfig = Record<string, unknown>;

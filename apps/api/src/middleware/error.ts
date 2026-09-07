@@ -1,6 +1,6 @@
 import type { ErrorHandler } from "hono";
 import { ZodError } from "zod";
-import { AppError } from "@pinhaoji/core";
+import { AppError } from "@qmkvm/core";
 
 export const errorHandler: ErrorHandler = (err, c) => {
   const requestId = c.get("requestId") ?? "req_unknown";

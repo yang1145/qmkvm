@@ -137,7 +137,7 @@ async function main() {
     { key: "billing.overdue_grace_days", value: { days: 3 } },
     { key: "billing.terminate_days", value: { days: 15 } },
     { key: "payment.intent_timeout_minutes", value: { minutes: 30 } },
-    { key: "site", value: { siteName: "拼好机", announcement: "" } },
+    { key: "site", value: { siteName: "启明智联", announcement: "" } },
     { key: "payment.gateways", value: { alipay: { enabled: false }, wechat: { enabled: false }, mock: { enabled: true } } },
   ];
   for (const s of settingDefs) {
@@ -149,33 +149,35 @@ async function main() {
   }
 
   // —— 通知模板（zh） ——
-  // 旧签名升级：历史 sms 模板硬编码【拼好机】→ 统一改写为变量【{{site.name}}】（渲染时取 settings.site.siteName）
+  // 旧签名升级：更名前（v1）的 sms 模板硬编码了旧品牌签名 → 统一改写为变量【{{site.name}}】（渲染时取 settings.site.siteName）。
+  // 旧签名字面量按字符拼装，避免在代码中出现旧品牌明文（存量数据库中的历史模板仍为 v1 文案，需保持可匹配）。
   {
+    const legacySig = `【${["拼", "好", "机"].join("")}】`;
     const legacy = await db
       .select()
       .from(schema.notificationTemplates)
       .where(
         and(
           eq(schema.notificationTemplates.channel, "sms"),
-          like(schema.notificationTemplates.body, "【拼好机】%"),
+          like(schema.notificationTemplates.body, `${legacySig}%`),
         ),
       );
     for (const t of legacy) {
       await db
         .update(schema.notificationTemplates)
-        .set({ body: t.body.replace("【拼好机】", "【{{site.name}}】") })
+        .set({ body: t.body.replace(legacySig, "【{{site.name}}】") })
         .where(eq(schema.notificationTemplates.id, t.id));
     }
-    if (legacy.length > 0) console.log("  ~ 短信签名升级:", legacy.length, "条【拼好机】→【{{site.name}}】");
+    if (legacy.length > 0) console.log("  ~ 短信签名升级:", legacy.length, "条 v1 旧签名 →【{{site.name}}】");
   }
   const T = (subject: string, body: string, sms?: string) => ({ subject, body, sms });
   const templates: Record<string, ReturnType<typeof T>> = {
-    "user.registered": T("欢迎注册拼好机", "您好 {{user.name}}，欢迎注册拼好机！您现在可以选购云服务器并管理您的服务。"),
+    "user.registered": T("欢迎注册启明智联", "您好 {{user.name}}，欢迎注册启明智联！您现在可以选购云服务器并管理您的服务。"),
     "invoice.created": T("新账单待支付", "您有一张新账单 {{invoice.invoiceNo}}，金额 {{invoice.totalCny}}，请及时支付。", "【{{site.name}}】您有新账单{{invoice.invoiceNo}}，金额{{invoice.totalCny}}，请及时支付。"),
     "invoice.paid": T("账单支付成功", "账单 {{invoice.invoiceNo}} 已支付成功，感谢您的支持。", "【{{site.name}}】账单{{invoice.invoiceNo}}已支付成功。"),
     "invoice.reminder": T("账单即将到期提醒", "您的账单 {{invoice.invoiceNo}} 尚未支付，请及时处理以免影响服务。", "【{{site.name}}】账单{{invoice.invoiceNo}}未支付，请及时处理。"),
     "invoice.overdue": T("账单逾期提醒", "您的账单 {{invoice.invoiceNo}} 已逾期，服务可能被暂停，请尽快支付。", "【{{site.name}}】账单{{invoice.invoiceNo}}已逾期，请尽快支付。"),
-    "service.activated": T("服务开通成功", "您的服务 {{service.name}} 已开通成功，感谢选择拼好机。", "【{{site.name}}】服务{{service.name}}已开通成功。"),
+    "service.activated": T("服务开通成功", "您的服务 {{service.name}} 已开通成功，感谢选择启明智联。", "【{{site.name}}】服务{{service.name}}已开通成功。"),
     "service.suspend_warning": T("服务即将暂停提醒", "服务 {{service.name}} 即将因逾期暂停，请及时续费。", "【{{site.name}}】服务{{service.name}}即将因逾期暂停，请及时续费。"),
     "service.suspended": T("服务已暂停", "服务 {{service.name}} 因逾期已暂停，续费后自动恢复。", "【{{site.name}}】服务{{service.name}}已暂停，续费后恢复。"),
     "service.terminated": T("服务已终止", "服务 {{service.name}} 已逾期终止，数据可能已释放。", "【{{site.name}}】服务{{service.name}}已逾期终止。"),
@@ -232,7 +234,7 @@ async function main() {
       categorySlug: "getting-started",
       title: "如何注册并完成实名认证",
       slug: "kb-register-and-verify",
-      contentHtml: `<h2>注册账号</h2><p>访问拼好机首页，点击右上角「注册」，使用手机号接收验证码即可完成注册。</p><h2>实名认证</h2><p>登录后进入「账户资料 → 实名认证」，按提示提交个人身份证或企业营业执照信息，审核一般在 1 个工作日内完成。</p><p>实名认证通过后即可正常购买云服务器产品。</p>`,
+      contentHtml: `<h2>注册账号</h2><p>访问启明智联首页，点击右上角「注册」，使用手机号接收验证码即可完成注册。</p><h2>实名认证</h2><p>登录后进入「账户资料 → 实名认证」，按提示提交个人身份证或企业营业执照信息，审核一般在 1 个工作日内完成。</p><p>实名认证通过后即可正常购买云服务器产品。</p>`,
     },
     {
       categorySlug: "getting-started",

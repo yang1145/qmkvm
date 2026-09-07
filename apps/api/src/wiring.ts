@@ -1,9 +1,9 @@
-import { enqueueJob, registerJobHandler } from "@pinhaoji/core";
-import { processPaymentEvent, registerPaymentJobHandlers } from "@pinhaoji/payments";
-import { getDb, schema } from "@pinhaoji/db";
+import { enqueueJob, registerJobHandler } from "@qmkvm/core";
+import { processPaymentEvent, registerPaymentJobHandlers } from "@qmkvm/payments";
+import { getDb, schema } from "@qmkvm/db";
 import { eq } from "drizzle-orm";
-import { notifyUserAllChannels } from "@pinhaoji/notifications";
-import { logger } from "@pinhaoji/logger";
+import { notifyUserAllChannels } from "@qmkvm/notifications";
+import { logger } from "@qmkvm/logger";
 
 /**
  * 队列任务处理器注册：API 进程（inline 降级模式）与 Worker 进程共用。
@@ -22,13 +22,13 @@ export function registerJobHandlers() {
   });
 
   registerJobHandler("provision.task", async (data: { taskId: number }) => {
-    const { runProvisionTask } = await import("@pinhaoji/provisioning");
+    const { runProvisionTask } = await import("@qmkvm/provisioning");
     const d = getDb();
     await runProvisionTask(d, data.taskId);
   });
 
   registerJobHandler("provision.retry", async (data: { taskId: number }) => {
-    const { runProvisionTask } = await import("@pinhaoji/provisioning");
+    const { runProvisionTask } = await import("@qmkvm/provisioning");
     const d = getDb();
     await runProvisionTask(d, data.taskId);
   });

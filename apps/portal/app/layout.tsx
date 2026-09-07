@@ -7,10 +7,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "拼好机 · 客户中心",
-    template: "%s · 拼好机",
+    default: "启明智联 · 客户中心",
+    template: "%s · 启明智联",
   },
-  description: "拼好机 Pinhaoji Cloud 客户门户：购买、管理您的云服务。",
+  description: "启明智联 QmKvm 客户门户：购买、管理您的云服务。",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

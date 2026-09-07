@@ -7,7 +7,7 @@ import {
   cartQuoteSchema,
   updateCartItemSchema,
   type BillingCycle,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 import { Minus, Plus, Tag, Trash2 } from "lucide-react";
 
 import { api } from "@/lib/api";

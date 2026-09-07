@@ -2,7 +2,7 @@
 
 import nodemailer from "nodemailer";
 
-import { createLogger } from "@pinhaoji/logger";
+import { createLogger } from "@qmkvm/logger";
 
 const log = createLogger("notifications:email");
 

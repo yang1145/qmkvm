@@ -71,11 +71,11 @@ export function SiteHeader() {
         {/* Logo */}
         <Link href="/" className="mr-2 flex items-center gap-2 font-semibold">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
-            拼
+            启
           </span>
-          <span className="hidden sm:inline">拼好机</span>
+          <span className="hidden sm:inline">启明智联</span>
           <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
-            Pinhaoji Cloud
+            QmKvm
           </span>
         </Link>
 
@@ -201,7 +201,7 @@ export function SiteHeader() {
           />
           <div className="absolute right-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-l bg-card p-4 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <span className="font-semibold">拼好机</span>
+              <span className="font-semibold">启明智联</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}

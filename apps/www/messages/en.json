@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "Pinhaoji Cloud | Affordable, Reliable Global Cloud Infrastructure",
-    "description": "Pinhaoji Cloud provides developers, startups and enterprises with cost-effective, highly available cloud servers, networking and storage. Predictable cost, stable operations, from web hosting to production workloads."
+    "title": "QmKvm | Affordable, Reliable Global Cloud Infrastructure",
+    "description": "QmKvm provides developers, startups and enterprises with cost-effective, highly available cloud servers, networking and storage. Predictable cost, stable operations, from web hosting to production workloads."
   },
   "nav": {
     "products": "Products",
@@ -17,7 +17,7 @@
   "hero": {
     "slides": [
       {
-        "badge": "Pinhaoji Cloud",
+        "badge": "QmKvm",
         "title": "Reliable cloud infrastructure, at a fair price",
         "subtitle": "A global cloud services brand focused on overseas markets. Get reliable cloud capabilities at a reasonable cost — on-demand, stable and predictable infrastructure for websites, APIs and enterprise workloads.",
         "ctaPrimary": "Request Trial",
@@ -112,7 +112,7 @@
     "note": "Sample pricing shown above. Final prices and billing details follow official product documentation and terms."
   },
   "diff": {
-    "title": "Why Pinhaoji",
+    "title": "Why QmKvm",
     "subtitle": "Trust built on verifiable metrics and transparent mechanisms — never overpromise.",
     "items": [
       {
@@ -246,7 +246,7 @@
     "scalePlaceholder": "e.g. 10 instances / month",
     "message": "Message",
     "messagePlaceholder": "Briefly describe your scenario (optional)",
-    "privacy": "I agree that Pinhaoji processes the above information under its Privacy Policy for follow-up communication.",
+    "privacy": "I agree that QmKvm processes the above information under its Privacy Policy for follow-up communication.",
     "submit": "Submit",
     "submitting": "Submitting…",
     "success": "Submitted. We will contact you shortly.",
@@ -267,14 +267,14 @@
     "privacyHref": "/en/privacy",
     "termsHref": "/en/terms",
     "slogan": "Reliable cloud capabilities at a fair price.",
-    "copyright": "© {year} Pinhaoji Cloud · pinhaoji1.cn"
+    "copyright": "© {year} QmKvm"
   },
   "about": {
-    "badge": "About Pinhaoji",
+    "badge": "About QmKvm",
     "title": "Reliable cloud capability at a fair price",
-    "intro": "Pinhaoji is a global cloud services brand focused on overseas markets. We believe reliable cloud infrastructure should not come with high costs or complex lock-in.",
+    "intro": "QmKvm is a global cloud services brand focused on overseas markets. We believe reliable cloud infrastructure should not come with high costs or complex lock-in.",
     "storyTitle": "Why we exist",
-    "story": "From developers and startups to enterprise teams, more workloads than ever need stable, predictable cloud resources. Pinhaoji brings together compute, storage and networking with clear specs and transparent billing — so teams get dependable cloud capability at a reasonable cost, from a first website to production workloads.",
+    "story": "From developers and startups to enterprise teams, more workloads than ever need stable, predictable cloud resources. QmKvm brings together compute, storage and networking with clear specs and transparent billing — so teams get dependable cloud capability at a reasonable cost, from a first website to production workloads.",
     "principlesTitle": "What we stand for",
     "principles": [
       { "name": "Transparent cost", "desc": "Clear billing logic and resource specs keep every cloud spend predictable." },
@@ -283,7 +283,7 @@
       { "name": "Ongoing support", "desc": "24/7 technical support from selection through operations." }
     ],
     "architectureTitle": "Platform architecture",
-    "architectureDesc": "From a global edge network and redundant infrastructure, to compute, storage and networking capabilities, to unified support and operations — Pinhaoji uses a clear layered architecture to power workloads of any size.",
+    "architectureDesc": "From a global edge network and redundant infrastructure, to compute, storage and networking capabilities, to unified support and operations — QmKvm uses a clear layered architecture to power workloads of any size.",
     "architectureLayers": [
       { "name": "Infrastructure layer", "desc": "Global edge network and multi-region data centers with multi-layer redundancy." },
       { "name": "Service layer", "desc": "Elastic compute, bare metal, object storage and network acceleration, combined on demand." },

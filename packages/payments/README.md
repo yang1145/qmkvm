@@ -1,4 +1,4 @@
-# @pinhaoji/payments
+# @qmkvm/payments
 
 支付域包：网关抽象（mock / 支付宝 / 微信）+ 回调处理管线 + 掉单补偿 + 退款。
 遵循 `docs/SPEC-P0.md` §2.4；金额一律整数分；相对导入带 `.js` 后缀。
@@ -21,7 +21,7 @@ src/
 ## 快速上手（宿主进程，如 apps/api、apps/worker）
 
 ```ts
-import { getDb } from "@pinhaoji/db/client";
+import { getDb } from "@qmkvm/db/client";
 import {
   createGateways,           // 按 settings 装配全部网关
   getGateway,               // 按需取单个网关
@@ -31,7 +31,7 @@ import {
   registerPaymentJobHandlers,
   queryAndSettleStaleIntents,
   createRefund,
-} from "@pinhaoji/payments";
+} from "@qmkvm/payments";
 
 const db = getDb();
 
@@ -60,7 +60,7 @@ app.post("/api/v1/webhooks/alipay", async (c) => {
 
 ```ts
 // examples/stripe.ts
-import type { PaymentGateway } from "@pinhaoji/payments";
+import type { PaymentGateway } from "@qmkvm/payments";
 
 export function createStripeGateway(config: { apiKey: string }): PaymentGateway {
   return {
@@ -81,7 +81,7 @@ registerGateway(createStripeGateway({ apiKey: process.env.STRIPE_KEY! }));
 ## 网关配置（settings 表 `payment.gateways`）
 
 值为 JSON，key = 网关 code。敏感字段以 `{"__enc":true,"v":"<aes>"}` 加密存储
-（AES-256-GCM，APP_KEY 派生，格式与 @pinhaoji/auth 一致；加密用
+（AES-256-GCM，APP_KEY 派生，格式与 @qmkvm/auth 一致；加密用
 `encryptSettingValue()`，后台设置读取侧负责加密落库）。缺失 `__enc` 包裹的字符串按明文处理。
 
 ```jsonc

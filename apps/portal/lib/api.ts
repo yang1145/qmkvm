@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { errorResponseSchema } from "@pinhaoji/contracts";
+import { errorResponseSchema } from "@qmkvm/contracts";
 
 /** 后端 API 基准地址（同源反向代理或独立域名均可） */
 export const API_BASE_URL =
@@ -64,13 +64,17 @@ async function request<T>(
 ): Promise<T> {
   const { query, parse, silent, signal } = options;
 
+  const isFormData = body instanceof FormData;
   let res: Response;
   try {
     res = await fetch(buildUrl(path, query), {
       method,
       credentials: "include",
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers:
+        body !== undefined && !isFormData
+          ? { "Content-Type": "application/json" }
+          : undefined,
+      body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
       signal,
       cache: "no-store",
     });
@@ -98,7 +102,7 @@ async function request<T>(
     if (!silent) errorHandler?.(message);
     // 会话失效：广播给 AuthProvider 清空登录态
     if (res.status === 401) {
-      window.dispatchEvent(new CustomEvent("phj:unauthorized"));
+      window.dispatchEvent(new CustomEvent("kvm:unauthorized"));
     }
     throw new ApiError(message, { code, status: res.status, requestId });
   }

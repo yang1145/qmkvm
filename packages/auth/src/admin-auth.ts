@@ -2,11 +2,11 @@
 
 import { and, eq, gt, isNull } from "drizzle-orm";
 
-import { ALL_PERMISSIONS, ERR, PERMISSIONS, type PermissionKey } from "@pinhaoji/contracts";
-import { AppError } from "@pinhaoji/core/errors";
-import type { Db } from "@pinhaoji/db/client";
-import { adminRoles, adminSessions, adminUsers, auditLogs } from "@pinhaoji/db/schema";
-import { createLogger } from "@pinhaoji/logger";
+import { ALL_PERMISSIONS, ERR, PERMISSIONS, type PermissionKey } from "@qmkvm/contracts";
+import { AppError } from "@qmkvm/core/errors";
+import type { Db } from "@qmkvm/db/client";
+import { adminRoles, adminSessions, adminUsers, auditLogs } from "@qmkvm/db/schema";
+import { createLogger } from "@qmkvm/logger";
 
 import { verifyPassword } from "./password.js";
 import { randomToken, sha256hex } from "./crypto.js";

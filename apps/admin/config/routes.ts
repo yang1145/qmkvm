@@ -1,5 +1,5 @@
 /**
- * 拼好机管理后台路由（全中文菜单）
+ * 启明智联业务管理系统路由（全中文菜单）
  * access 字段对应 src/access.ts 的 canXxx 权限点
  */
 export default [

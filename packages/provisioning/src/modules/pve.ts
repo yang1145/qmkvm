@@ -39,7 +39,7 @@
  * 最长 30s，失败不阻塞交付）。clone 成功后的失败均携带 vmid 便于人工清理。
  */
 import { Agent, fetch as undiciFetch } from "undici";
-import type { ServiceRow } from "@pinhaoji/core";
+import type { ServiceRow } from "@qmkvm/core";
 import { STANDARD_MODULE_ACTIONS } from "../types.js";
 import type {
   ChangePackageTarget,
@@ -651,7 +651,7 @@ export const pveModule: ProvisionModule = {
       `${vmPath(cfg, node, cfg.templateVmId)}/clone`,
       {
         newid,
-        name: `phj-${service.id}`,
+        name: `kvm-${service.id}`,
         full: 1,
         ...(cfg.storage ? { target: cfg.storage } : {}),
       },

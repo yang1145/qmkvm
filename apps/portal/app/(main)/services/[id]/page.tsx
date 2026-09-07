@@ -8,7 +8,7 @@ import {
   productGroupDto,
   upgradeQuoteSchema,
   type BillingCycle,
-} from "@pinhaoji/contracts";
+} from "@qmkvm/contracts";
 import { z } from "zod";
 import { ArrowLeftRight, RefreshCw, XCircle } from "lucide-react";
 

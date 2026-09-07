@@ -17,7 +17,7 @@ import { createdAt, id, updatedAt, type Json } from "./_shared.js";
 
 /**
  * 账单（invoice）：催收与对账依据。
- * invoiceNo 规则：PHJ-YYYYMM-XXXXXX。
+ * invoiceNo 规则：KVM-YYYYMM-XXXXXX。
  */
 export const invoices = mysqlTable(
   "invoices",

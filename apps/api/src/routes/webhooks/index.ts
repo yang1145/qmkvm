@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { getDb } from "@pinhaoji/db";
-import { handleGatewayCallback } from "@pinhaoji/payments";
-import { logger } from "@pinhaoji/logger";
+import { getDb } from "@qmkvm/db";
+import { handleGatewayCallback } from "@qmkvm/payments";
+import { logger } from "@qmkvm/logger";
 
 /**
  * 网关异步回调：

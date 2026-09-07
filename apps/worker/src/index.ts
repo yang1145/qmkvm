@@ -1,5 +1,5 @@
 /**
- * Worker 进程入口：BullMQ 消费者（队列 `phj`）+ 9 个 repeatable 定时任务。
+ * Worker 进程入口：BullMQ 消费者（队列 `kvm`）+ 9 个 repeatable 定时任务。
  *
  * - 启动时注册队列任务处理器（provision.task / provision.retry / notify.user /
  *   payment.process_event / domain.event），消费侧统一经 core 的
@@ -10,11 +10,11 @@
  */
 import { Worker, Queue } from "bullmq";
 import { eq } from "drizzle-orm";
-import { getDb, getRedis, schema } from "@pinhaoji/db";
-import { QUEUE_NAME, closeStalePaymentIntents, processEnqueuedJob, registerJobHandler } from "@pinhaoji/core";
-import { processQueuedTasks, runProvisionTask } from "@pinhaoji/provisioning";
-import { notifyUserAllChannels } from "@pinhaoji/notifications";
-import { logger } from "@pinhaoji/logger";
+import { getDb, getRedis, schema } from "@qmkvm/db";
+import { QUEUE_NAME, closeStalePaymentIntents, processEnqueuedJob, registerJobHandler } from "@qmkvm/core";
+import { processQueuedTasks, runProvisionTask } from "@qmkvm/provisioning";
+import { notifyUserAllChannels } from "@qmkvm/notifications";
+import { logger } from "@qmkvm/logger";
 import { workerEnv } from "./env.js";
 import { TASKS, runTask } from "./tasks/index.js";
 
@@ -54,7 +54,7 @@ function registerJobHandlers(db: Db): void {
   );
 
   registerJobHandler("payment.process_event", async (data: { eventId?: number | string }) => {
-    const payments = await import("@pinhaoji/payments");
+    const payments = await import("@qmkvm/payments");
     await payments.processPaymentEvent(db, Number(data?.eventId));
   });
 

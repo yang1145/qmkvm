@@ -36,6 +36,13 @@
       "when": 1788717774392,
       "tag": "0004_identity_reject_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1788720398738,
+      "tag": "0005_clean_lilith",
+      "breakpoints": true
     }
   ]
 }

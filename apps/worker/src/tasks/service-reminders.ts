@@ -1,5 +1,5 @@
 /** 到期提醒（T-14/7/3/1）：每日 09:00（UTC）。 */
-import { enqueueDueReminders } from "@pinhaoji/core";
+import { enqueueDueReminders } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const serviceRemindersTask: TaskDef = {

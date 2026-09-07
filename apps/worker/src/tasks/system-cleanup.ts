@@ -4,7 +4,7 @@
  * 审计/通知等日志（>90 天）不在本任务范围内，一律保留。
  */
 import { lt } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db";
+import { schema, type Db } from "@qmkvm/db";
 import type { TaskDef } from "./framework.js";
 
 interface CleanupResult {

@@ -1,5 +1,5 @@
 /** 欠费暂停调度：每日 04:00（UTC）。core 创建 suspend 供应任务，由供应模块执行。 */
-import { suspendOverdueServices } from "@pinhaoji/core";
+import { suspendOverdueServices } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const serviceSuspendOverdueTask: TaskDef = {

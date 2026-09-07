@@ -1,5 +1,5 @@
 /** 续费账单批量生成：每日 03:00（UTC）。 */
-import { generateDueRenewalInvoices } from "@pinhaoji/core";
+import { generateDueRenewalInvoices } from "@qmkvm/core";
 import type { TaskDef } from "./framework.js";
 
 export const renewalInvoicesTask: TaskDef = {

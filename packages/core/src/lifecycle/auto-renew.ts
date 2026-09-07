@@ -6,7 +6,7 @@
  * 事务内行锁 + 条件守卫（next_due_date 仍 <= today）兜底并发重复调度。
  */
 import { and, eq, isNotNull, lte, ne } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
+import { schema, type Db } from "@qmkvm/db/client";
 import { addCycle, maxDate, todayStr } from "../date-utils.js";
 import { formatCny } from "../money.js";
 import { debitUser } from "../billing/credit.js";

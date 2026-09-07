@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/worker",
+  "name": "@qmkvm/worker",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -11,13 +11,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/core": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
-    "@pinhaoji/notifications": "workspace:*",
-    "@pinhaoji/payments": "workspace:*",
-    "@pinhaoji/provisioning": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/core": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
+    "@qmkvm/notifications": "workspace:*",
+    "@qmkvm/payments": "workspace:*",
+    "@qmkvm/provisioning": "workspace:*",
     "bullmq": "^6.3.4",
     "drizzle-orm": "^0.45.2",
     "ioredis": "^6.0.0"

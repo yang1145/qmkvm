@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/payments",
+  "name": "@qmkvm/payments",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -12,10 +12,10 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/core": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/core": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
     "alipay-sdk": "^4.14.0",
     "drizzle-orm": "^0.45.2",
     "wechatpay-axios-plugin": "^0.9.6"

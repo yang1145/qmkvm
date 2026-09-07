@@ -51,6 +51,16 @@ export const userProfiles = mysqlTable(
     status: mysqlEnum("status", ["unverified", "pending", "verified", "rejected"])
       .notNull()
       .default("unverified"),
+    /** 身份证正面照存储路径（UPLOAD_DIR 相对/绝对路径，仅管理员审核可见） */
+    idFrontPath: varchar("id_front_path", { length: 500 }),
+    /** 身份证反面照存储路径 */
+    idBackPath: varchar("id_back_path", { length: 500 }),
+    /** 手持身份证照存储路径 */
+    idHandheldPath: varchar("id_handheld_path", { length: 500 }),
+    /** 正面照 OCR 提取的身份证号（OCR 不可用时为 null） */
+    ocrIdNumber: varchar("ocr_id_number", { length: 30 }),
+    /** 正面照 OCR 与用户填写证件号的核对结果（校验码验证通过才算 matched） */
+    ocrStatus: mysqlEnum("ocr_status", ["matched", "unavailable"]),
     /** 审核驳回原因（rejected 时有值，重新提交后清空） */
     rejectReason: varchar("reject_reason", { length: 255 }),
     verifiedAt: datetime("verified_at", { mode: "date" }),

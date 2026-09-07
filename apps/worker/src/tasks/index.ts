@@ -1,6 +1,6 @@
 /**
  * Worker 定时任务注册表（SPEC-P0 §3 共 9 个）。
- * BullMQ repeatable（UTC cron）+ `pnpm --filter @pinhaoji/worker task -- <name>` 手动执行共用。
+ * BullMQ repeatable（UTC cron）+ `pnpm --filter @qmkvm/worker task -- <name>` 手动执行共用。
  */
 import { renewalInvoicesTask } from "./renewal-invoices.js";
 import { renewalAutoTask } from "./renewal-auto.js";

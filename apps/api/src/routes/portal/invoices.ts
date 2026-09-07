@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 
 type User = typeof schema.users.$inferSelect;
-import { pageQuerySchema } from "@pinhaoji/contracts";
+import { pageQuerySchema } from "@qmkvm/contracts";
 import {
   payInvoiceWithBalance,
   markOrderPaid,
   appError,
-} from "@pinhaoji/core";
-import { getGateway } from "@pinhaoji/payments";
+} from "@qmkvm/core";
+import { getGateway } from "@qmkvm/payments";
 import { requireAuth } from "../../middleware/auth.js";
 
 export const portalInvoiceRoutes = new Hono();
@@ -121,7 +121,7 @@ portalInvoiceRoutes.post("/invoices/:id/pay", async (c) => {
       throw appError("BILL_INSUFFICIENT_BALANCE", "余额不足，请先充值或选择在线支付");
     }
     if (inv.type === "renewal") {
-      const { payRenewalInvoice } = await import("@pinhaoji/core");
+      const { payRenewalInvoice } = await import("@qmkvm/core");
       await payRenewalInvoice(db, user.id, inv.id);
     } else {
       await payInvoiceWithBalance(db, user.id, inv.id);

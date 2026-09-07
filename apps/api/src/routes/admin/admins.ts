@@ -2,16 +2,16 @@
 import { Hono } from "hono";
 import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
+import { getDb, schema } from "@qmkvm/db";
 import {
   adminCreateSchema,
   idParamSchema,
   pageQuerySchema,
   roleUpsertSchema,
-} from "@pinhaoji/contracts";
-import { ALL_PERMISSIONS, type PermissionKey } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
-import { hashPassword } from "@pinhaoji/auth";
+} from "@qmkvm/contracts";
+import { ALL_PERMISSIONS, type PermissionKey } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
+import { hashPassword } from "@qmkvm/auth";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 import { adminPayload } from "./auth.js";

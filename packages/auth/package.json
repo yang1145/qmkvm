@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/auth",
+  "name": "@qmkvm/auth",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",
-    "@pinhaoji/contracts": "workspace:*",
-    "@pinhaoji/core": "workspace:*",
-    "@pinhaoji/db": "workspace:*",
-    "@pinhaoji/logger": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
+    "@qmkvm/core": "workspace:*",
+    "@qmkvm/db": "workspace:*",
+    "@qmkvm/logger": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "ioredis": "^6.0.0"
   },

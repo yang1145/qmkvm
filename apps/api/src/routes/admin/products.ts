@@ -5,10 +5,10 @@
 import { Hono } from "hono";
 import { and, asc, desc, eq, inArray, like, ne, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@pinhaoji/db";
-import type { Json } from "@pinhaoji/db/schema";
-import { idParamSchema, pageQuerySchema, productUpsertSchema } from "@pinhaoji/contracts";
-import { appError } from "@pinhaoji/core";
+import { getDb, schema } from "@qmkvm/db";
+import type { Json } from "@qmkvm/db/schema";
+import { idParamSchema, pageQuerySchema, productUpsertSchema } from "@qmkvm/contracts";
+import { appError } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, writeAdminAudit } from "./helpers.js";
 

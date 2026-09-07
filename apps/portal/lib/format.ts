@@ -1,4 +1,4 @@
-import type { BillingCycle } from "@pinhaoji/contracts";
+import type { BillingCycle } from "@qmkvm/contracts";
 
 /**
  * 金额展示：整数分 → "¥39.00"。

@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         fontSize: 12,
       }}
     >
-      拼好机云业务系统管理后台 ©{year}
+      启明智联业务管理系统 ©{year}
     </div>
   );
 };

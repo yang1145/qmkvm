@@ -9,9 +9,9 @@
  *   amount      = unitFirst × qty + setupFee
  */
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { schema } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
-import { billingCycleEnum, type BillingCycle } from "@pinhaoji/contracts";
+import { schema } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
+import { billingCycleEnum, type BillingCycle } from "@qmkvm/contracts";
 import { appError } from "../errors.js";
 import type { DbLike } from "../lifecycle/service-actions.js";
 

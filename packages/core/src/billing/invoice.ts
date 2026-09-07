@@ -1,12 +1,12 @@
 /**
  * 账单（invoice）：编号生成、建单（含明细）、标记支付（幂等）、作废。
- * invoiceNo 规则：PHJ-YYYYMM-XXXXXX（6 位大写字母数字随机，查重重试）。
+ * invoiceNo 规则：KVM-YYYYMM-XXXXXX（6 位大写字母数字随机，查重重试）。
  * total = subtotal - discount；balance_used 在余额支付时写入实扣金额。
  */
 import { and, eq } from "drizzle-orm";
 import { randomInt } from "node:crypto";
-import { schema } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
+import { schema } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
 import { appError } from "../errors.js";
 import type { DbLike, Tx } from "../lifecycle/service-actions.js";
 import { emitEvent, EVENT_NAMES } from "../events.js";
@@ -17,12 +17,12 @@ export type InvoiceRow = typeof invoices.$inferSelect;
 export type InvoiceStatus = InvoiceRow["status"];
 export type InvoiceType = InvoiceRow["type"];
 
-const INVOICE_NO_PREFIX = "PHJ";
+const INVOICE_NO_PREFIX = "KVM";
 const SUFFIX_LENGTH = 6;
 const SUFFIX_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const MAX_INVOICE_NO_ATTEMPTS = 5;
 
-/** 账单号格式化（纯函数）：PHJ-YYYYMM-XXXXXX（按 UTC 年月） */
+/** 账单号格式化（纯函数）：KVM-YYYYMM-XXXXXX（按 UTC 年月） */
 export function formatInvoiceNo(now: Date, suffix: string): string {
   if (!new RegExp(`^[${SUFFIX_CHARS}]{${SUFFIX_LENGTH}}$`).test(suffix)) {
     throw appError("VALIDATION_FAILED", `账单号后缀须为 ${SUFFIX_LENGTH} 位大写字母数字：${suffix}`);

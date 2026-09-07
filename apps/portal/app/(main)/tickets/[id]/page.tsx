@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ticketReplySchema } from "@pinhaoji/contracts";
+import { ticketReplySchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useApiData } from "@/hooks/use-api";

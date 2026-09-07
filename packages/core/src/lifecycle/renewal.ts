@@ -2,8 +2,8 @@
  * 服务生命周期 · 续费：到期账单批量生成、续费支付推进服务到期日。
  */
 import { and, eq, gte, inArray, isNotNull, lte } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { BillingCycle } from "@pinhaoji/contracts";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { BillingCycle } from "@qmkvm/contracts";
 import { appError } from "../errors.js";
 import { addCycle, addDays, maxDate, todayStr } from "../date-utils.js";
 import { formatCny } from "../money.js";

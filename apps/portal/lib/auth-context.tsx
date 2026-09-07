@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { authResultSchema, type AuthResult } from "@pinhaoji/contracts";
+import { authResultSchema, type AuthResult } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { notificationListSchema } from "@/lib/schemas";
@@ -95,8 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 会话失效（401）时清空登录态
   React.useEffect(() => {
     const onUnauthorized = () => setUser(null);
-    window.addEventListener("phj:unauthorized", onUnauthorized);
-    return () => window.removeEventListener("phj:unauthorized", onUnauthorized);
+    window.addEventListener("kvm:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("kvm:unauthorized", onUnauthorized);
   }, []);
 
   const logout = React.useCallback(async () => {

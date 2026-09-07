@@ -12,7 +12,7 @@
  * 优惠只作用于 subtotal，单订单一张、不叠加。
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { schema } from "@pinhaoji/db/client";
+import { schema } from "@qmkvm/db/client";
 import { appError } from "../errors.js";
 import { applyPercent } from "../money.js";
 import type { DbLike } from "../lifecycle/service-actions.js";

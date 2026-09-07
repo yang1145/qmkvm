@@ -2,7 +2,7 @@
  * settings 表网关配置的加解密与解码。
  *
  * settings.value 为 JSON；敏感字段以 `{"__enc":true,"v":"<aes>"}` 形式存储，
- * 解密算法与 @pinhaoji/auth 的 crypto 保持一致：AES-256-GCM，密钥取 APP_KEY
+ * 解密算法与 @qmkvm/auth 的 crypto 保持一致：AES-256-GCM，密钥取 APP_KEY
  * （base64 解码后前 32 字节），密文格式 `iv:tag:ct`（三段 base64，":" 分隔）。
  *
  * payments 包不依赖 auth 包（避免越权依赖），故在此独立实现同一格式。

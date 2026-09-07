@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { productGroupDto } from "@pinhaoji/contracts";
+import { productGroupDto } from "@qmkvm/contracts";
 import { z } from "zod";
 
 import { api } from "@/lib/api";

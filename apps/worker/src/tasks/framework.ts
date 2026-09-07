@@ -5,9 +5,9 @@
  * 结束回写 status/result/error/finishedAt；任何异常只记日志不外抛（不中断进程）。
  */
 import { eq } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db";
-import type { Json } from "@pinhaoji/db/schema";
-import { logger } from "@pinhaoji/logger";
+import { schema, type Db } from "@qmkvm/db";
+import type { Json } from "@qmkvm/db/schema";
+import { logger } from "@qmkvm/logger";
 
 const log = logger.child({ module: "worker:tasks" });
 

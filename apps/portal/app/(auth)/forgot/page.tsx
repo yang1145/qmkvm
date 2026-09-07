@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { phoneSchema, resetPasswordBySmsSchema } from "@pinhaoji/contracts";
+import { phoneSchema, resetPasswordBySmsSchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";

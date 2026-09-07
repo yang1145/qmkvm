@@ -1,5 +1,5 @@
 {
-  "name": "@pinhaoji/portal",
+  "name": "@qmkvm/portal",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@pinhaoji/contracts": "workspace:*",
+    "@qmkvm/contracts": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.23",
     "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@radix-ui/react-select": "^2.3.7",

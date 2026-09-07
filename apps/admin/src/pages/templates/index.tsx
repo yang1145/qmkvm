@@ -260,7 +260,7 @@ const TemplateList: React.FC = () => {
               style={{ width: 240 }}
               maxLength={20}
               value={sigValue}
-              placeholder="例如：拼好机"
+              placeholder="例如：启明智联"
               onChange={(e) => setSigValue(e.target.value)}
               onPressEnter={doSetSignature}
             />

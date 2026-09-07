@@ -13,7 +13,7 @@ const Settings: ProLayoutProps & {
   fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: '拼好机管理后台',
+  title: '启明智联业务管理系统',
   logo: '/logo.png',
   iconfontUrl: '',
   token: {},

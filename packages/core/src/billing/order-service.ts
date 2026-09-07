@@ -7,9 +7,9 @@
  * useBalance 且余额足额时 payInvoiceWithBalance + markOrderPaid（P0 仅全额余额或全额在线，不做混合）。
  */
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { schema, type Db } from "@pinhaoji/db/client";
-import type { Json } from "@pinhaoji/db/schema";
-import { billingCycleEnum, type BillingCycle } from "@pinhaoji/contracts";
+import { schema, type Db } from "@qmkvm/db/client";
+import type { Json } from "@qmkvm/db/schema";
+import { billingCycleEnum, type BillingCycle } from "@qmkvm/contracts";
 import { appError } from "../errors.js";
 import { cycleLabel } from "../upgrade/prorata.js";
 import { emitEvent, EVENT_NAMES } from "../events.js";

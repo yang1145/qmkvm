@@ -1,8 +1,8 @@
 /** 限流：Redis INCR+EXPIRE 固定窗口；无 Redis 时进程内 Map 降级 */
 
-import { AppError } from "@pinhaoji/core/errors";
-import { ERR } from "@pinhaoji/contracts";
-import { getRedis } from "@pinhaoji/db/redis";
+import { AppError } from "@qmkvm/core/errors";
+import { ERR } from "@qmkvm/contracts";
+import { getRedis } from "@qmkvm/db/redis";
 
 export interface RateLimitOptions {
   /** 窗口内允许的最大次数 */
@@ -58,7 +58,7 @@ export async function checkRateLimit(key: string, opts: RateLimitOptions): Promi
   const { limit, windowSec } = opts;
   const redis = getRedis();
   if (redis) {
-    const fullKey = `phj:rl:${key}`;
+    const fullKey = `kvm:rl:${key}`;
     const count = await redis.incr(fullKey);
     if (count === 1) {
       await redis.expire(fullKey, windowSec);
