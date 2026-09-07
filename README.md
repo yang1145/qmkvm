@@ -66,7 +66,7 @@ pnpm dev:api              # http://localhost:4000
 pnpm dev:portal           # http://localhost:3001
 pnpm dev:admin            # http://localhost:8000（登录需图形验证码）
 pnpm dev:www              # http://localhost:3000
-pnpm dev:worker           # 定时任务（需 Redis）
+pnpm dev:worker           # 定时任务（需 Redis；生产按 --group 分组，见 docs/deployment.md）
 ```
 
 无 Redis 时 API 自动降级：限流走进程内存、队列任务内联执行，开发无需 Redis 也能跑通全链路。
@@ -169,6 +169,9 @@ STORAGE_PROVIDER=s3 + STORAGE_S3_*                    # 见 .env.example
 ## 文档
 
 - [PRD-billing.md](PRD-billing.md) —— 产品需求（里程碑、功能规格 F1~F14、审批项）
+- [docs/development.md](docs/development.md) —— **开发者指南**：仓库结构、统一约定（契约/队列/存储/迁移）、常见开发任务操作指南、环境变量速查
+- [docs/deployment.md](docs/deployment.md) —— **部署指南**：三种部署方式（Compose 标准版 / 集群版 / PM2）、主从数据库、对象存储迁移、升级回滚、备份、安全清单、FAQ
 - [docs/SPEC-P0.md](docs/SPEC-P0.md) —— 实现规格（包接口契约、API 端点清单、环境变量）
-- [docs/architecture-evolution.md](docs/architecture-evolution.md) —— 微服务化高并发架构：目标形态图、分阶段改造（含已完成的队列分组/worker 分组/OCR 异步化/存储抽象清单）、集群部署与压测方案
+- [docs/architecture-evolution.md](docs/architecture-evolution.md) —— 微服务化高并发架构：目标形态图、分阶段改造清单、集群部署与压测方案
+- [docker/README-cluster.md](docker/README-cluster.md) —— 集群版部署手册（15 服务编排详解）
 - [packages/provisioning/README.md](packages/provisioning/README.md) —— 供应模块接入（含 PVE 配置示例）
