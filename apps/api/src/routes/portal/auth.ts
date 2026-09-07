@@ -113,6 +113,11 @@ portalAuthRoutes.post("/logout", async (c) => {
   return c.json({ ok: true });
 });
 
+/** 会话探测（门户登录守卫）：未登录 401，已登录返回当前用户 */
+portalAuthRoutes.get("/me", requireAuth(), (c) => {
+  return c.json({ user: userPayload(c.get("user") as User) });
+});
+
 /** 忘记密码：发送重置短信/邮件 */
 portalAuthRoutes.post("/forgot-password", rateLimit("auth:forgot", 5, 15 * 60), async (c) => {
   const body = forgotPasswordSchema.parse(await c.req.json());

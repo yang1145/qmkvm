@@ -5,7 +5,7 @@
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
-import { App, Button, Descriptions, Drawer, Input, Modal, Popconfirm, Space, Tag, Typography } from 'antd';
+import { App, Button, Descriptions, Drawer, Image, Input, Modal, Popconfirm, Space, Tag, Typography } from 'antd';
 import { useRef, useState } from 'react';
 import type React from 'react';
 import { getIdentities, getIdentity, reviewIdentity } from '@/services/admin';
@@ -27,6 +27,34 @@ function IdentityStatusTag({ status }: { status: string }) {
     <Tag color={IDENTITY_TAG_COLOR[status] ?? 'default'}>
       {IDENTITY_STATUS_LABEL[status] ?? status}
     </Tag>
+  );
+}
+
+/** 正面照 OCR 状态标签：matched 绿 / unavailable 灰（不可用或与填写不一致） */
+function OcrStatusTag({ detail }: { detail: IdentityDetail }) {
+  if (detail.type !== 'personal') return <span>-</span>;
+  const { status, valid, idNumber } = detail.ocr ?? {};
+  if (!idNumber) return <Tag>OCR 不可用</Tag>;
+  if (status === 'matched') return <Tag color="green">识别号与填写一致</Tag>;
+  return (
+    <Tag color={valid ? 'orange' : 'default'}>
+      {valid ? `识别号 ${idNumber}（与填写不一致）` : '识别号不可靠，请人工核对'}
+    </Tag>
+  );
+}
+
+/** 证件照展示（API 返回 no-store，img 直显；Image 组件支持点击放大） */
+function IdImagePreview({ src, kind }: { src: string | null; kind: string }) {
+  if (!src) return <Typography.Text type="secondary">未上传</Typography.Text>;
+  return (
+    <Image
+      src={src}
+      alt={`身份证${kind}照`}
+      width={96}
+      height={64}
+      style={{ objectFit: 'cover', borderRadius: 4 }}
+      preview={{ mask: '预览' }}
+    />
   );
 }
 
@@ -210,6 +238,18 @@ const IdentityList: React.FC = () => {
                   ? [
                       { key: 'realName', label: '姓名', children: detail.realName || '-' },
                       { key: 'idNumber', label: '证件号', children: <Typography.Text copyable>{detail.idNumber || '-'}</Typography.Text> },
+                      { key: 'ocr', label: 'OCR 识别', children: <OcrStatusTag detail={detail} /> },
+                      {
+                        key: 'images',
+                        label: '证件照',
+                        children: (
+                          <Space size={8}>
+                            <IdImagePreview src={detail.images?.front ?? null} kind="正面" />
+                            <IdImagePreview src={detail.images?.back ?? null} kind="反面" />
+                            <IdImagePreview src={detail.images?.handheld ?? null} kind="手持" />
+                          </Space>
+                        ),
+                      },
                     ]
                   : [
                       { key: 'companyName', label: '企业名称', children: detail.companyName || '-' },

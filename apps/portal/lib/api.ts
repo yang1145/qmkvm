@@ -5,7 +5,18 @@ import { errorResponseSchema } from "@qmkvm/contracts";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-const API_PREFIX = "/api/v1";
+const API_PREFIX = "/api/v1/portal";
+
+/** 公开只读资源（catalog/settings 等）挂在 /api/v1/public 下，免登录 */
+function publicUrl(path: string): string {
+  return `${API_BASE_URL}/api/v1/public${path}`;
+}
+
+/** 调用方以路径首段区分：/settings 与 /catalog 为公开端点，其余归属 portal 域 */
+function resolveUrl(path: string): string {
+  if (path === "/settings" || path.startsWith("/catalog")) return publicUrl(path);
+  return API_BASE_URL + API_PREFIX + path;
+}
 
 /** 统一业务错误：携带契约错误码与 requestId，方便排查 */
 export class ApiError extends Error {
@@ -46,7 +57,7 @@ export function setApiErrorHandler(fn: (message: string) => void) {
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>): string {
-  const url = new URL(API_BASE_URL + API_PREFIX + path);
+  const url = new URL(resolveUrl(path));
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === null || value === undefined || value === "") continue;

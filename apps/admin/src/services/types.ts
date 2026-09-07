@@ -520,4 +520,12 @@ export type IdentityListItem = {
 export type IdentityDetail = IdentityListItem & {
   idNumber: string | null;
   user: { name: string | null; phone: string | null; email: string | null; createdAt: string | null } | null;
+  /** 证件照 URL（front/back/handheld，未上传为 null） */
+  images: { front: string | null; back: string | null; handheld: string | null };
+  /** 正面照 OCR 结果：valid 为 null 表示无识别号；status: matched=与填写一致 / unavailable=不可用或不一致 */
+  ocr: {
+    idNumber: string | null;
+    valid: boolean | null;
+    status: 'matched' | 'unavailable' | null;
+  };
 };
