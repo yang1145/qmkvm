@@ -6,6 +6,7 @@ import {
   mysqlEnum,
   mysqlTable,
   text,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 import { createdAt, id, updatedAt, type Json } from "./_shared.js";
@@ -56,3 +57,16 @@ export const webhookDeliveries = mysqlTable(
   },
   (t) => [index("webhook_deliveries_status_idx").on(t.status, t.createdAt)],
 );
+
+/** worker 进程心跳：admin 仪表盘"系统运行状态"只读展示 */
+export const workerHeartbeats = mysqlTable("worker_heartbeats", {
+  id: id(),
+  group: varchar("group", { length: 20 }).notNull(),
+  pid: bigint("pid", { mode: "number" }).notNull(),
+  host: varchar("host", { length: 100 }).notNull(),
+  version: varchar("version", { length: 50 }),
+  queues: json("queues").$type<Json>(),
+  lastSeenAt: datetime("last_seen_at", { mode: "date" }).notNull(),
+  startedAt: datetime("started_at", { mode: "date" }).notNull(),
+  createdAt: createdAt(),
+}, (t) => [uniqueIndex("worker_heartbeats_uq").on(t.group, t.pid, t.host)]);

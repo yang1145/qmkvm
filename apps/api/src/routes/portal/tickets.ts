@@ -7,6 +7,7 @@ type User = typeof schema.users.$inferSelect;
 import { pageQuerySchema, ticketCreateSchema, ticketReplySchema } from "@qmkvm/contracts";
 import { appError } from "@qmkvm/core";
 import { requireAuth } from "../../middleware/auth.js";
+import { getStorage } from "@qmkvm/storage";
 
 export const portalTicketRoutes = new Hono();
 portalTicketRoutes.use("*", requireAuth());
@@ -202,19 +203,15 @@ portalTicketRoutes.post("/tickets/:id/attachments", async (c) => {
   if (!ALLOWED.includes(file.type)) throw appError("TICKET_ATTACHMENT_INVALID", "不支持的文件类型");
   if (file.size > 5 * 1024 * 1024) throw appError("TICKET_ATTACHMENT_INVALID", "文件不能超过 5MB");
 
-  const { mkdir, writeFile } = await import("node:fs/promises");
-  const path = await import("node:path");
-  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
-  const dir = path.join(uploadDir, `tickets/${t.id}`);
-  await mkdir(dir, { recursive: true });
+  const data = Buffer.from(await file.arrayBuffer());
+  // key：tickets/<ticketId>/<ts>-<净化文件名>（目录结构与历史一致；local 模式落 UPLOAD_DIR）
   const safeName = `${Date.now()}-${file.name.replace(/[^\w.\-\u4e00-\u9fa5]/g, "_")}`.slice(0, 200);
-  const stored = path.join(dir, safeName);
-  await writeFile(stored, Buffer.from(await file.arrayBuffer()));
+  const { key: storedKey } = await getStorage().put(`tickets/${t.id}/${safeName}`, data, file.type);
   const db = getDb();
   await db.insert(schema.attachments).values({
     ticketId: t.id,
     filename: file.name.slice(0, 250),
-    storedPath: stored,
+    storedPath: storedKey,
     mime: file.type,
     size: file.size,
     createdByType: "customer",

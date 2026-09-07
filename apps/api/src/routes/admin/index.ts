@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { requireAdmin } from "../../middleware/auth.js";
 import { adminAuthRoutes } from "./auth.js";
 import { adminDashboardRoutes } from "./dashboard.js";
+import { adminSystemStatusRoutes } from "./system-status.js";
 import { adminCustomerRoutes } from "./customers.js";
 import { adminOrderRoutes } from "./orders.js";
 import { adminServiceRoutes } from "./services.js";
@@ -40,6 +41,7 @@ adminRoutes.route("/auth", adminAuthRoutes);
 adminRoutes.use("*", requireAdmin());
 
 adminRoutes.route("/", adminDashboardRoutes);
+adminRoutes.route("/", adminSystemStatusRoutes);
 adminRoutes.route("/", adminCustomerRoutes);
 adminRoutes.route("/", adminOrderRoutes);
 adminRoutes.route("/", adminServiceRoutes);

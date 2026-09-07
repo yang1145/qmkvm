@@ -33,6 +33,7 @@ import type {
   ServiceListItem,
   SettingsMap,
   SmsSignatureResult,
+  SystemStatusDto,
   TemplateItem,
   TicketDetail,
   TicketListItem,
@@ -628,4 +629,10 @@ export async function runScheduledTask(name: string) {
     `${BASE}/scheduled-tasks/${encodeURIComponent(name)}/run`,
     { method: 'POST' },
   );
+}
+
+// ============ 系统运行状态 ============
+
+export async function getSystemStatus() {
+  return request<SystemStatusDto>(`${BASE}/system/status`);
 }

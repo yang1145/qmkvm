@@ -9,6 +9,7 @@ import { aesDecrypt, aesEncrypt, revokeAllPortalSessions } from "@qmkvm/auth";
 import { requireAuth, clearPortalCookie } from "../../middleware/auth.js";
 import { appError, enqueueJob } from "@qmkvm/core";
 import { ocrIdCardFront } from "@qmkvm/core";
+import { getStorage } from "@qmkvm/storage";
 
 export const portalAccountRoutes = new Hono();
 portalAccountRoutes.use("*", requireAuth());
@@ -27,22 +28,20 @@ function validateIdImage(file: unknown, label: string): asserts file is File {
   }
 }
 
+/** 证件照存储 key：identity/<userId>/<kind>-<ts>.<ext>（目录结构与历史一致） */
 async function saveIdImage(userId: number, kind: string, file: File): Promise<string> {
-  const { mkdir, writeFile } = await import("node:fs/promises");
-  const path = await import("node:path");
-  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
-  const dir = path.join(uploadDir, `identity/${userId}`);
-  await mkdir(dir, { recursive: true });
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const stored = path.join(dir, `${kind}-${Date.now()}.${ext}`);
-  await writeFile(stored, Buffer.from(await file.arrayBuffer()));
-  return stored;
+  const data = Buffer.from(await file.arrayBuffer());
+  const key = `identity/${userId}/${kind}-${Date.now()}.${ext}`;
+  // local 模式落 UPLOAD_DIR；s3 模式传对象存储（DB 统一存 key）
+  await getStorage().put(key, data, file.type);
+  return key;
 }
 
-async function removeFileQuiet(p: string | null | undefined) {
-  if (!p) return;
+async function removeFileQuiet(keyOrPath: string | null | undefined) {
+  if (!keyOrPath) return;
   try {
-    await (await import("node:fs/promises")).unlink(p);
+    await getStorage().delete(keyOrPath);
   } catch {
     // 文件已不存在等情况忽略
   }

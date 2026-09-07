@@ -13,6 +13,7 @@ import { aesDecrypt } from "@qmkvm/auth";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, maskedContact, writeAdminAudit } from "./helpers.js";
 import { isValidIdNumber } from "@qmkvm/core";
+import { getStorage, storageEnv } from "@qmkvm/storage";
 
 export const adminIdentityRoutes = new Hono();
 
@@ -143,7 +144,9 @@ adminIdentityRoutes.get("/identities/:id", requireAdmin("customers.manage"), asy
   });
 });
 
-/** 证件照查看（customers.manage）：按 profileId + kind 读取存储文件，防路径穿越 */
+/** 证件照查看（customers.manage）：按 profileId + kind 读取存储文件，防路径穿越。
+ * 本地盘模式：API 直接读文件返回（与历史行为一致，兼容 DB 中的历史绝对路径）；
+ * S3 模式：302 重定向到 presigned GET URL（短暂有效期，仍带 no-store 语义头）。 */
 adminIdentityRoutes.get("/identities/:id/images/:kind", requireAdmin("customers.manage"), async (c) => {
   const { id } = idParamSchema.parse({ id: c.req.param("id") });
   const kind = z.enum(["front", "back", "handheld"]).parse(c.req.param("kind"));
@@ -159,24 +162,25 @@ adminIdentityRoutes.get("/identities/:id/images/:kind", requireAdmin("customers.
     kind === "front" ? p.idFrontPath : kind === "back" ? p.idBackPath : p.idHandheldPath;
   if (!storedPath) throw appError("NOT_FOUND", "证件照不存在");
 
-  const fs = await import("node:fs/promises");
+  const storage = getStorage();
   const path = await import("node:path");
-  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
-  const resolved = path.resolve(storedPath);
-  if (!resolved.startsWith(uploadDir + path.sep)) {
-    throw appError("PERM_DENIED", "非法文件路径");
-  }
-  try {
-    const data = await fs.readFile(resolved);
-    const ext = path.extname(resolved).toLowerCase();
-    const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
-    return c.body(new Uint8Array(data), 200, {
-      "Content-Type": mime,
-      "Cache-Control": "private, no-store",
-    });
-  } catch {
+
+  // S3 模式：302 → presigned URL（key 或历史绝对路径都先规范化为 key）
+  if (storageEnv.provider === "s3") {
+    const url = await storage.presign(storedPath, 300);
+    if (url) return c.redirect(url, 302);
     throw appError("NOT_FOUND", "证件照文件已丢失");
   }
+
+  // 本地盘模式（含历史绝对路径兼容）：直接读文件返回
+  const file = await storage.get(storedPath);
+  if (!file) throw appError("NOT_FOUND", "证件照文件已丢失");
+  const ext = path.extname(storedPath).toLowerCase();
+  const mime = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+  return c.body(new Uint8Array(file.data), 200, {
+    "Content-Type": mime,
+    "Cache-Control": "private, no-store",
+  });
 });
 
 const reviewBody = z.object({

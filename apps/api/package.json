@@ -20,6 +20,8 @@
     "@qmkvm/notifications": "workspace:*",
     "@qmkvm/payments": "workspace:*",
     "@qmkvm/provisioning": "workspace:*",
+    "@qmkvm/storage": "workspace:*",
+    "bullmq": "^6.3.4",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.7",
     "node-tesseract-ocr": "^2.2.1",

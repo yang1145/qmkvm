@@ -50,6 +50,13 @@
       "when": 1788746000000,
       "tag": "0006_ocr_processing",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1788781222355,
+      "tag": "0007_worker_heartbeat",
+      "breakpoints": true
     }
   ]
 }

@@ -20,7 +20,8 @@ import { processQueuedTasks } from "@qmkvm/provisioning";
 import { logger } from "@qmkvm/logger";
 import { workerEnv } from "./env.js";
 import { parseWorkerGroup } from "./groups.js";
-import { registerJobHandlers } from "./handlers/index.js";
+import { startHeartbeat } from "./heartbeat.js";
+import { registerJobHandlers, registeredHandlerCountByGroup } from "./handlers/index.js";
 import { TASKS, runTask } from "./tasks/index.js";
 
 const log = logger.child({ module: "worker" });
@@ -67,6 +68,8 @@ async function main(): Promise<void> {
       log.info(`[worker:${group}] 未配置 REDIS_URL，本组无可执行任务，进程空转退出`);
       process.exit(0);
     }
+    // 无 Redis fallback 模式：tx 组仍上报心跳（组内订阅仅主队列 kvm）
+    startHeartbeat(db, group, [QUEUE_NAME]);
     await runFallbackLoop(db);
     return;
   }
@@ -112,8 +115,17 @@ async function main(): Promise<void> {
     workers.push(worker);
   }
 
+  // 心跳上报：BullMQ 消费者启动后 upsert + 30s 刷新 last_seen_at（失败仅告警）
+  startHeartbeat(db, group, queueNames);
+
   log.info(
-    { group, queues: queueNames, concurrency: workerEnv.concurrency, tasks: TASKS.length },
+    {
+      group,
+      queues: queueNames,
+      concurrency: workerEnv.concurrency,
+      tasks: TASKS.length,
+      handlerCounts: registeredHandlerCountByGroup(),
+    },
     "[worker] BullMQ 消费者已启动",
   );
 

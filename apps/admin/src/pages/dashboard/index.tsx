@@ -1,9 +1,10 @@
 /**
  * 仪表盘：顶部今日/本月概览、近 30 天 GMV 趋势与新增用户图表、待办区与最近订单。
+ * 顶部"系统运行状态"卡片只读展示 API/DB/Redis 探活、worker 心跳与队列积压（10s 轮询）。
  */
 import { PageContainer, ProCard } from '@ant-design/pro-components';
-import { Spin, Statistic, Table, TableProps, Typography } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Badge, Space, Spin, Statistic, Table, TableProps, Tag, Typography } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -16,17 +17,31 @@ import {
   YAxis,
 } from 'recharts';
 import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/zh-cn';
 import { cny, formatDateTime } from '@/utils/format';
 import {
   getDashboard,
   getOrders,
   getRevenueReport,
+  getSystemStatus,
   getUserReport,
 } from '@/services/admin';
-import type { DashboardDto, OrderListItem } from '@/services/types';
+import type {
+  DashboardDto,
+  OrderListItem,
+  SystemStatusDto,
+  SystemStatusWorker,
+} from '@/services/types';
 import type { RevenuePoint, UserGrowthPoint } from '@/services/admin';
 
 const { Text } = Typography;
+
+/** 四 worker 组固定顺序展示 */
+const WORKER_GROUP_ORDER = ['tx', 'notify', 'supply', 'ocr'];
+
+dayjs.extend(relativeTime);
+dayjs.locale('zh-cn');
 
 const ORDER_STATUS_LABEL: Record<string, string> = {
   pending: '待支付',
@@ -42,6 +57,9 @@ const Dashboard: React.FC = () => {
   const [users, setUsers] = useState<UserGrowthPoint[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sysStatus, setSysStatus] = useState<SystemStatusDto | null>(null);
+  // React19：useRef 必须带初值（去重并发轮询用）
+  const sysPollingRef = useRef(false);
 
   useEffect(() => {
     const range = {
@@ -64,6 +82,29 @@ const Dashboard: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // 系统运行状态：立即拉取 + 10s 轮询（卸载时 cleanup）
+  useEffect(() => {
+    let disposed = false;
+    const load = () => {
+      if (sysPollingRef.current) return;
+      sysPollingRef.current = true;
+      getSystemStatus()
+        .then((res) => {
+          if (!disposed) setSysStatus(res);
+        })
+        .catch(() => {})
+        .finally(() => {
+          sysPollingRef.current = false;
+        });
+    };
+    load();
+    const timer = setInterval(load, 10_000);
+    return () => {
+      disposed = true;
+      clearInterval(timer);
+    };
+  }, []);
+
   if (loading) return <Spin style={{ display: 'block', margin: '120px auto' }} />;
 
   const orderColumns: TableProps<OrderListItem>['columns'] = [
@@ -75,8 +116,68 @@ const Dashboard: React.FC = () => {
     { title: '创建时间', dataIndex: 'createdAt', width: 170, render: (v: string) => formatDateTime(v) },
   ];
 
+  const sysQueueColumns: TableProps<SystemStatusDto['queues'][number]>['columns'] = [
+    { title: '队列', dataIndex: 'name', width: 120 },
+    { title: '等待', dataIndex: 'waiting', width: 80, align: 'right' as const },
+    {
+      title: '失败',
+      dataIndex: 'failed',
+      width: 80,
+      align: 'right' as const,
+      render: (v: number) => <Text type={v > 0 ? 'danger' : undefined}>{v}</Text>,
+    },
+  ];
+
+  /** 探活状态点：绿/红 + 延迟 */
+  const probeBadge = (ok: boolean, label: string, latencyMs: number | null) => (
+    <Badge
+      status={ok ? 'success' : 'error'}
+      text={
+        <Text>
+          {label}
+          {ok && latencyMs !== null ? ` ${latencyMs}ms` : ''}
+        </Text>
+      }
+    />
+  );
+
   return (
     <PageContainer>
+      <ProCard title="系统运行状态" gutter={16} style={{ marginBottom: 16 }}>
+        <ProCard colSpan={{ xs: 24, sm: 8, lg: 5 }} style={{ height: '100%' }}>
+          <Space direction="vertical" size={4}>
+            {probeBadge(sysStatus?.api.ok ?? false, 'API', null)}
+            {probeBadge(sysStatus?.db.ok ?? false, 'DB', sysStatus?.db.latencyMs ?? null)}
+            {probeBadge(sysStatus?.redis.ok ?? false, 'Redis', sysStatus?.redis.latencyMs ?? null)}
+          </Space>
+        </ProCard>
+        <ProCard colSpan={{ xs: 24, sm: 8, lg: 9 }} title="Worker 分组" style={{ height: '100%' }}>
+          {(WORKER_GROUP_ORDER.map((g) => sysStatus?.workers.find((w) => w.group === g))
+            .filter((w): w is SystemStatusWorker => !!w).length > 0
+            ? WORKER_GROUP_ORDER.map((g) => sysStatus?.workers.find((w) => w.group === g)).filter(
+                (w): w is SystemStatusWorker => !!w,
+              )
+            : (sysStatus?.workers ?? [])
+          ).map((w) => (
+            <Tag key={`${w.group}-${w.pid}`} color={w.online ? 'green' : 'default'}>
+              {w.group}
+              {w.online ? ' 在线' : ` 离线 ${dayjs(w.lastSeenAt).fromNow()}`}
+            </Tag>
+          ))}
+          {!sysStatus && <Text type="secondary">加载中…</Text>}
+        </ProCard>
+        <ProCard colSpan={{ xs: 24, sm: 8, lg: 10 }} title="队列积压" style={{ height: '100%' }}>
+          <Table<SystemStatusDto['queues'][number]>
+            rowKey="name"
+            size="small"
+            pagination={false}
+            dataSource={sysStatus?.queues ?? []}
+            columns={sysQueueColumns}
+            locale={{ emptyText: <Text type="secondary">暂无数据（Redis 未连接）</Text> }}
+          />
+        </ProCard>
+      </ProCard>
+
       <ProCard title="今日概览" gutter={16} style={{ marginBottom: 16 }}>
         <ProCard colSpan={6}>
           <Statistic title="新增用户" value={data?.today.newUsers ?? 0} />

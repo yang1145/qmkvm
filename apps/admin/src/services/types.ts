@@ -529,3 +529,34 @@ export type IdentityDetail = IdentityListItem & {
     status: 'processing' | 'matched' | 'unavailable' | null;
   };
 };
+
+// ============ 系统运行状态 ============
+
+/** GET /system/status 响应（探活逐项降级，子项失败不影响整体） */
+export type SystemStatusDto = {
+  api: { ok: boolean; ts: string };
+  db: { ok: boolean; latencyMs: number | null };
+  redis: { ok: boolean; latencyMs: number | null };
+  workers: SystemStatusWorker[];
+  queues: SystemStatusQueue[];
+};
+
+/** worker 心跳条目（online = lastSeenAt 距今 < 90s） */
+export type SystemStatusWorker = {
+  group: string;
+  pid: number;
+  host: string;
+  version: string | null;
+  queues: string[];
+  lastSeenAt: string;
+  online: boolean;
+};
+
+/** 队列积压计数 */
+export type SystemStatusQueue = {
+  name: string;
+  waiting: number;
+  active: number;
+  failed: number;
+  delayed: number;
+};

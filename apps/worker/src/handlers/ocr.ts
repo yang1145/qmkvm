@@ -1,53 +1,18 @@
 /**
- * ocr 组：身份证正面照异步识别。
+ * ocr 组 handler：身份证正面照异步识别（薄包装）。
  *
- * ocr.verify handler：读取 user_profiles 里的正面照路径 → 调 OcrProvider 识别 →
- * 回写 ocr_id_number / ocr_status（matched / unavailable）。
- * 提交侧只入队不等待；识别失败按 unavailable 兜底，不阻断人工审核。
+ * ocr.verify job 的注册入口；核心识别 + user_profiles 回写逻辑已下沉
+ * packages/core/src/ocr/verify.ts（与 API inline 降级路径共用，行为一致）。
+ * 订阅队列：kvm-ocr（分组模式）/ kvm（单队列模式兜底）。
+ * 凭据边界：tesseract 二进制/语言包经环境变量（TESSERACT_BIN/TESSERACT_LANG）
+ * 配置，本组进程需能访问识别程序；不触达支付/供应凭据。
  */
-import { eq } from "drizzle-orm";
-import { getDb, schema } from "@qmkvm/db";
-import { logger } from "@qmkvm/logger";
-import { ocrIdCardFront } from "@qmkvm/core";
+import { getDb } from "@qmkvm/db";
+import { ocrVerifyHandler, registerJobHandler } from "@qmkvm/core";
 
-const log = logger.child({ module: "worker:ocr" });
 type Db = ReturnType<typeof getDb>;
 
-export async function ocrVerifyHandler(
-  db: Db,
-  data: { profileId?: number | string; submittedIdNumber?: string | null },
-): Promise<void> {
-  const profileId = Number(data?.profileId);
-  if (!Number.isFinite(profileId)) {
-    log.warn({ data }, "ocr.verify 缺少 profileId，跳过");
-    return;
-  }
-  const rows = await db
-    .select()
-    .from(schema.userProfiles)
-    .where(eq(schema.userProfiles.id, profileId))
-    .limit(1);
-  const profile = rows[0];
-  if (!profile?.idFrontPath) {
-    log.warn({ profileId }, "ocr.verify 无正面照记录，跳过");
-    return;
-  }
-
-  const ocr = await ocrIdCardFront(profile.idFrontPath);
-  const submitted = data?.submittedIdNumber?.trim().toUpperCase();
-  let ocrStatus: "matched" | "unavailable" = "unavailable";
-  if (ocr.idNumber) {
-    if (ocr.verified && submitted && ocr.idNumber === submitted) ocrStatus = "matched";
-  }
-
-  await db
-    .update(schema.userProfiles)
-    .set({
-      ocrIdNumber: ocr.idNumber,
-      ocrStatus,
-      updatedAt: new Date(),
-    })
-    .where(eq(schema.userProfiles.id, profileId));
-
-  log.info({ profileId, status: ocrStatus, hasNumber: !!ocr.idNumber }, "OCR 异步识别完成");
+/** ocr 组注册：OCR 异步识别（重 CPU，独立组便于资源隔离扩缩容） */
+export function registerOcrHandlers(db: Db): void {
+  registerJobHandler("ocr.verify", (data) => ocrVerifyHandler(db, data));
 }

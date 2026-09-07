@@ -1,4 +1,4 @@
-import { enqueueJob, registerJobHandler } from "@qmkvm/core";
+import { enqueueJob, ocrVerifyHandler, registerJobHandler } from "@qmkvm/core";
 import { processPaymentEvent, registerPaymentJobHandlers } from "@qmkvm/payments";
 import { getDb, schema } from "@qmkvm/db";
 import { eq } from "drizzle-orm";
@@ -51,8 +51,8 @@ export function registerJobHandlers() {
   });
 
   // OCR 异步识别（inline 降级模式下在 API 进程内联执行；Redis 模式由 ocr 组 worker 消费）
+  // 识别 + 回写实现在 core（ocr/verify.ts），与 worker 侧共用同一份逻辑
   registerJobHandler("ocr.verify", async (data: { profileId: number | string; submittedIdNumber?: string | null }) => {
-    const { ocrVerifyHandler } = await import("./inline/ocr-verify.js");
     await ocrVerifyHandler(getDb(), data);
   });
 

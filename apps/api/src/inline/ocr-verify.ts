@@ -1,47 +1,17 @@
 /**
- * OCR 验证 handler 的 API 侧实现（inline 降级模式复用）。
- * 与 worker 侧 handlers/ocr.ts 逻辑一致：识别 → 回写 ocr_id_number / ocr_status。
- * 抽成独立文件以共享核心逻辑说明：识别在两条执行路径（inline/BullMQ）行为一致。
+ * ocr.verify handler 的 API 侧薄包装（inline 降级模式复用）。
+ *
+ * 核心识别 + user_profiles 回写逻辑已下沉 packages/core/src/ocr/verify.ts
+ * （ocrVerifyHandler），worker 侧与 API inline 侧共用同一实现，
+ * 保证两条执行路径（inline/BullMQ）行为一致。本文件仅保留模块别名转发。
  */
-import { eq } from "drizzle-orm";
-import { ocrIdCardFront } from "@qmkvm/core";
-import { getDb, schema } from "@qmkvm/db";
-import { logger } from "@qmkvm/logger";
+import { ocrVerifyHandler as coreOcrVerifyHandler } from "@qmkvm/core";
+import { getDb } from "@qmkvm/db";
+import type { OcrVerifyData } from "@qmkvm/core";
 
-const log = logger.child({ module: "api:inline-ocr" });
 type Db = ReturnType<typeof getDb>;
 
-export async function ocrVerifyHandler(
-  db: Db,
-  data: { profileId?: number | string; submittedIdNumber?: string | null },
-): Promise<void> {
-  const profileId = Number(data?.profileId);
-  if (!Number.isFinite(profileId)) {
-    log.warn({ data }, "ocr.verify 缺少 profileId，跳过");
-    return;
-  }
-  const rows = await db
-    .select()
-    .from(schema.userProfiles)
-    .where(eq(schema.userProfiles.id, profileId))
-    .limit(1);
-  const profile = rows[0];
-  if (!profile?.idFrontPath) {
-    log.warn({ profileId }, "ocr.verify 无正面照记录，跳过");
-    return;
-  }
-
-  const ocr = await ocrIdCardFront(profile.idFrontPath);
-  const submitted = data?.submittedIdNumber?.trim().toUpperCase();
-  let ocrStatus: "matched" | "unavailable" = "unavailable";
-  if (ocr.idNumber && ocr.verified && submitted && ocr.idNumber === submitted) {
-    ocrStatus = "matched";
-  }
-
-  await db
-    .update(schema.userProfiles)
-    .set({ ocrIdNumber: ocr.idNumber, ocrStatus, updatedAt: new Date() })
-    .where(eq(schema.userProfiles.id, profileId));
-
-  log.info({ profileId, status: ocrStatus, hasNumber: !!ocr.idNumber }, "OCR 识别完成（inline）");
+/** 兼容旧导入路径：直接转发 core 实现（db 连接由调用方传入） */
+export async function ocrVerifyHandler(db: Db, data: OcrVerifyData): Promise<void> {
+  await coreOcrVerifyHandler(db, data);
 }
