@@ -11,6 +11,10 @@ export const metadata: Metadata = {
     template: "%s · 启明智联",
   },
   description: "启明智联 QmKvm 客户门户：购买、管理您的云服务。",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
