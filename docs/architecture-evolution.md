@@ -71,7 +71,7 @@
 
 | # | 改造点 | 代码位置 | 工作量 | 状态 |
 |---|---|---|---|---|
-| 1 | 存储抽象 | 新建 `packages/storage`；改 `apps/api/src/routes/portal/account.ts`、`portal/tickets.ts`、`admin/identities.ts` 三个调用点 | 1~2 天 | 待做 |
+| 1 | 存储抽象 | `packages/storage`（StorageProvider 接口 put/get/delete/presign；local 缺省/S3 兼容双实现，@aws-sdk/client-s3 + presigner）；三调用点接入（证件照/工单附件/admin 图片端点 S3 模式 302 presigned URL）；迁移脚本 `migrate-local.ts`（产出 key 映射报告不直接改 DB）；11 个 vitest 单测 | — | ✅ 已完成 |
 | 2 | 队列分组路由 | `packages/core/src/queue.ts`：`QUEUE_TX/NOTIFY/SUPPLY/OCR` 四队列 + `queueForJob` 路由（`QUEUE_ROUTING=split` 启用，缺省单队列 kvm 兼容既有部署） | — | ✅ 已完成 |
 | 3 | worker 分组参数 | `apps/worker/src/groups.ts`（--group 解析）+ `handlers/{index,ocr}.ts`（半差异化：handler 按域分文件，每组注册全量 handler，隔离靠队列路由而非删代码）；ocr 工具下沉 `packages/core/src/ocr/`（API/worker 共用） | — | ✅ 已完成 |
 | 4 | OCR 异步化 | 提交侧 `account.ts` 落盘后入队 `ocr.verify`（立即返回，不再同步识别）；回写侧 worker `handlers/ocr.ts` 与 API inline 降级 `inline/ocr-verify.ts` 双路径一致；`ocr_status` 枚举加 `processing`（迁移 0006，已执行）；预填端点保持同步 | — | ✅ 已完成（E2E 验证：提交→入队→消费→回写 unavailable 降级链路全通） |
@@ -134,6 +134,6 @@
 - [ ] API 多副本下登录→下单→支付回调 E2E 通过（无粘性会话依赖）
 - [ ] worker 四组各自独立启停，任务不丢不重（含 kill -9 恢复）
 - [ ] 对象存储切换后，历史证件照/附件可读（旧前缀兼容）
-- [ ] OCR 异步链路：提交→队列→回写→admin 标注展示
+- [x] OCR 异步链路：提交→队列→回写→admin 标注展示（E2E 实测 2026-09-07）
 - [ ] 报表接口走从库（慢查询日志验证）
 - [ ] k6 压测：登录/下单/回调/实名四链路报告落盘
