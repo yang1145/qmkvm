@@ -2,6 +2,13 @@
  * 身份证正面照 OCR（node-tesseract-ocr 封装）。
  * 仅用于辅助核对身份证号：提取 18 位证件号并做 GB11643 校验码验证；
  * tesseract 二进制或语言包缺失时视为「OCR 不可用」，不阻断提交流程。
+ *
+ * 后续演进（2026-09-07 调研结论，未实施）：
+ * - npm 上无可用的 PP-OCR onnx 封装包（ppocr-onnx 等候选均不存在）；
+ *   若未来替换实现，走 onnxruntime-node + sharp 自实现 det/rec 双模型推理，
+ *   模型可从 PyPI rapidocr_onnxruntime wheel 内提取（免鉴权直连）。
+ * - 替换时保持本函数签名（ocrIdCardFront）与返回结构不变，调用方零改动；
+ *   异步链路（ocr.verify job）也无需变动。
  */
 import tesseract from "node-tesseract-ocr";
 
