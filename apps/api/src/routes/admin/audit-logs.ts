@@ -2,7 +2,7 @@
 import { Hono } from "hono";
 import { and, desc, eq, gte, like, lte, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@qmkvm/db";
+import { getDbRO, schema } from "@qmkvm/db";
 import { pageQuerySchema } from "@qmkvm/contracts";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso } from "./helpers.js";
@@ -32,7 +32,7 @@ function parseDateBound(v: string, endOfDay: boolean): Date {
 }
 
 adminAuditLogRoutes.get("/audit-logs", requireAdmin("audit.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const q = listQuery.parse(c.req.query());
 
   const conditions: SQL[] = [];

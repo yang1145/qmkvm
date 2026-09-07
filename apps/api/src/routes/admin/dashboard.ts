@@ -1,7 +1,7 @@
 /** 工作台汇总（dashboardDto）：今日/本月新用户、订单数、GMV（已付账单合计）、支付成功率 + 待办计数。 */
 import { Hono } from "hono";
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
-import { getDb, schema } from "@qmkvm/db";
+import { getDbRO, schema } from "@qmkvm/db";
 import { requireAdmin } from "../../middleware/auth.js";
 
 export const adminDashboardRoutes = new Hono();
@@ -16,7 +16,7 @@ function windowStart(now: Date, kind: "day" | "month"): Date {
 }
 
 adminDashboardRoutes.get("/dashboard", requireAdmin("reports.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const now = new Date();
   const todayStart = windowStart(now, "day");
   const monthStart = windowStart(now, "month");

@@ -8,7 +8,7 @@
 import { Hono } from "hono";
 import { and, desc, eq, gte, like, lt, or, type SQL } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@qmkvm/db";
+import { getDbRO, schema } from "@qmkvm/db";
 import {
   invoiceStatusEnum,
   invoiceTypeEnum,
@@ -72,7 +72,7 @@ function csvResponse(header: string[], rows: unknown[][], filename: string) {
 
 /** 客户导出：ID/手机号(脱敏)/邮箱(脱敏)/状态/余额(元)/注册时间；筛选 q/status */
 adminExportRoutes.get("/export/customers", requireAdmin("customers.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const q = c.req.query("q")?.trim().slice(0, 100);
   const status = z.enum(["active", "disabled"]).safeParse(c.req.query("status")).success
@@ -108,7 +108,7 @@ adminExportRoutes.get("/export/customers", requireAdmin("customers.read"), async
 
 /** 订单导出：ID/用户ID/类型/状态/小计/折扣/合计(元)/创建时间；筛选 status/type */
 adminExportRoutes.get("/export/orders", requireAdmin("orders.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const status = orderStatusEnum.safeParse(c.req.query("status")).success
     ? (c.req.query("status") as z.infer<typeof orderStatusEnum>)
@@ -163,7 +163,7 @@ adminExportRoutes.get("/export/orders", requireAdmin("orders.read"), async (c) =
 
 /** 账单导出：账单号/用户ID/类型/状态/金额(元)/支付时间/创建时间；筛选 status/type */
 adminExportRoutes.get("/export/invoices", requireAdmin("invoices.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const status = invoiceStatusEnum.safeParse(c.req.query("status")).success
     ? (c.req.query("status") as z.infer<typeof invoiceStatusEnum>)
@@ -216,7 +216,7 @@ adminExportRoutes.get("/export/invoices", requireAdmin("invoices.read"), async (
 
 /** 交易流水导出：ID/用户ID/类型/网关/金额(元)/状态/创建时间；筛选 status/type */
 adminExportRoutes.get("/export/transactions", requireAdmin("transactions.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const status = z.enum(["pending", "success", "failed", "refunded"]).safeParse(c.req.query("status"))
     .success

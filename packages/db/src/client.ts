@@ -32,3 +32,21 @@ export function getDb(url?: string): Db {
   }
   return cached;
 }
+
+// —— 只读副本连接（主从兼容）：未配置 DATABASE_URL_RO 时回落主连接 ——
+// 语义约定：getDbRO() 仅用于**可容忍主从延迟的读路径**（报表/导出/审计检索）；
+// 任何"读后写"或强一致读（如审核前核对最新状态）必须用 getDb()。
+
+let cachedRo: Db | undefined;
+let cachedRoUrl: string | undefined;
+
+/** 只读副本连接；DATABASE_URL_RO 未配置时返回主连接（单机部署零配置兼容） */
+export function getDbRO(): Db {
+  const roUrl = process.env.DATABASE_URL_RO;
+  if (!roUrl) return getDb();
+  if (!cachedRo || cachedRoUrl !== roUrl) {
+    cachedRo = createDb(roUrl);
+    cachedRoUrl = roUrl;
+  }
+  return cachedRo;
+}

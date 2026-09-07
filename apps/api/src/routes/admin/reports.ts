@@ -7,7 +7,7 @@
 import { Hono } from "hono";
 import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { z } from "zod";
-import { getDb, schema } from "@qmkvm/db";
+import { getDbRO, schema } from "@qmkvm/db";
 import { appError, centsToYuan } from "@qmkvm/core";
 import { requireAdmin } from "../../middleware/auth.js";
 
@@ -56,7 +56,7 @@ function fillDays(from: Date, to: Date, rows: { date: string }[]): string[] {
 
 /** 收入：paid 及以后账单按日 GMV / 订单数 */
 adminReportRoutes.get("/reports/revenue", requireAdmin("reports.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const rows = await db
     .select({
@@ -87,7 +87,7 @@ adminReportRoutes.get("/reports/revenue", requireAdmin("reports.read"), async (c
 
 /** 商品销量：paid 及以后订单的明细 join 商品，按商品聚合 */
 adminReportRoutes.get("/reports/products", requireAdmin("reports.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const rows = await db
     .select({
@@ -124,7 +124,7 @@ adminReportRoutes.get("/reports/products", requireAdmin("reports.read"), async (
 
 /** 留存：新增服务 vs paid 续费单按日（续费率 = 续费单数 / 存量服务可按前端口径自行计算） */
 adminReportRoutes.get("/reports/retention", requireAdmin("reports.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
 
   const newRows = await db
@@ -165,7 +165,7 @@ adminReportRoutes.get("/reports/retention", requireAdmin("reports.read"), async 
 
 /** 新增用户按日 */
 adminReportRoutes.get("/reports/users", requireAdmin("reports.read"), async (c) => {
-  const db = getDb();
+  const db = getDbRO(); // 只读副本（可容忍主从延迟的读路径）；未配置 DATABASE_URL_RO 时回落主库
   const { from, to } = parseRange(c.req);
   const rows = await db
     .select({ date: dayExpr(users.createdAt), count: sql<number>`count(*)` })
