@@ -390,6 +390,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(mysql2@3.24.3(@types/node@26.4.1))
+      node-tesseract-ocr:
+        specifier: ^2.2.1
+        version: 2.2.1
     devDependencies:
       '@types/node':
         specifier: ^26.2.0

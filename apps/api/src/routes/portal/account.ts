@@ -7,8 +7,8 @@ type User = typeof schema.users.$inferSelect;
 import { updateProfileSchema } from "@qmkvm/contracts";
 import { aesDecrypt, aesEncrypt, revokeAllPortalSessions } from "@qmkvm/auth";
 import { requireAuth, clearPortalCookie } from "../../middleware/auth.js";
-import { appError } from "@qmkvm/core";
-import { ocrIdCardFront } from "../../utils/ocr.js";
+import { appError, enqueueJob } from "@qmkvm/core";
+import { ocrIdCardFront } from "@qmkvm/core";
 
 export const portalAccountRoutes = new Hono();
 portalAccountRoutes.use("*", requireAuth());
@@ -229,28 +229,19 @@ portalAccountRoutes.post("/identity", async (c) => {
     ]);
   }
 
-  // 保存证件照并 OCR 正面：提取证件号与用户填写值核对（校验码验证通过才阻断）
+  // 保存证件照；OCR 移交 ocr 组 worker 异步执行（提交不再同步等待识别，
+  // 重 CPU 从 API 请求路径移除；结果由 ocr.verify handler 回写 ocr_status）
   let frontPath: string | null = null;
   let backPath: string | null = null;
   let handheldPath: string | null = null;
-  let ocrIdNumber: string | null = null;
-  let ocrStatus: "matched" | "unavailable" = "unavailable";
+  const ocrIdNumber: string | null = null;
+  const ocrStatus: "processing" | null = front ? "processing" : null;
   if (front) {
     frontPath = await saveIdImage(userId, "front", front);
-    [backPath, handheldPath] = await Promise.all([
+    await Promise.all([
       back ? saveIdImage(userId, "back", back) : Promise.resolve(null),
       handheld ? saveIdImage(userId, "handheld", handheld) : Promise.resolve(null),
     ]);
-    const ocr = await ocrIdCardFront(frontPath);
-    const submitted = body.idNumber?.trim().toUpperCase();
-    if (ocr.idNumber) {
-      ocrIdNumber = ocr.idNumber;
-      if (ocr.verified && submitted && ocr.idNumber !== submitted) {
-        throw appError("IDENTITY_OCR_MISMATCH", "身份证号与正面照片识别结果不一致，请核对后重新提交");
-      }
-      ocrStatus =
-        ocr.verified && submitted && ocr.idNumber === submitted ? "matched" : "unavailable";
-    }
   }
 
   const encrypted =
@@ -271,10 +262,20 @@ portalAccountRoutes.post("/identity", async (c) => {
     verifiedAt: null,
     rejectReason: null,
   };
+  let profileId: number;
   if (existing[0]) {
     await db.update(schema.userProfiles).set(values).where(eq(schema.userProfiles.userId, userId));
+    profileId = existing[0].id;
   } else {
-    await db.insert(schema.userProfiles).values(values);
+    const inserted = await db.insert(schema.userProfiles).values(values);
+    profileId = Number(inserted[0]?.insertId ?? 0);
+  }
+  if (front && profileId) {
+    // OCR 比对结果不再阻断提交；不一致由审核页标注（admin 详情 ocr.status）
+    void enqueueJob("ocr.verify", {
+      profileId,
+      submittedIdNumber: body.idNumber ?? null,
+    });
   }
   return c.json({ ok: true, status: "pending" });
 });

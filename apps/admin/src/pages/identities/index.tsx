@@ -30,10 +30,11 @@ function IdentityStatusTag({ status }: { status: string }) {
   );
 }
 
-/** 正面照 OCR 状态标签：matched 绿 / unavailable 灰（不可用或与填写不一致） */
+/** 正面照 OCR 状态标签：matched 绿 / processing 蓝（识别中）/ unavailable 灰（不可用或与填写不一致） */
 function OcrStatusTag({ detail }: { detail: IdentityDetail }) {
   if (detail.type !== 'personal') return <span>-</span>;
   const { status, valid, idNumber } = detail.ocr ?? {};
+  if (status === 'processing') return <Tag color="blue">OCR 识别中…</Tag>;
   if (!idNumber) return <Tag>OCR 不可用</Tag>;
   if (status === 'matched') return <Tag color="green">识别号与填写一致</Tag>;
   return (

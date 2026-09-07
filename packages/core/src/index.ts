@@ -6,3 +6,4 @@ export * from "./lifecycle/index.js";
 export * from "./upgrade/prorata.js";
 export * from "./queue.js";
 export * from "./events.js";
+export * from "./ocr/index.js";

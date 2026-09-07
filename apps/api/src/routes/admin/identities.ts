@@ -12,7 +12,7 @@ import { appError } from "@qmkvm/core";
 import { aesDecrypt } from "@qmkvm/auth";
 import { requireAdmin } from "../../middleware/auth.js";
 import { iso, maskedContact, writeAdminAudit } from "./helpers.js";
-import { isValidIdNumber } from "../../utils/ocr.js";
+import { isValidIdNumber } from "@qmkvm/core";
 
 export const adminIdentityRoutes = new Hono();
 

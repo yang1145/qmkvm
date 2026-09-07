@@ -119,7 +119,7 @@ export const identitySchema = z.object({
     .object({ front: z.boolean().catch(false), back: z.boolean().catch(false), handheld: z.boolean().catch(false) })
     .nullable()
     .catch(null),
-  ocrStatus: z.enum(["matched", "unavailable"]).nullable().catch(null),
+  ocrStatus: z.enum(["matched", "unavailable", "processing"]).nullable().catch(null),
   updatedAt: z.string().nullable().catch(null),
 });
 export type Identity = z.infer<typeof identitySchema>;

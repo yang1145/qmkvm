@@ -69,18 +69,23 @@
 
 ## 三、改造点映射（代码级）
 
-| # | 改造点 | 代码位置 | 工作量 | 说明 |
+| # | 改造点 | 代码位置 | 工作量 | 状态 |
 |---|---|---|---|---|
-| 1 | 存储抽象 | 新建 `packages/storage`；改 `apps/api/src/routes/portal/account.ts`、`portal/tickets.ts`、`admin/identities.ts` 三个调用点 | 1~2 天 | `put/get/delete/presign` 接口；本地盘与 S3 兼容双实现；历史文件迁移脚本 |
-| 2 | 队列分组路由 | `packages/core/src/queue.ts`（现为 `QUEUE_NAME="kvm"` 单队列） | 1 天 | 按 job 名映射四队列；`enqueueJob` 内部路由，调用方零改动 |
-| 3 | worker 分组参数 | `apps/worker/src/index.ts` + `run-task.ts` | 0.5 天 | `--group` 启动参数 + concurrency 配置 |
-| 4 | OCR 异步化 | `apps/api/src/routes/portal/account.ts`（现为同步调用 `ocrIdCardFront`）；`apps/api/src/utils/ocr.ts` 抽为 `OcrProvider` | 1 天 | 提交落盘+入队，worker 回写 `ocr_status`（枚举加 `processing`，迁移 0006）；预填端点保持同步 |
-| 5 | 读写分离 | `packages/db`（只读连接串）+ admin 读路由（reports/dashboard/export/audit-logs） | 1 天 | 强一致场景走主库白名单 |
-| 6 | 部署编排 | `docker/docker-compose.cluster.yml` 新建（LB+API×N+worker 分组+Redis Cluster+MinIO 样例） | 1 天 | 附健康检查与扩缩命令 |
-| 7 | 压测验证 | `scripts/loadtest/`（k6 脚本：登录/下单/回调/实名四链路） | 1 天 | 产出容量报告，对外数字以此为据 |
+| 1 | 存储抽象 | 新建 `packages/storage`；改 `apps/api/src/routes/portal/account.ts`、`portal/tickets.ts`、`admin/identities.ts` 三个调用点 | 1~2 天 | 待做 |
+| 2 | 队列分组路由 | `packages/core/src/queue.ts`：`QUEUE_TX/NOTIFY/SUPPLY/OCR` 四队列 + `queueForJob` 路由（`QUEUE_ROUTING=split` 启用，缺省单队列 kvm 兼容既有部署） | — | ✅ 已完成 |
+| 3 | worker 分组参数 | `apps/worker/src/groups.ts`（--group 解析）+ `handlers/{index,ocr}.ts`（半差异化：handler 按域分文件，每组注册全量 handler，隔离靠队列路由而非删代码）；ocr 工具下沉 `packages/core/src/ocr/`（API/worker 共用） | — | ✅ 已完成 |
+| 4 | OCR 异步化 | 提交侧 `account.ts` 落盘后入队 `ocr.verify`（立即返回，不再同步识别）；回写侧 worker `handlers/ocr.ts` 与 API inline 降级 `inline/ocr-verify.ts` 双路径一致；`ocr_status` 枚举加 `processing`（迁移 0006，已执行）；预填端点保持同步 | — | ✅ 已完成（E2E 验证：提交→入队→消费→回写 unavailable 降级链路全通） |
+| 5 | 读写分离 | `packages/db`（只读连接串）+ admin 读路由（reports/dashboard/export/audit-logs） | 1 天 | 待做 |
+| 6 | 部署编排 | `docker/docker-compose.cluster.yml` 新建（LB+API×N+worker 分组+Redis Cluster+MinIO 样例） | 1 天 | 待做 |
+| 7 | 压测验证 | `scripts/loadtest/`（k6 脚本：登录/下单/回调/实名四链路） | 1 天 | 待做 |
 
-**合计：约 7~9 个工作日**。全部改造不引入服务间 HTTP 调用——服务边界靠"队列分组 + 无状态副本"实现，
+**剩余合计：约 4~5 个工作日**。全部改造不引入服务间 HTTP 调用——服务边界靠"队列分组 + 无状态副本"实现，
 这是维护难度不上升的关键。
+
+> 实施备注（半差异化的一个关键取舍）：每组 worker 都注册全量 handler（注册本身无副作用），
+> 隔离靠两层——①凭据是环境变量级（只有 supply 组进程配 PVE 凭据）；②分组模式下
+> `QUEUE_ROUTING=split` 时 job 已按路由分流，非本组 handler 收不到 job。
+> 这避开了"tx 组订阅主队列却缺 ocr handler → job 反复失败"的陷阱（E2E 实测发现并修复）。
 
 ---
 

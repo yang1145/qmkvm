@@ -17,7 +17,8 @@
     "@qmkvm/db": "workspace:*",
     "@qmkvm/logger": "workspace:*",
     "bullmq": "^6.3.4",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "node-tesseract-ocr": "^2.2.1"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

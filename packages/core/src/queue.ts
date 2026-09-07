@@ -13,6 +13,60 @@ import { logger } from "@qmkvm/logger";
 /** 队列名（worker 侧消费同名队列） */
 export const QUEUE_NAME = "kvm";
 
+/**
+ * 队列分组（微服务化部署形态）：worker 按 --group 只订阅本组队列。
+ * 路由规则集中在一处；分组缺失的 job 一律回落主队列 kvm（兼容既有部署）。
+ * 开发态（未配置分组路由环境变量）时全部走主队列，行为与单队列完全一致。
+ */
+export const QUEUE_TX = "kvm";
+export const QUEUE_NOTIFY = "kvm-notify";
+export const QUEUE_SUPPLY = "kvm-supply";
+export const QUEUE_OCR = "kvm-ocr";
+
+/** job 名 → 队列映射（一处定义，API/worker 双侧共用） */
+const QUEUE_ROUTING: Record<string, string> = {
+  "notify.user": QUEUE_NOTIFY,
+  "domain.event": QUEUE_TX,
+  "provision.task": QUEUE_SUPPLY,
+  "provision.retry": QUEUE_SUPPLY,
+  "payment.process_event": QUEUE_TX,
+  "cron.run": QUEUE_TX,
+  "ocr.verify": QUEUE_OCR,
+};
+
+export const QUEUE_GROUPS = ["tx", "notify", "supply", "ocr"] as const;
+export type QueueGroup = (typeof QUEUE_GROUPS)[number];
+
+/** 组 → 订阅的队列名列表（worker 启动时用） */
+export function queuesForGroup(group: string): string[] {
+  const queues = new Set<string>([QUEUE_TX]);
+  for (const q of Object.values(QUEUE_ROUTING)) {
+    if (q !== QUEUE_TX) queues.add(q);
+  }
+  // 主队列 kvm 始终属于 tx 组；其余组只订阅本组队列 + 不含主队列
+  if (group !== "tx") {
+    return Object.values(QUEUE_ROUTING).filter(
+      (q) => routeGroupOf(q) === group && q !== QUEUE_TX,
+    );
+  }
+  return [...queues];
+}
+
+/** 队列名 → 所属组（无映射的队列归 tx） */
+function routeGroupOf(queue: string): QueueGroup {
+  if (queue === QUEUE_NOTIFY) return "notify";
+  if (queue === QUEUE_SUPPLY) return "supply";
+  if (queue === QUEUE_OCR) return "ocr";
+  return "tx";
+}
+
+/** 入队时的队列选择：按 job 名路由；未配置分组时统一走主队列 */
+export function queueForJob(job: string): string {
+  const routingEnabled = process.env.QUEUE_ROUTING === "split";
+  if (!routingEnabled) return QUEUE_NAME;
+  return QUEUE_ROUTING[job] ?? QUEUE_NAME;
+}
+
 export type JobHandler = (data: any) => Promise<void>;
 
 export interface EnqueueOptions {
@@ -55,16 +109,16 @@ export async function processEnqueuedJob(job: string, data: unknown): Promise<vo
 
 // —— BullMQ 队列单例（惰性创建；无 REDIS_URL 恒为 null） ——
 
-let queueInstance: Queue | null | undefined;
+const queueInstances = new Map<string, Queue>();
 
-function getQueue(): Queue | null {
-  if (queueInstance !== undefined) return queueInstance;
+function getQueue(name: string): Queue | null {
+  const cached = queueInstances.get(name);
+  if (cached) return cached;
   const redis = getRedis();
   if (!redis) {
-    queueInstance = null;
     return null;
   }
-  queueInstance = new Queue(QUEUE_NAME, {
+  const queue = new Queue(name, {
     connection: redis,
     defaultJobOptions: {
       attempts: 5,
@@ -73,7 +127,8 @@ function getQueue(): Queue | null {
       removeOnFail: { count: 5000 },
     },
   });
-  return queueInstance;
+  queueInstances.set(name, queue);
+  return queue;
 }
 
 /**
@@ -81,7 +136,7 @@ function getQueue(): Queue | null {
  * 阻断主业务事务，掉单由定时任务兜底）；inline 模式下 handler 异常同样不抛。
  */
 export async function enqueueJob(job: string, data: unknown, opts?: EnqueueOptions): Promise<void> {
-  const queue = getQueue();
+  const queue = getQueue(queueForJob(job));
   if (queue) {
     try {
       await queue.add(job, data, {

@@ -59,8 +59,8 @@ export const userProfiles = mysqlTable(
     idHandheldPath: varchar("id_handheld_path", { length: 500 }),
     /** 正面照 OCR 提取的身份证号（OCR 不可用时为 null） */
     ocrIdNumber: varchar("ocr_id_number", { length: 30 }),
-    /** 正面照 OCR 与用户填写证件号的核对结果（校验码验证通过才算 matched） */
-    ocrStatus: mysqlEnum("ocr_status", ["matched", "unavailable"]),
+    /** 正面照 OCR 与用户填写证件号的核对结果（processing=已入队待识别；matched=校验码通过且与填写一致；unavailable=不可用或不一致） */
+    ocrStatus: mysqlEnum("ocr_status", ["matched", "unavailable", "processing"]),
     /** 审核驳回原因（rejected 时有值，重新提交后清空） */
     rejectReason: varchar("reject_reason", { length: 255 }),
     verifiedAt: datetime("verified_at", { mode: "date" }),

@@ -1,0 +1,1 @@
+ALTER TABLE `user_profiles` MODIFY `ocr_status` enum('matched','unavailable','processing');

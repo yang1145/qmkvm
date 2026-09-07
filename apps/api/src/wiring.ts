@@ -50,6 +50,12 @@ export function registerJobHandlers() {
     logger.warn({ event: data.event, payload: data.payload }, "[domain.event] 无目标用户事件（P0 仅记录）");
   });
 
+  // OCR 异步识别（inline 降级模式下在 API 进程内联执行；Redis 模式由 ocr 组 worker 消费）
+  registerJobHandler("ocr.verify", async (data: { profileId: number | string; submittedIdNumber?: string | null }) => {
+    const { ocrVerifyHandler } = await import("./inline/ocr-verify.js");
+    await ocrVerifyHandler(getDb(), data);
+  });
+
   logger.info("[wiring] job handlers registered");
 }
 
