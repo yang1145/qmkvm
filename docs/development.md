@@ -15,7 +15,7 @@ apps/
   portal     客户门户（Next.js 16，端口 3001）—— Next.js 破坏性变更见 AGENTS.md 顶部提示
   admin      管理后台（Ant Design Pro / umi max，端口 8000，静态产物）
   api        Hono REST API（端口 4000，唯一后端服务）
-  worker     BullMQ 消费者 + 10 定时任务（--group 分组，无端口）
+  worker     BullMQ 消费者 + 11 定时任务（--group 分组，无端口）
 packages/
   contracts  zod 契约（DTO/错误码/权限点，前后端共享，TS 源码包）
   db         Drizzle schema + 连接层（主库 getDb / 只读 getDbRO）+ 迁移（drizzle-kit）
@@ -133,7 +133,9 @@ pnpm dev:worker             # worker（需 Redis；缺省 --group tx）
 | 核心 | `APP_KEY` | ✅ | base64 32 字节；AES-256-GCM 加密支付密钥/证件号，轮换需重录网关配置 |
 | 核心 | `REDIS_URL` | 推荐 | 无则限流/验证码降级进程内存、队列内联执行 |
 | 核心 | `CORS_ORIGINS` / `COOKIE_DOMAIN` | 生产 | 前端来源白名单 / 跨子域会话共享 |
-| 数据库 | `DATABASE_URL_RO` | 可选 | 只读副本；报表/导出/审计/dashboard 走从库，未配置回落主库 |
+| 数据库 | `DATABASE_URL_RO` | 可选 | 只读从库；报表/导出/审计/dashboard 走从库，未配置回落主库 |
+| 数据库 | `DATABASE_URL_STANDBY` | 可选 | 备库探测串（`system.replica_health` 复制告警用，需 REPLICATION CLIENT）；未配置只探测从库 |
+| 数据库 | `REPLICA_LAG_ALERT_SECONDS` | 可选 | 复制延迟告警阈值（秒，缺省 60） |
 | 存储 | `STORAGE_PROVIDER` | 缺省 local | `local` 本地盘（UPLOAD_DIR） / `s3` 对象存储 |
 | 存储 | `STORAGE_S3_ENDPOINT/REGION/BUCKET/ACCESS_KEY/SECRET/BUCKET_PREFIX` | s3 时 | MinIO/OSS/COS 兼容，forcePathStyle |
 | 队列 | `QUEUE_ROUTING` | 缺省单队列 | `split` 启用四队列分流（配合 worker --group） |

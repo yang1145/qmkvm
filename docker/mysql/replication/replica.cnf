@@ -1,0 +1,29 @@
+# MySQL 8.4 备库/从库配置（docker-compose 集群样例用）
+# server_id 各节点唯一（compose 经 command 行 --server-id=2/3 注入，本文件不写死）；
+# 备库 log_replica_updates=ON 是链式拓扑（从库挂备库）与备库提主后继续带从的前提。
+[mysqld]
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# —— 复制基线（三节点一致）——
+binlog_format = ROW
+gtid_mode = ON
+enforce_gtid_consistency = ON
+binlog_expire_logs_seconds = 259200
+relay_log_recovery = ON
+
+# —— 链式复制：备库也写 binlog ——
+log_replica_updates = ON
+
+# —— 半同步 replica（仅备库生效；从库不装插件，loose- 前缀使其忽略此项）——
+# 8.0.26+/8.4 命名；8.0 旧名 rpl_semi_sync_slave_enabled。首次由 replica-init.sh
+# INSTALL 插件 + SET GLOBAL 启用，重启后插件已持久化、本变量生效。
+loose-rpl_semi_sync_replica_enabled = 1
+
+# —— 只读防护：备/从常置只读（提主/维护时按 runbook 显式解除）——
+read_only = ON
+super_read_only = ON
+
+# —— 资金库 durability ——
+innodb_flush_log_at_trx_commit = 1
+sync_binlog = 1

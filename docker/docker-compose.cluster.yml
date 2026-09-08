@@ -9,6 +9,9 @@
 #     Dockerfile.node / Dockerfile.next / Dockerfile.admin 构建之上，
 #     增加 LB、API 多副本、worker 四分组、S3 对象存储（MinIO）。
 #   - 代码与镜像完全同源，差别只在副本数与编排拓扑。
+#   - MySQL 为三节点主备样例（mysql-master / mysql-standby / mysql-readonly，
+#     链式复制 主→备→从），配置见 docker/mysql/replication/，生产对应关系
+#     与切换 runbook 见 docs/deployment.md §6.2。
 #
 # 重要：单机 docker compose（无 Swarm）下 deploy.replicas 无效，
 #   API 多副本用显式服务 api-1/api-2/api-3（container_name 固定，
@@ -143,7 +146,7 @@ services:
       # 设置 CORS_ORIGINS（前端来源白名单）与 COOKIE_DOMAIN（.example.com 形式，
       # 用于 portal/www/admin 跨子域共享会话 Cookie；同源单域名留空）
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -174,7 +177,7 @@ services:
       STORAGE_S3_ENDPOINT: http://minio:9000
       QUEUE_ROUTING: split
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -204,7 +207,7 @@ services:
       STORAGE_S3_ENDPOINT: http://minio:9000
       QUEUE_ROUTING: split
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -245,7 +248,7 @@ services:
       # 供应/PVE 凭据为 env 级隔离：PVE_* 只配给 worker-supply（见下方说明），
       # 本组不配置 PVE_*，即使误收到供应 job 也无法触达真实宿主机
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -265,7 +268,7 @@ services:
       NODE_ENV: production
       QUEUE_ROUTING: split
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -290,7 +293,7 @@ services:
       NODE_ENV: production
       QUEUE_ROUTING: split
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -310,7 +313,7 @@ services:
       NODE_ENV: production
       QUEUE_ROUTING: split
     depends_on:
-      mysql:
+      mysql-master:
         condition: service_healthy
       redis:
         condition: service_started
@@ -366,49 +369,107 @@ services:
       sh -c "mc mb --ignore-existing local/${STORAGE_S3_BUCKET:?请在 .env 设置 STORAGE_S3_BUCKET}"
 
   # ------------------------------------------------------------------
-  # MySQL 主库（对应架构图"MySQL 主"）
+  # MySQL 三节点主备样例（主 + 半同步备 + 只读从；链式复制 主→备→从）
   # ------------------------------------------------------------------
-  mysql:
+  # - 复制配置与脚本见 docker/mysql/replication/（master.cnf / replica.cnf /
+  #   master-init.sh / replica-init.sh / check_master.sh，半同步变量为
+  #   8.0.26+/8.4 命名 rpl_semi_sync_source_* / rpl_semi_sync_replica_*）
+  # - 单机样例差异：三节点同机 + 空库直启复制（mysql-replica-init 一次性任务
+  #   自动挂复制）；生产为三台独立机 + mysqldump 灌初始数据 + Keepalived VIP，
+  #   搭建步骤与切换 runbook 见 docs/deployment.md §6.2
+  # - 应用连接串（.env）：DATABASE_URL 指向 mysql-master（生产指向 VIP）；
+  #   DATABASE_URL_RO 指向 mysql-readonly（报表/导出/审计/dashboard 走从库，
+  #   不配置回落主库）；DATABASE_URL_STANDBY 指向 mysql-standby（可选，
+  #   worker 的 system.replica_health 复制健康告警用）
+  # - 角色纪律：备/从常置 read_only+super_read_only（replica.cnf），任何时刻
+  #   至多一个节点可写；提主操作见 deployment.md §6.2，禁止直接改 cnf 绕过
+  # ------------------------------------------------------------------
+  mysql-master:
     image: mysql:8.4
     restart: unless-stopped
-    container_name: qmkvm-cluster-mysql
+    container_name: qmkvm-cluster-mysql-master
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
       MYSQL_DATABASE: qmkvm
+      # 复制账号密码（master-init.sh 建号用，与 mysql-replica-init 共用）
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD:?请在 .env 设置 MYSQL_REPL_PASSWORD}
       TZ: Asia/Shanghai
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql-data:/var/lib/mysql
+      - ./mysql/replication/master.cnf:/etc/mysql/conf.d/master.cnf:ro
+      # 首次初始化执行：装半同步插件 + 建复制账号（仅空数据目录时运行）
+      - ./mysql/replication/master-init.sh:/docker-entrypoint-initdb.d/01-master-init.sh:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
 
-  # ------------------------------------------------------------------
-  # MySQL 只读副本 —— 可选项（默认注释掉，启用后 .env 中 DATABASE_URL_RO
-  # 指向 mysql-readonly 即可让报表/导出/审计/dashboard 走从库）
-  # ------------------------------------------------------------------
-  # 单机模拟限制：真实主从需要主库开 binlog + GTID、从库 CHANGE REPLICATION SOURCE
-  # 并复制初始数据，单容器无法用同一 data 卷同时充当主从（会互相覆盖）。
-  # 下方注释块给出的是"独立空从库"形态：仅满足 DATABASE_URL_RO 连通性验证
-  # （从库无业务数据，读路由返回空结果），完整主从的生产做法见 README-cluster.md。
-  # mysql-readonly:
-  #   image: mysql:8.4
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
-  #     MYSQL_DATABASE: qmkvm
-  #     TZ: Asia/Shanghai
-  #   command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-  #     --read-only=1
-  #   volumes:
-  #     - mysql-readonly-data:/var/lib/mysql
-  #   healthcheck:
-  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 10
+  # 备库：半同步复制主库，不承载业务读（保持随时可提升的干净状态）；
+  # server_id 经命令行注入（replica.cnf 备/从共用，不写死）
+  mysql-standby:
+    image: mysql:8.4
+    restart: unless-stopped
+    container_name: qmkvm-cluster-mysql-standby
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+      MYSQL_DATABASE: qmkvm
+      TZ: Asia/Shanghai
+    command: --server-id=2 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-standby-data:/var/lib/mysql
+      - ./mysql/replication/replica.cnf:/etc/mysql/conf.d/replica.cnf:ro
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 从库：异步复制备库（链式），承载 DATABASE_URL_RO 读流量
+  # （报表/导出/审计/dashboard；主库故障提主时本节点复制指向不变）
+  mysql-readonly:
+    image: mysql:8.4
+    restart: unless-stopped
+    container_name: qmkvm-cluster-mysql-readonly
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+      MYSQL_DATABASE: qmkvm
+      TZ: Asia/Shanghai
+    command: --server-id=3 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-readonly-data:/var/lib/mysql
+      - ./mysql/replication/replica.cnf:/etc/mysql/conf.d/replica.cnf:ro
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # 一次性挂复制任务（幂等，失败 exit 1 可 compose restart 重试）：
+  # 备库挂主库（半同步）→ 从库挂备库（异步）。完成后 exited(0)。
+  mysql-replica-init:
+    image: mysql:8.4
+    container_name: qmkvm-cluster-mysql-replica-init
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 或环境设置}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD:?请在 .env 设置 MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./mysql/replication/replica-init.sh:/replica-init.sh:ro
+    entrypoint: ["sh", "/replica-init.sh"]
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      mysql-standby:
+        condition: service_healthy
+      mysql-readonly:
+        condition: service_healthy
 
   # ------------------------------------------------------------------
   # Redis（复用 prod 版：BullMQ 依赖持久化 key，必须 noeviction）
@@ -471,6 +532,7 @@ networks:
 
 volumes:
   mysql-data:
+  mysql-standby-data:
+  mysql-readonly-data:
   redis-data:
   minio-data:
-  # mysql-readonly-data:（启用 mysql-readonly 时取消注释）

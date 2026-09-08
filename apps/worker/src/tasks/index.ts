@@ -1,5 +1,5 @@
 /**
- * Worker 定时任务注册表（SPEC-P0 §3 共 9 个）。
+ * Worker 定时任务注册表（SPEC-P0 §3，共 11 个）。
  * BullMQ repeatable（UTC cron）+ `pnpm --filter @qmkvm/worker task -- <name>` 手动执行共用。
  */
 import { renewalInvoicesTask } from "./renewal-invoices.js";
@@ -12,6 +12,7 @@ import { paymentReconcileTask } from "./payment-reconcile.js";
 import { provisionRetryScanTask } from "./provision-retry-scan.js";
 import { systemCleanupTask } from "./system-cleanup.js";
 import { systemJobHealthTask } from "./system-job-health.js";
+import { replicaHealthTask } from "./replica-health.js";
 import type { TaskDef } from "./framework.js";
 
 export const TASKS: readonly TaskDef[] = [
@@ -25,6 +26,7 @@ export const TASKS: readonly TaskDef[] = [
   provisionRetryScanTask,
   systemCleanupTask,
   systemJobHealthTask,
+  replicaHealthTask,
 ];
 
 export { runTask, type TaskDef, type TaskRunOutcome, type TaskStatus } from "./framework.js";

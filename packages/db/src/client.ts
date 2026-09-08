@@ -16,6 +16,11 @@ export function createDb(url: string) {
     // 计费事务需要可重复读默认隔离级（MySQL 默认 RR）
     timezone: "Z",
     supportBigNumbers: true,
+    // 主备形态下 VIP/代理漂移时旧连接会断：failover 后新获取的连接重建即可，
+    // connectTimeout 控制建连失败快速报错（由 BullMQ 退避重试与回调幂等兜底）
+    connectTimeout: 10_000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10_000,
   });
   return drizzle(pool, { schema, mode: "default" });
 }

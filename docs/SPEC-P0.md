@@ -319,6 +319,7 @@ processQueuedTasks(db, limit=50): Promise<{processed, succeeded, failed}>   // c
 | provision.retry_scan | */10 * * * * | core.processQueuedTasks（failed 退避重投 + 兜底） |
 | system.cleanup | 30 2 * * 0 | 清理过期 sessions/sms_codes/password_reset_tokens（>90 天日志除外） |
 | system.job_health | 0 7 * * * | 汇总昨日 job_runs → 告警（钉钉/飞书 webhook 环境变量 ALERT_WEBHOOK_URL） |
+| system.replica_health | */5 * * * * | 探测备/从库复制线程与延迟（DATABASE_URL_RO / DATABASE_URL_STANDBY），异常转变推 ALERT_WEBHOOK_URL；未配置 RO 时跳过 |
 
 每个任务包装 `runTask(name, fn)`：记录 startedAt/finishedAt/job_runs(status/result/error)；失败不中断进程。`apps/worker/src/run-task.ts`：`tsx src/run-task.ts <taskName>` 直接执行（无 Redis 也能跑）。
 

@@ -13,7 +13,7 @@
 | A. Docker Compose（标准版） | ≤ 1 万客户，峰值 < 500 QPS | 单机一键起，最简运维 | §二 |
 | B. Docker Compose（集群版） | 1~10 万客户，需要独立伸缩 | LB + API×3 + 四组 worker + MinIO | §三 / README-cluster.md |
 | C. 源码 + PM2 | 无 Docker 环境 / 定制构建 | 手工依赖管理 | §四 |
-| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（主从见 §六） | §五 |
+| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（单库起步，主备高可用见 §六.2） | §五 |
 | 前置：对象存储 | 集群版必选 | S3 兼容（MinIO/OSS/COS） | §六.3 |
 
 ---
@@ -85,7 +85,7 @@ curl http://127.0.0.1:4000/healthz
 
 ## 三、方式 B：集群版（微服务化形态）
 
-15 服务：Nginx LB（轮询 API×3，无 sticky，XFF 透传）+ 四组 worker（`--group tx|notify|supply|ocr`，同一镜像不同启动参数）+ MinIO 建桶 + MySQL（只读副本可选块）+ Redis + 三前端。
+18 服务：Nginx LB（轮询 API×3，无 sticky，XFF 透传）+ 四组 worker（`--group tx|notify|supply|ocr`，同一镜像不同启动参数）+ MinIO 建桶 + MySQL 三节点主备样例（主/半同步备/只读从，链式复制）+ Redis + 三前端。
 
 ```bash
 docker compose -f docker/docker-compose.cluster.yml build
@@ -157,14 +157,129 @@ docker compose -f <对应compose> up -d --build   # 或 pm2 reload all
 
 **回滚**：应用回滚 = 切回上一镜像 tag / `git checkout` 上一 release；迁移以"只增不改"为前提，回滚应用一般无需回滚库。重大变更前 `mysqldump` 全量。
 
-### 6.2 数据库主从（读写分离）
+### 6.2 数据库主备高可用（主 + 半同步备 + 只读从）
 
-应用侧已支持：`DATABASE_URL_RO` 指向从库后，报表/导出/审计检索/dashboard 自动走从库；未配置回落主库。
+三节点形态：**写路径高可用（备库可提升）+ 读扩展（从库扛报表流量）**，读写分离是它的自然产物。
+应用代码零改动——`DATABASE_URL` 指向"固定写入口"，`DATABASE_URL_RO` 指向从库，
+`getDbRO()` 未配置时回落主库的既有逻辑保持单机零配置兼容。
 
-- 搭建（生产）：主库开 binlog + GTID → 从库 `CHANGE REPLICATION SOURCE TO ...` → 灌初始数据（`mysqldump --single-transaction --source-data=2`）
-- 只读账号最小权限：`SELECT` on `qmkvm.*`
-- 验证：从库 `SHOW REPLICA STATUS\G`（`Seconds_Behind` 应≈0）；慢查询日志确认 reports 查询落在从库
-- 延迟敏感说明：这些读路径均为可容忍延迟的展示/检索；审核操作等强一致读固定走主库，无需额外配置
+```
+                          ┌─ DATABASE_URL（写，固定入口 = VIP）──▶ mysql-master    半同步主
+  api ×N / worker ×N ─────┤                                       mysql-standby  半同步备（不承载读，随时可提主）
+                          └─ DATABASE_URL_RO（读）──────────────▶ mysql-readonly 异步从（报表/导出/审计/dashboard）
+                                  复制链：master ─(半同步)─▶ standby ─(异步，log_replica_updates)─▶ readonly
+```
+
+**角色纪律（脑裂防护的根基）：** 备/从常置 `read_only` + `super_read_only`；
+VIP 只被"mysqld 存活且 `read_only=0`"的节点持有；任何时刻**至多一个节点可写**。
+
+**连接串约定：**
+
+| 变量 | 指向 | 说明 |
+|---|---|---|
+| `DATABASE_URL` | VIP / 数据库代理 / 云 RDS 端点 | 故障转移发生在入口之下，切换时本值不变、应用不重启 |
+| `DATABASE_URL_RO` | mysql-readonly | 报表/导出/审计/dashboard 10 处读路径；从库故障时可临时撤掉回落主库 |
+| `DATABASE_URL_STANDBY` | mysql-standby | 可选，`system.replica_health` 复制健康告警探测用 |
+
+#### 搭建步骤（自建生产）
+
+**① my.cnf 基线**（参考 `docker/mysql/replication/*.cnf`；MySQL 8.0.26+/8.4 命名，8.0 旧名见括号）：
+
+| 参数 | 主 | 备 | 从 | 说明 |
+|---|---|---|---|---|
+| `server_id` | 1 | 2 | 3 | 唯一 |
+| `binlog_format=ROW`、`gtid_mode=ON`、`enforce_gtid_consistency=ON` | ✅ | ✅ | ✅ | GTID 自动定位的前提 |
+| `log_replica_updates=ON`（旧名 log_slave_updates） | — | ✅ | — | 链式复制：从库挂备库；备库提主后继续带从 |
+| `relay_log_recovery=ON`、`binlog_expire_logs_seconds≥259200` | ✅ | ✅ | ✅ | 断连追传缓冲 |
+| `loose-rpl_semi_sync_source_enabled=1`、`_timeout=5000`、`_wait_for_replica_count=1`（旧名 rpl_semi_sync_master_*） | ✅ | — | — | 备库失联 5s 自动降级异步，写路径不被备库故障拖死 |
+| `loose-rpl_semi_sync_replica_enabled=1`（旧名 rpl_semi_sync_slave_enabled） | — | ✅ | — | 备库作为半同步 ack 方 |
+| `read_only=ON` + `super_read_only=ON` | — | ✅ | ✅ | 提主/维护时按 runbook 显式解除 |
+| `innodb_flush_log_at_trx_commit=1` + `sync_binlog=1` | ✅ | ✅ | ✅ | 资金库双 1，防误改 |
+
+**② 半同步插件与复制账号**（主库）：
+
+```sql
+INSTALL SONAME 'semisync_source.so';   -- 8.0 旧名 semisync_master.so
+INSTALL SONAME 'semisync_replica.so';  -- 备库用；备库上执行同款
+CREATE USER 'repl'@'192.168.%' IDENTIFIED BY '<强密码>';
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'repl'@'192.168.%';
+```
+
+**③ 灌初始数据并挂复制**（链式：备挂主、从挂备）：
+
+```bash
+# 主库导出（--source-data=2 记录 GTID 位点；主库短暂 FLUSH TABLES WITH READ LOCK）
+mysqldump --single-transaction --source-data=2 -A -uroot -p > dump.sql
+# 分别灌入备库、从库后，各自执行（SOURCE_HOST 分别填主库/备库 IP）：
+CHANGE REPLICATION SOURCE TO SOURCE_HOST='<上游IP>', SOURCE_USER='repl',
+  SOURCE_PASSWORD='<密码>', SOURCE_AUTO_POSITION=1, GET_SOURCE_PUBLIC_KEY=1;
+START REPLICA;
+```
+
+**④ 写入口（Keepalived VIP）**：主备两台装 Keepalived（主 priority 150 / 备 100，`nopreempt`），
+探测脚本用 `docker/mysql/replication/check_master.sh`——**只有 mysqld 存活且 `read_only=0`
+的节点才持有 VIP**。云上不支持 VRRP 时改用 MySQL Router/ProxySQL 或云 RDS 高可用版，
+`DATABASE_URL` 指向其固定端点，其余步骤不变。
+
+**⑤ 验证**：
+
+```sql
+-- 从库/备库各执行：IO/SQL 线程均 Yes，Seconds_Behind_Source ≈ 0
+SHOW REPLICA STATUS\G
+-- 主库：Rpl_semi_sync_source_clients ≥ 1，status=yes 且随写入增长
+SHOW STATUS LIKE 'Rpl_semi_sync_source%';
+```
+
+#### 计划内切换 runbook（主备轮换，应用零重启）
+
+1. **预检**：从库 `Seconds_Behind_Source=0`；主库无长事务（`information_schema.innodb_trx`）
+2. **旧主停写**：`SET GLOBAL read_only=1`（VIP 探测随即失配，自动让出入口）
+3. **备库追平**：确认 GTID 差值=0（`SHOW REPLICA STATUS` 的 Retrieved/Executed 对比）
+4. **提升**：备库 `STOP REPLICA; RESET REPLICA ALL;` → `SET GLOBAL super_read_only=0; SET GLOBAL read_only=0;`
+5. VIP 漂移至新主（Keepalived 按探测条件自动接管）；**从库不动**（链式复制指向不变，GTID 自动续传）
+6. 旧主作为新备挂新主（`CHANGE REPLICATION SOURCE TO ... SOURCE_AUTO_POSITION=1; START REPLICA;`）
+7. 冒烟验证：`/admin/system/status` db.ok、一笔测试交易、报表仍走从库
+
+预期表现：切换窗口内进行中的请求短暂报错（秒级），用户重试即可；支付回调由
+`gateway_events` 幂等 + BullMQ 退避重试兜底，不重不漏。
+
+#### 紧急故障转移 runbook（主库宕机）
+
+1. **先防脑裂**：旧主若仍可达，立即 `read_only=1` 或直接停 mysqld——宁可误杀不可双主
+2. 确认备库已收全 GTID（半同步保证已 ack 的事务不丢）
+3. 提升备库（同计划内切换第 4 步）；VIP 已由 Keepalived 漂移
+4. 从库不动；旧主恢复后**只能作为新备加入**，禁止直接接回写路径
+
+#### 故障矩阵
+
+| 故障 | 写路径 | 动作 | RTO / RPO |
+|---|---|---|---|
+| 主库宕机 | 中断→报错（用户重试，回调幂等+worker 退避兜底） | 提升备库 | ~3-5 min / ≈0 |
+| 备库宕机 | 正常（半同步 5s 超时降级异步） | 修复后重建为新备；从库临时改挂主库（一步 `CHANGE REPLICATION SOURCE`） | 即时 / 降级窗口由对账兜底 |
+| 从库宕机 | 不受影响；报表/导出/dashboard 报错 | 重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 | 即时 / — |
+| 主+备宕机 | 中断 | 从库数据抢救或备份恢复 | 小时级 / 由备份决定 |
+
+#### 监控与告警
+
+- worker 内置任务 **`system.replica_health`**（每 5 分钟）：探测从库（`DATABASE_URL_RO`）
+  与备库（`DATABASE_URL_STANDBY`，可选）的 IO/SQL 线程与 `Seconds_Behind_Source`，
+  超过 `REPLICA_LAG_ALERT_SECONDS`（缺省 60s）或线程断开时推送 `ALERT_WEBHOOK_URL`；
+  状态转变时推送一次，连续异常不重复推送
+- 探测账号最小权限：`GRANT REPLICATION CLIENT ON *.* TO 'monitor'@'worker-ip'`
+- 详见 §6.5 与 `apps/worker/src/tasks/replica-health.ts`
+
+#### 备份策略（主备形态下的调整）
+
+- 每日全量 `mysqldump --single-transaction` **改从从库取**（为主备减负）；binlog 增量仍从主库归档
+- 备库不替代备份：误删/逻辑损坏会原样复制到备/从，恢复仍靠全量+binlog 重放（§6.4）
+
+#### 集群样例与云 RDS 对应
+
+- compose 集群样例已内置三节点（`mysql-master`/`mysql-standby`/`mysql-readonly`，链式复制，
+  `mysql-replica-init` 一次性任务自动挂复制，配置见 `docker/mysql/replication/`）；
+  样例为空库直启复制，生产按本节 ③ 先灌数据
+- 云 RDS 高可用版：搭建/切换/VIP 全部由云托管，`DATABASE_URL` 指向 RDS 代理端点、
+  `DATABASE_URL_RO` 指向只读地址即可，无需自建半同步与 Keepalived
 
 ### 6.3 对象存储（S3 兼容）
 
@@ -192,6 +307,7 @@ STORAGE_S3_REGION=...      # 按云商
 
 - 存活：LB 健康检查 `/healthz`；**应用内监控**：admin 仪表盘"系统运行状态"卡片 + `GET /api/v1/admin/system/status`（API/DB/Redis 探活 + 四组 worker 心跳在线 + 队列积压）
 - 任务失败：`system.job_health` 每日汇总 `job_runs` 失败，`ALERT_WEBHOOK_URL` 推钉钉/飞书
+- 复制健康：`system.replica_health` 每 5 分钟探测备/从库复制线程与延迟（主备形态，见 §6.2）
 - 可选：Prometheus `/metrics`（预留，未实现）
 
 ### 6.6 生产安全清单
@@ -218,3 +334,5 @@ STORAGE_S3_REGION=...      # 按云商
 | 实名一直显示"OCR 识别中" | worker-ocr 未启动（或 tesseract 未安装） | 部署 tesseract + `chi_sim` 语言包，或接受 unavailable 降级走人工审核 |
 | 限流把正常用户挡了 | LB 未透传 X-Forwarded-For | §五 |
 | 供应任务卡 pending | PVE 凭据未配置在 supply 组 / PVE 连接失败 | 后台「供应模块」连接测试；确认凭据只在 supply 组环境 |
+| 后台报表/审计打不开（500） | 只读从库宕机或未追平 | §6.2：重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 |
+| 收到"复制健康告警" | 备/从复制延迟超阈值或线程断开 | §6.2 监控小节：`SHOW REPLICA STATUS` 排错；线程断开按搭建步骤 ③ 重挂 |

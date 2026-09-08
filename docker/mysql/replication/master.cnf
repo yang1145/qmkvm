@@ -1,0 +1,28 @@
+# MySQL 8.4 主库配置（docker-compose 集群样例用）
+# 三节点基线：ROW + GTID；角色差异：半同步 source 插件启用。
+# 生产部署对应项见 docs/deployment.md §6.2（自建时写入 my.cnf，云 RDS 由参数组设置）。
+[mysqld]
+# —— 字符集（与 prod 编排一致）——
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# —— 复制基线（三节点一致）——
+server_id = 1
+binlog_format = ROW
+gtid_mode = ON
+enforce_gtid_consistency = ON
+# 备库宕机后 binlog 不被过早清理（从库断连追传的缓冲窗口）
+binlog_expire_logs_seconds = 259200
+relay_log_recovery = ON
+
+# —— 半同步 source（8.0.26+/8.4 命名；8.0 旧名 rpl_semi_sync_master_*）——
+# loose- 前缀：插件 INSTALL 前变量未知时忽略而非拒绝启动（首次启动装插件由
+# master-init.sh 完成，重启后插件已持久化、变量生效）
+# timeout：备库失联 5s 后自动降级异步，写路径不被备库故障拖死
+loose-rpl_semi_sync_source_enabled = 1
+loose-rpl_semi_sync_source_timeout = 5000
+loose-rpl_semi_sync_source_wait_for_replica_count = 1
+
+# —— 资金库 durability（保持 MySQL 默认，显式声明防误改）——
+innodb_flush_log_at_trx_commit = 1
+sync_binlog = 1

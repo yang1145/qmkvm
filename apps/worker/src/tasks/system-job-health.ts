@@ -6,7 +6,7 @@
 import { and, gte, lt } from "drizzle-orm";
 import { schema, type Db } from "@qmkvm/db";
 import { logger } from "@qmkvm/logger";
-import { workerEnv } from "../env.js";
+import { postAlert } from "../alert.js";
 import type { TaskDef } from "./framework.js";
 
 const log = logger.child({ module: "worker:job-health" });
@@ -24,32 +24,6 @@ interface HealthSummary {
 /** UTC 零点 */
 function utcMidnight(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
-
-/** 钉钉机器人 text 消息（飞书同格式兼容） */
-async function postAlert(content: string): Promise<boolean> {
-  const url = workerEnv.alertWebhookUrl;
-  if (!url) return false;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10_000);
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ msgtype: "text", text: { content } }),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      log.warn({ status: res.status }, "告警 webhook 响应异常");
-      return false;
-    }
-    return true;
-  } catch (err) {
-    log.warn({ err }, "告警 webhook 发送失败");
-    return false;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 async function run(db: Db, now: Date): Promise<HealthSummary> {

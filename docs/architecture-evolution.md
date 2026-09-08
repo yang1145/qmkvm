@@ -78,6 +78,7 @@
 | 5 | 读写分离 | `packages/db`：`getDbRO()` + `DATABASE_URL_RO`（未配置回落主库，单机零配置兼容）；admin 纯读路由切换（reports/dashboard/export/audit-logs 四文件全部端点）；强一致读始终走主库 | — | ✅ 已完成 |
 | 6 | 部署编排 | `docker/docker-compose.cluster.yml`（15 服务：lb 轮询 API×3 + worker 四组 `--group` + MinIO 建桶 + 三前端；nginx 无 sticky、XFF 透传）+ `docker/README-cluster.md` 部署手册（compose→K8s 映射、切换阈值、MinIO 降级路径） | — | ✅ 已完成（静态校验通过；本机无 Docker，起停验证四步见手册） |
 | 7 | 压测验证 | `scripts/loadtest/`（k6 脚本：登录/下单/回调/实名四链路） | 1 天 | 待做 |
+| 8 | 主备高可用（三节点） | 主+半同步备+只读从（链式复制 主→备→从）：集群编排三节点样例（`docker/mysql/replication/` 配置与脚本）+ worker `system.replica_health` 复制健康告警（5min）+ db 连接池硬化（connectTimeout/keepAlive）+ deployment.md §6.2 完整 runbook（搭建/计划内切换/紧急切换/脑裂防护/故障矩阵）；生产三台独立机 + Keepalived VIP（探测条件 = 存活且 read_only=0），应用零改动 | — | ✅ 仓库侧完成（生产搭建/切换演练见 deployment.md §6.2，需真实环境执行） |
 
 **剩余合计：约 2~3 个工作日（仅 #7 压测脚本）**。全部改造不引入服务间 HTTP 调用——服务边界靠"队列分组 + 无状态副本"实现，
 这是维护难度不上升的关键。
@@ -136,4 +137,5 @@
 - [ ] 对象存储切换后，历史证件照/附件可读（旧前缀兼容）
 - [x] OCR 异步链路：提交→队列→回写→admin 标注展示（E2E 实测 2026-09-07）
 - [ ] 报表接口走从库（慢查询日志验证）
+- [ ] 主备切换演练：计划内轮换 + kill 主库紧急切换，应用零重启，切换后支付回调对账零差异（runbook：deployment.md §6.2）
 - [ ] k6 压测：登录/下单/回调/实名四链路报告落盘

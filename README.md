@@ -14,7 +14,7 @@
 | `apps/portal` | 客户门户：注册登录、商品选购、购物车结算、收银台、服务管理、账单发票、工单、通知 | 3001 |
 | `apps/admin` | 管理后台（Ant Design Pro）：客户/订单/服务/账务/发票/商品/供应模块/优惠码/工单/知识库/报表/审计/设置中心/计划任务 | 8000 |
 | `apps/api` | Hono REST API：portal / admin / webhooks / public 四区，统一鉴权、限流、审计 | 4000 |
-| `apps/worker` | BullMQ Worker（按任务域分组 `--group tx\|notify\|supply\|ocr`）：支付回调结算、供应任务执行、OCR 异步识别、10 个定时任务（续费/提醒/逾期/掉单补偿/清理/健康上报） | — |
+| `apps/worker` | BullMQ Worker（按任务域分组 `--group tx\|notify\|supply\|ocr`）：支付回调结算、供应任务执行、OCR 异步识别、11 个定时任务（续费/提醒/逾期/掉单补偿/清理/健康上报/复制健康探测） | — |
 
 核心能力：
 
