@@ -4,7 +4,7 @@ import { getMessages, getTranslations, setRequestLocale } from "next-intl/server
 import { notFound } from "next/navigation";
 
 import { routing, type Locale } from "@/i18n/routing";
-import { siteConfig } from "@/lib/site";
+import { siteConfig, getPortalUrl } from "@/lib/site";
 import { Header } from "@/components/sections/header";
 import { Footer } from "@/components/sections/footer";
 import "@/app/globals.css";
@@ -20,32 +20,33 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const brand = siteConfig.brandName(locale);
 
   return {
     metadataBase: new URL(siteConfig.domain),
     title: {
-      default: t("title"),
+      default: t("title", { brand }),
       template: `%s · ${siteConfig.nameEn}`,
     },
-    description: t("description"),
+    description: t("description", { brand }),
     applicationName: siteConfig.nameEn,
     icons: {
-      icon: "/logo.png",
-      apple: "/logo.png",
+      icon: siteConfig.logo.icon,
+      apple: siteConfig.logo.icon,
     },
     openGraph: {
       type: "website",
       url: locale === "zh" ? "/" : "/en",
       siteName: siteConfig.nameEn,
-      title: t("title"),
-      description: t("description"),
+      title: t("title", { brand }),
+      description: t("description", { brand }),
       images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
       locale: locale === "zh" ? "zh_CN" : "en_US",
     },
     twitter: {
       card: "summary_large_image",
-      title: t("title"),
-      description: t("description"),
+      title: t("title", { brand }),
+      description: t("description", { brand }),
       images: [siteConfig.ogImage],
     },
   };
@@ -71,7 +72,7 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className="min-h-dvh">
         <NextIntlClientProvider messages={messages}>
-          <Header />
+          <Header portalUrl={getPortalUrl()} />
           <main>{children}</main>
           <Footer />
         </NextIntlClientProvider>

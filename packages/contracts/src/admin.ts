@@ -115,7 +115,7 @@ export const refundCreateSchema = z.object({
 });
 
 export const serviceActionSchema = z.object({
-  action: z.enum(["provision", "suspend", "unsuspend", "terminate", "sync"]),
+  action: z.enum(["provision", "suspend", "unsuspend", "terminate", "sync", "renew"]),
   reason: z.string().max(255).optional(),
 });
 

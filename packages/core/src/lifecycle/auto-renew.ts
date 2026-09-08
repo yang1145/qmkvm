@@ -109,10 +109,22 @@ export async function autoRenewDueServices(db: Db, now: Date): Promise<AutoRenew
 
     succeeded += 1;
     if (done.wasSuspendedOverdue) {
-      // 欠费停机恢复后补排 unsuspend 供应任务（事务提交后执行，避免 inline 早于提交）
+      // 欠费停机恢复后补排 renew/unsuspend 供应任务（事务提交后执行，避免 inline 早于提交）
+      await createProvisionTask(db, {
+        serviceId: service.id,
+        action: "renew",
+        payload: { reason: "auto_renew", nextDueDate: done.nextDue },
+      });
       await createProvisionTask(db, {
         serviceId: service.id,
         action: "unsuspend",
+        payload: { reason: "auto_renew", nextDueDate: done.nextDue },
+      });
+    } else {
+      // 正常到期自动续费：本地到期日已顺延，同步创建 renew 任务（需要远端续费的模块消费）
+      await createProvisionTask(db, {
+        serviceId: service.id,
+        action: "renew",
         payload: { reason: "auto_renew", nextDueDate: done.nextDue },
       });
     }

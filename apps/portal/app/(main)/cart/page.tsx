@@ -29,11 +29,14 @@ export default function CartPage() {
   const [promoCode, setPromoCode] = React.useState<string | null>(null);
   const [mutating, setMutating] = React.useState(false);
 
+  // 统一走服务端报价端点：/cart/quote 与 cartQuoteSchema 契约一致，
+  // 空购物车、优惠码、余额抵扣建议均在同一响应内返回（/cart 仅返回原始行，不能用于渲染）
   const cartState = useApiData(
     () =>
-      promoCode
-        ? api.get("/cart/quote", { query: { promoCode }, parse: cartQuoteSchema })
-        : api.get("/cart", { parse: cartQuoteSchema }),
+      api.get("/cart/quote", {
+        query: promoCode ? { promoCode } : undefined,
+        parse: cartQuoteSchema,
+      }),
     [promoCode],
   );
 

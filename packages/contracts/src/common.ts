@@ -57,6 +57,7 @@ export const provisionActionEnum = z.enum([
   "terminate",
   "change_package",
   "sync",
+  "renew",
 ]);
 export const provisionStatusEnum = z.enum([
   "queued",

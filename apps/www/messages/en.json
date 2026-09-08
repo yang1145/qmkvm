@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "QmKvm | Affordable, Reliable Global Cloud Infrastructure",
-    "description": "QmKvm provides developers, startups and enterprises with cost-effective, highly available cloud servers, networking and storage. Predictable cost, stable operations, from web hosting to production workloads."
+    "title": "{brand} | Affordable, Reliable Global Cloud Infrastructure",
+    "description": "{brand} provides developers, startups and enterprises with cost-effective, highly available cloud servers, networking and storage. Predictable cost, stable operations, from web hosting to production workloads."
   },
   "nav": {
     "products": "Products",
@@ -9,6 +9,7 @@
     "infrastructure": "Infrastructure",
     "pricing": "Pricing",
     "about": "About",
+    "ctaConsole": "Console",
     "ctaPrimary": "Get Started",
     "ctaSecondary": "Contact Sales",
     "langSwitch": "中文",
@@ -17,7 +18,7 @@
   "hero": {
     "slides": [
       {
-        "badge": "QmKvm",
+        "badge": "Global cloud brand",
         "title": "Reliable cloud infrastructure, at a fair price",
         "subtitle": "A global cloud services brand focused on overseas markets. Get reliable cloud capabilities at a reasonable cost — on-demand, stable and predictable infrastructure for websites, APIs and enterprise workloads.",
         "ctaPrimary": "Request Trial",
@@ -112,7 +113,7 @@
     "note": "Sample pricing shown above. Final prices and billing details follow official product documentation and terms."
   },
   "diff": {
-    "title": "Why QmKvm",
+    "title": "Why us",
     "subtitle": "Trust built on verifiable metrics and transparent mechanisms — never overpromise.",
     "items": [
       {
@@ -246,7 +247,7 @@
     "scalePlaceholder": "e.g. 10 instances / month",
     "message": "Message",
     "messagePlaceholder": "Briefly describe your scenario (optional)",
-    "privacy": "I agree that QmKvm processes the above information under its Privacy Policy for follow-up communication.",
+    "privacy": "I agree that {brand} processes the above information under its Privacy Policy for follow-up communication.",
     "submit": "Submit",
     "submitting": "Submitting…",
     "success": "Submitted. We will contact you shortly.",
@@ -259,6 +260,7 @@
     "productTitle": "Products",
     "products": ["Cloud Server", "Bare Metal", "Object Storage", "Network & CDN"],
     "resourceTitle": "Resources",
+    "console": "Console",
     "resources": ["Docs (coming soon)", "Status (coming soon)", "Contact us"],
     "companyTitle": "Company",
     "company": ["About", "Careers", "News"],
@@ -267,14 +269,14 @@
     "privacyHref": "/en/privacy",
     "termsHref": "/en/terms",
     "slogan": "Reliable cloud capabilities at a fair price.",
-    "copyright": "© {year} QmKvm"
+    "copyright": "© {year} {brand}"
   },
   "about": {
-    "badge": "About QmKvm",
+    "badge": "About us",
     "title": "Reliable cloud capability at a fair price",
-    "intro": "QmKvm is a global cloud services brand focused on overseas markets. We believe reliable cloud infrastructure should not come with high costs or complex lock-in.",
+    "intro": "{brand} is a global cloud services brand focused on overseas markets. We believe reliable cloud infrastructure should not come with high costs or complex lock-in.",
     "storyTitle": "Why we exist",
-    "story": "From developers and startups to enterprise teams, more workloads than ever need stable, predictable cloud resources. QmKvm brings together compute, storage and networking with clear specs and transparent billing — so teams get dependable cloud capability at a reasonable cost, from a first website to production workloads.",
+    "story": "From developers and startups to enterprise teams, more workloads than ever need stable, predictable cloud resources. {brand} brings together compute, storage and networking with clear specs and transparent billing — so teams get dependable cloud capability at a reasonable cost, from a first website to production workloads.",
     "principlesTitle": "What we stand for",
     "principles": [
       { "name": "Transparent cost", "desc": "Clear billing logic and resource specs keep every cloud spend predictable." },
@@ -283,7 +285,7 @@
       { "name": "Ongoing support", "desc": "24/7 technical support from selection through operations." }
     ],
     "architectureTitle": "Platform architecture",
-    "architectureDesc": "From a global edge network and redundant infrastructure, to compute, storage and networking capabilities, to unified support and operations — QmKvm uses a clear layered architecture to power workloads of any size.",
+    "architectureDesc": "From a global edge network and redundant infrastructure, to compute, storage and networking capabilities, to unified support and operations — {brand} uses a clear layered architecture to power workloads of any size.",
     "architectureLayers": [
       { "name": "Infrastructure layer", "desc": "Global edge network and multi-region data centers with multi-layer redundancy." },
       { "name": "Service layer", "desc": "Elastic compute, bare metal, object storage and network acceleration, combined on demand." },

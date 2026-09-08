@@ -17,7 +17,10 @@ import {
   getProduct,
   getProductGroups,
   getProvisionModules,
+  getZjmfSuppliers,
+  getZjmfUpstreamProducts,
   testProvisionModule,
+  testZjmfSupplier,
   updateConfigGroup,
   updateConfigOption,
   updateProduct,
@@ -28,8 +31,10 @@ import type {
   ProductGroupItem,
   ProductPricing,
   ProvisionModuleItem,
+  ZjmfSupplierItem,
+  ZjmfUpstreamProductItem,
 } from '@/services/types';
-import { yuanToFen } from '@/utils/format';
+import { formatCny, yuanToFen } from '@/utils/format';
 import { BILLING_CYCLE, BILLING_CYCLE_LABEL } from '@/services/enums';
 
 const GROUP_TYPES = [
@@ -148,6 +153,11 @@ const ProductEdit: React.FC = () => {
   const [moduleConfig, setModuleConfig] = useState<Record<string, unknown> | null>(null);
   /** 供应模块配置 JSON 文本（http-api / pve 模块显示编辑框，随「保存」提交） */
   const [moduleConfigText, setModuleConfigText] = useState('{}');
+  /** 魔方财务（zjmf）：结构化映射——供应商 + 上游商品，替代 JSON 配置 */
+  const [zjmfSuppliers, setZjmfSuppliers] = useState<ZjmfSupplierItem[]>([]);
+  const [zjmfSupplierCode, setZjmfSupplierCode] = useState<string | undefined>(undefined);
+  const [zjmfUpProducts, setZjmfUpProducts] = useState<ZjmfUpstreamProductItem[]>([]);
+  const [zjmfUpProductId, setZjmfUpProductId] = useState<number | undefined>(undefined);
   const [testingConn, setTestingConn] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardGroups, setWizardGroups] = useState<WizardGroup[]>(defaultWizardGroups);
@@ -156,6 +166,7 @@ const ProductEdit: React.FC = () => {
   useEffect(() => {
     getProductGroups().then(setGroups).catch(() => {});
     getProvisionModules().then(setModules).catch(() => {});
+    getZjmfSuppliers().then((res) => setZjmfSuppliers(res.items)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -190,13 +201,31 @@ const ProductEdit: React.FC = () => {
         setConfigGroups(p.configGroups ?? []);
         setModuleConfig(p.moduleConfig ?? null);
         setModuleConfigText(JSON.stringify(p.moduleConfig ?? {}, null, 2));
+        if (p.moduleCode === 'zjmf') {
+          const cfg = (p.moduleConfig ?? {}) as Record<string, unknown>;
+          setZjmfSupplierCode(typeof cfg.supplierCode === 'string' && cfg.supplierCode ? cfg.supplierCode : undefined);
+          setZjmfUpProductId(Number(cfg.upProductId ?? 0) || undefined);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [idNum, isNew]);
 
-  /** 当前模块是否显示 moduleConfig JSON 编辑框（仅 http-api / pve 需要商品级 JSON 配置） */
+  /** 供应模块是否显示 moduleConfig JSON 编辑框（http-api / pve；zjmf 用结构化映射） */
   const showModuleConfig = base.moduleCode === 'http-api' || base.moduleCode === 'pve';
+  /** 魔方财务：结构化「供应商 + 上游商品」映射 */
+  const showZjmfConfig = base.moduleCode === 'zjmf';
+
+  /** 供应商变化 → 拉取该供应商已同步的上游商品 */
+  useEffect(() => {
+    if (!showZjmfConfig || !zjmfSupplierCode) {
+      setZjmfUpProducts([]);
+      return;
+    }
+    getZjmfUpstreamProducts(zjmfSupplierCode)
+      .then((res) => setZjmfUpProducts(res.items))
+      .catch(() => setZjmfUpProducts([]));
+  }, [showZjmfConfig, zjmfSupplierCode]);
 
   /** 解析 moduleConfig 编辑框内容为对象；非法返回 null 并提示 */
   const parseModuleConfigText = (): Record<string, unknown> | null => {
@@ -222,12 +251,18 @@ const ProductEdit: React.FC = () => {
       message.warning('请选择商品分组');
       return;
     }
-    // moduleConfig 随基本信息一并提交（仅 http-api / pve 模块显示编辑框时）
+    // moduleConfig 随基本信息一并提交（http-api / pve 用 JSON 编辑框；zjmf 用结构化映射）
     let moduleConfigValue: Record<string, unknown> | undefined;
     if (showModuleConfig) {
       const parsed = parseModuleConfigText();
       if (parsed === null) return;
       moduleConfigValue = parsed;
+    } else if (showZjmfConfig) {
+      if (!zjmfSupplierCode || !zjmfUpProductId) {
+        message.warning('请选择魔方供应商与上游商品（供应商在「商品管理 → 魔方财务」维护）');
+        return;
+      }
+      moduleConfigValue = { supplierCode: zjmfSupplierCode, upProductId: zjmfUpProductId };
     }
     setSaving(true);
     try {
@@ -346,6 +381,24 @@ const ProductEdit: React.FC = () => {
     const code = base.moduleCode.trim();
     if (!code) {
       message.warning('请先填写供应模块 code');
+      return;
+    }
+    // zjmf：按所选供应商测试（凭据在「魔方财务」页维护，商品侧不持有）
+    if (showZjmfConfig) {
+      if (!zjmfSupplierCode) {
+        message.warning('请先选择魔方供应商');
+        return;
+      }
+      setTestingConn(true);
+      try {
+        const res = await testZjmfSupplier({ code: zjmfSupplierCode });
+        if (res.ok) message.success(res.message ?? '连接成功');
+        else message.error(res.message ?? '连接失败');
+      } catch {
+        // 请求失败由统一 errorHandler 提示
+      } finally {
+        setTestingConn(false);
+      }
       return;
     }
     // http-api / pve：优先使用编辑框当前内容；其他模块用详情返回的配置
@@ -615,6 +668,41 @@ const ProductEdit: React.FC = () => {
           </div>
         </div>
       </ProCard>
+
+      {showZjmfConfig && (
+        <ProCard title="魔方财务上游映射" style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Select
+              style={{ width: 280 }}
+              placeholder="选择供应商"
+              value={zjmfSuppliers.some((s) => s.code === zjmfSupplierCode) ? zjmfSupplierCode : undefined}
+              disabled={readOnly}
+              onChange={(v) => {
+                setZjmfSupplierCode(v);
+                setZjmfUpProductId(undefined);
+              }}
+              options={zjmfSuppliers.map((s) => ({ value: s.code, label: `${s.name}（${s.code}）` }))}
+            />
+            <Select
+              style={{ width: 420 }}
+              placeholder="选择上游商品（需先在「商品管理 → 魔方财务」同步）"
+              value={zjmfUpProducts.some((p) => p.upProductId === zjmfUpProductId) ? zjmfUpProductId : undefined}
+              disabled={readOnly || !zjmfSupplierCode}
+              onChange={(v) => setZjmfUpProductId(v)}
+              showSearch
+              optionFilterProp="label"
+              options={zjmfUpProducts.map((p) => ({
+                value: p.upProductId,
+                label: `#${p.upProductId} ${p.name}（代理价 ${formatCny(p.agentPriceCents)}）`,
+              }))}
+            />
+          </div>
+          <div style={{ color: '#999', marginTop: 8 }}>
+            上游为固定套餐模式：选好供应商与上游商品即完成映射，向客户收取的价格在下方「周期定价」独立配置（代理价仅供参考）。
+            供应商与上游商品在「商品管理 → 魔方财务」页维护与同步。
+          </div>
+        </ProCard>
+      )}
 
       {showModuleConfig && (
         <ProCard title="供应模块配置（moduleConfig）" style={{ marginTop: 16 }}>

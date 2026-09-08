@@ -1,7 +1,7 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { siteConfig } from "@/lib/site";
+import { siteConfig, getPortalUrl } from "@/lib/site";
 import { Logo } from "@/components/logo";
 import { Separator } from "@/components/ui/separator";
 
@@ -16,7 +16,10 @@ interface FooterItem {
 /** 页脚：产品 / 资源 / 公司 / 法律链接分组 + 品牌与版权信息（PRD 7.12） */
 export async function Footer() {
   const t = await getTranslations("footer");
+  const locale = await getLocale();
   const year = new Date().getFullYear();
+  const brand = siteConfig.brandName(locale);
+  const portalUrl = getPortalUrl();
 
   const products = t.raw("products") as string[];
   const resources = t.raw("resources") as string[];
@@ -31,11 +34,17 @@ export async function Footer() {
     },
     {
       title: t("resourceTitle"),
-      items: resources.map((label, i) =>
-        i === 2
-          ? { label, href: "/contact", page: true }
-          : { label }
-      ),
+      items: [
+        // 配置了 portal 时展示控制台入口（PRD 9.2：未配置不渲染死链）
+        ...(portalUrl
+          ? [{ label: t("console"), href: portalUrl, external: true }]
+          : []),
+        ...resources.map((label, i) =>
+          i === 2
+            ? { label, href: "/contact", page: true }
+            : { label }
+        ),
+      ],
     },
     {
       title: t("companyTitle"),
@@ -75,6 +84,8 @@ export async function Footer() {
                       ) : (
                         <a
                           href={item.href}
+                          target={item.external ? "_blank" : undefined}
+                          rel={item.external ? "noreferrer" : undefined}
                           className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >
                           {item.label}
@@ -117,7 +128,7 @@ export async function Footer() {
         <Separator className="my-8" />
 
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>{t("copyright", { year })}</p>
+          <p>{t("copyright", { year, brand })}</p>
           <span>
             {resources[2]} ·{" "}
             <a

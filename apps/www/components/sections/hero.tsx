@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
@@ -29,38 +29,42 @@ interface SlideText {
   points: string[];
 }
 
-/** Hero 首屏：三张 banner 自动轮播，文案与 CTA 随图切换（PRD 7.2） */
+/** Hero 首屏：三张 banner 自动轮播，文案与 CTA 随图切换（PRD 7.2）
+ *
+ * 自动轮播始终运行：减少动效（prefers-reduced-motion）时由全局 CSS
+ * 把过渡压到瞬时（globals.css），内容照常切换，只是不做淡入淡出。
+ * 悬停/聚焦暂停；手动切换后重新计时，避免刚点完立刻被自动切走。
+ */
 export function Hero() {
   const t = useTranslations("hero");
   const slides = t.raw("slides") as SlideText[];
   const [index, setIndex] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [paused, setPaused] = useState(false);
 
-  const goTo = useCallback((next: number) => {
-    setIndex(((next % slides.length) + slides.length) % slides.length);
-  }, [slides.length]);
+  const goTo = useCallback(
+    (next: number) => {
+      setIndex(((next % slides.length) + slides.length) % slides.length);
+    },
+    [slides.length]
+  );
 
   useEffect(() => {
-    // 尊重系统减少动效偏好：不自动轮播
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    if (reducedMotion) return;
-
-    timerRef.current = setInterval(() => {
+    if (paused) return;
+    const timer = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
     }, AUTO_PLAY_INTERVAL);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [slides.length]);
+    return () => clearInterval(timer);
+  }, [slides.length, index, paused]);
 
   return (
     <section
       aria-label={t("carousel.label")}
       aria-roledescription="carousel"
       className="relative overflow-hidden border-b border-border/60"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
     >
       {/* 轮播主体：固定高度容器，各 slide 绝对定位淡入淡出 */}
       <div className="relative h-[560px] sm:h-[620px] lg:h-[680px]">
@@ -95,7 +99,7 @@ export function Hero() {
             aria-hidden={i !== index}
             className={cn(
               "absolute inset-0 flex items-center transition-opacity duration-700",
-              i === index ? "z-20 opacity-100" : "z-0 opacity-0"
+              i === index ? "z-20 opacity-100" : "z-0 opacity-0 pointer-events-none"
             )}
           >
             <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -136,8 +140,8 @@ export function Hero() {
           </div>
         ))}
 
-        {/* 指示点 */}
-        <div className="absolute inset-x-0 bottom-6 z-30 flex justify-center gap-2.5">
+        {/* 指示点：固定尺寸按钮保证热区稳定（28px），内部圆点随激活变宽 */}
+        <div className="absolute inset-x-0 bottom-6 z-30 flex justify-center gap-1">
           {slides.map((_, i) => (
             <button
               key={i}
@@ -145,13 +149,17 @@ export function Hero() {
               aria-label={t("carousel.goToSlide", { index: i + 1 })}
               aria-current={i === index}
               onClick={() => goTo(i)}
-              className={cn(
-                "h-2 rounded-full transition-all duration-300",
-                i === index
-                  ? "w-7 bg-primary"
-                  : "w-2 bg-foreground/30 hover:bg-foreground/50"
-              )}
-            />
+              className="flex h-7 w-7 items-center justify-center"
+            >
+              <span
+                className={cn(
+                  "h-2 rounded-full transition-all duration-300",
+                  i === index
+                    ? "w-7 bg-primary"
+                    : "w-2 bg-foreground/30 hover:bg-foreground/50"
+                )}
+              />
+            </button>
           ))}
         </div>
       </div>

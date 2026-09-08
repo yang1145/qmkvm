@@ -77,6 +77,7 @@ export default [
     routes: [
       { path: '/products/groups', name: '商品分组', component: './products/groups' },
       { path: '/products/provision-modules', name: '供应模块', component: './provision-modules' },
+      { path: '/products/zjmf', name: '魔方财务', component: './zjmf' },
       { path: '/products', name: '商品列表', component: './products' },
       { path: '/products/:id/edit', name: '商品编辑', hideInMenu: true, component: './products/edit' },
     ],

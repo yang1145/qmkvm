@@ -24,7 +24,9 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const { user, refresh } = useAuth();
 
-  const cartState = useApiData(() => api.get("/cart", { parse: cartQuoteSchema }), []);
+  // 与购物车页一致：统一走 /cart/quote（与 cartQuoteSchema 契约匹配），
+  // /cart 仅返回原始购物行，缺少金额与商品名等渲染所需字段
+  const cartState = useApiData(() => api.get("/cart/quote", { parse: cartQuoteSchema }), []);
   const [useBalance, setUseBalance] = React.useState(true);
   const [note, setNote] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);

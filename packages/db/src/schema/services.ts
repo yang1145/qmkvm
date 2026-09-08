@@ -92,6 +92,7 @@ export const provisionTasks = mysqlTable(
       "terminate",
       "change_package",
       "sync",
+      "renew",
     ]).notNull(),
     status: mysqlEnum("status", [
       "queued",

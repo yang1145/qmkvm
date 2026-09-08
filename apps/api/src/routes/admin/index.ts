@@ -31,6 +31,7 @@ import { adminExportRoutes } from "./export.js";
 import { adminScheduledTaskRoutes } from "./scheduled-tasks.js";
 import { adminProvisionModuleRoutes } from "./provision-modules.js";
 import { adminIdentityRoutes } from "./identities.js";
+import { adminZjmfSupplierRoutes } from "./zjmf-suppliers.js";
 
 export const adminRoutes = new Hono();
 
@@ -64,3 +65,4 @@ adminRoutes.route("/", adminExportRoutes);
 adminRoutes.route("/", adminScheduledTaskRoutes);
 adminRoutes.route("/", adminProvisionModuleRoutes);
 adminRoutes.route("/", adminIdentityRoutes);
+adminRoutes.route("/", adminZjmfSupplierRoutes);

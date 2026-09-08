@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { z } from "zod";
 
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ type Status = "idle" | "loading" | "success" | "error";
 /** 联系销售表单（PRD 9.1）：RHF + Zod 双重校验，服务端 API 处理 */
 export function ContactForm() {
   const t = useTranslations("form");
+  const locale = useLocale();
   const needTypes = t.raw("needTypes") as string[];
   const [status, setStatus] = useState<Status>("idle");
 
@@ -180,7 +182,7 @@ export function ContactForm() {
             {...form.register("privacy")}
           />
           <span>
-            {t("privacy")}
+            {t("privacy", { brand: siteConfig.brandName(locale) })}
             <span className="text-destructive"> *</span>
           </span>
         </label>

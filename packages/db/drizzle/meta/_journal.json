@@ -1,62 +1,76 @@
 {
-  "version": "7",
-  "dialect": "mysql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1788658949372,
-      "tag": "0000_wooden_leopardon",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1788665539430,
-      "tag": "0001_sticky_titanium_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1788678300138,
-      "tag": "0002_small_exodus",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1788692617765,
-      "tag": "0003_high_ironclad",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1788717774392,
-      "tag": "0004_identity_reject_reason",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1788720398738,
-      "tag": "0005_clean_lilith",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1788746000000,
-      "tag": "0006_ocr_processing",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1788781222355,
-      "tag": "0007_worker_heartbeat",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "mysql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "5",
+			"when": 1788658949372,
+			"tag": "0000_wooden_leopardon",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "5",
+			"when": 1788665539430,
+			"tag": "0001_sticky_titanium_man",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "5",
+			"when": 1788678300138,
+			"tag": "0002_small_exodus",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "5",
+			"when": 1788692617765,
+			"tag": "0003_high_ironclad",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "5",
+			"when": 1788717774392,
+			"tag": "0004_identity_reject_reason",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "5",
+			"when": 1788720398738,
+			"tag": "0005_clean_lilith",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "5",
+			"when": 1788746000000,
+			"tag": "0006_ocr_processing",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "5",
+			"when": 1788781222355,
+			"tag": "0007_worker_heartbeat",
+			"breakpoints": true
+		},
+		{
+			"idx": 7,
+			"version": "5",
+			"when": 1788867000000,
+			"tag": "0008_zjmf_renew_action",
+			"breakpoints": true
+		},
+		{
+			"idx": 8,
+			"version": "5",
+			"when": 1788953400000,
+			"tag": "0009_zjmf_upstream_products",
+			"breakpoints": true
+		}
+	]
 }

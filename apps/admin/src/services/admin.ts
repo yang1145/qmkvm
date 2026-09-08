@@ -38,6 +38,12 @@ import type {
   TicketDetail,
   TicketListItem,
   TransactionItem,
+  ZjmfAssignResult,
+  ZjmfSupplierItem,
+  ZjmfSupplierSaveData,
+  ZjmfUpstreamHostItem,
+  ZjmfUpstreamProductItem,
+  ZjmfUpstreamStatusInfo,
 } from './types';
 
 const BASE = '/api/v1/admin';
@@ -128,7 +134,7 @@ export async function getServices(params: Record<string, unknown>) {
 
 export async function serviceAction(
   id: number,
-  data: { action: 'provision' | 'suspend' | 'unsuspend' | 'terminate' | 'sync'; reason?: string },
+  data: { action: 'provision' | 'suspend' | 'unsuspend' | 'terminate' | 'sync' | 'renew'; reason?: string },
 ) {
   return request<{ ok: boolean }>(`${BASE}/services/${id}/action`, { method: 'POST', data });
 }
@@ -635,4 +641,62 @@ export async function runScheduledTask(name: string) {
 
 export async function getSystemStatus() {
   return request<SystemStatusDto>(`${BASE}/system/status`);
+}
+
+// ============ 魔方财务（zjmf 供应模块） ============
+
+export async function getZjmfSuppliers() {
+  return request<{ items: ZjmfSupplierItem[] }>(`${BASE}/zjmf/suppliers`);
+}
+
+export async function saveZjmfSupplier(code: string, data: ZjmfSupplierSaveData) {
+  return request<{ ok: boolean; item: ZjmfSupplierItem }>(
+    `${BASE}/zjmf/suppliers/${encodeURIComponent(code)}`,
+    { method: 'PUT', data },
+  );
+}
+
+export async function deleteZjmfSupplier(code: string) {
+  return request<{ ok: boolean }>(`${BASE}/zjmf/suppliers/${encodeURIComponent(code)}`, { method: 'DELETE' });
+}
+
+export async function testZjmfSupplier(body: { code?: string }) {
+  return request<{ ok: boolean; message?: string }>(`${BASE}/zjmf/suppliers/test`, { method: 'POST', data: body });
+}
+
+export async function syncZjmfProducts(code: string) {
+  return request<{ ok: boolean; updated: number; failed: number; detailsSkipped: number; skippedOverLimit?: number }>(
+    `${BASE}/zjmf/suppliers/${encodeURIComponent(code)}/sync-products`,
+    { method: 'POST' },
+  );
+}
+
+export async function getZjmfUpstreamProducts(code: string) {
+  return request<{ items: ZjmfUpstreamProductItem[] }>(
+    `${BASE}/zjmf/suppliers/${encodeURIComponent(code)}/products`,
+  );
+}
+
+export async function getZjmfHosts(code: string) {
+  return request<{ items: ZjmfUpstreamHostItem[] }>(
+    `${BASE}/zjmf/suppliers/${encodeURIComponent(code)}/hosts`,
+  );
+}
+
+export async function getZjmfBalance(code: string) {
+  return request<{ credit: string; creditCents: number | null; currency: string }>(
+    `${BASE}/zjmf/suppliers/${encodeURIComponent(code)}/balance`,
+  );
+}
+
+export async function getZjmfServiceUpstreamStatus(serviceId: number) {
+  return request<ZjmfUpstreamStatusInfo>(`${BASE}/zjmf/services/${serviceId}/upstream-status`);
+}
+
+export async function zjmfAssign(
+  body:
+    | { mode: 'bind'; code: string; upHostId: number; userId: number; productId: number; name?: string }
+    | { mode: 'open'; code: string; upProductId: number; userId: number; name?: string },
+) {
+  return request<ZjmfAssignResult>(`${BASE}/zjmf/assign`, { method: 'POST', data: body });
 }

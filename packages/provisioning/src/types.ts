@@ -73,4 +73,11 @@ export interface ProvisionModule {
     service: ServiceRow,
     target: ChangePackageTarget,
   ): Promise<ModuleResult>;
+  /**
+   * 续费同步（可选）：本地续费结算（手动/余额自动）推进 next_due_date 后，
+   * 核心会为非一次性服务创建 renew 任务，把续费动作推给需要远端续费的供应方
+   * （如魔方财务上游主机有自己的到期日）。未实现本方法的模块，runner 将 renew
+   * 任务标记 skipped（视为"续费无需远端动作"），不视为失败。
+   */
+  renew?(ctx: ModuleCtx, service: ServiceRow): Promise<ModuleResult>;
 }

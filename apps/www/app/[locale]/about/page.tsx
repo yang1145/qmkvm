@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Globe, Headset, ReceiptText, ShieldCheck } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
+import { siteConfig } from "@/lib/site";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -46,6 +47,7 @@ export default async function AboutPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("about");
+  const brand = siteConfig.brandName(locale);
   const principles = t.raw("principles") as Principle[];
   const layers = t.raw("architectureLayers") as ArchitectureLayer[];
 
@@ -58,7 +60,7 @@ export default async function AboutPage({
           {t("title")}
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          {t("intro")}
+          {t("intro", { brand })}
         </p>
       </div>
 
@@ -68,7 +70,7 @@ export default async function AboutPage({
           {t("storyTitle")}
         </h2>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-          {t("story")}
+          {t("story", { brand })}
         </p>
       </div>
 
@@ -79,7 +81,7 @@ export default async function AboutPage({
             {t("architectureTitle")}
           </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            {t("architectureDesc")}
+            {t("architectureDesc", { brand })}
           </p>
           <ul className="mt-8 space-y-5">
             {layers.map((layer, index) => (

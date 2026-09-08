@@ -131,3 +131,93 @@ provision 成功后 runner 合并写入 `service.deliverInfo`：
 - qemu 模板建议安装 cloud-init 与 qemu-guest-agent（前者用于 `ipconfig0=dhcp`/sshkeys，后者用于回填 IP）。
 - lxc 模板克隆后经 `net0 ip=dhcp` 自动 DHCP。
 - 模板磁盘设备名与 `diskDevice` 一致（默认 `scsi0`）时才能自动扩容。
+
+---
+
+## ZJMF 模块（zjmf，魔方财务代理商对接）
+
+以代理商账号对接 [魔方财务](https://www.zjmf.com/)（ZJMF / cube_finance）上游。本地系统独占账务与
+生命周期（商品/定价/订单/账单/续费/逾期全部在核心），模块只把资源动作翻译成上游 API：
+
+| 动作 | 上游调用 | 说明 |
+| --- | --- | --- |
+| provision | cart/clear → cart/add_to_shop → cart/settle → apply_credit → invoices/{id} 轮询 → host/header | 结算成功即写 `deliverInfo.upInvoiceId`，重试先对账再决定是否重新购买（杜绝重复开通） |
+| renew | GET host/renewpage → POST host/renew（防御性 apply_credit） | 核心续费结算（手动/余额自动）自动创建 renew 任务；未实现 renew 的模块由 runner 标记 skipped |
+| suspend / unsuspend | POST provision/default func=off/on | **会员级 API 无主机暂停端点**，欠费管控以断电实现（result.message 明示） |
+| terminate | POST host/cancel（Immediate） | 提交上游取消请求，上游处理前主机仍存在 |
+| changePackage | POST upgrade/upgrade_product_post | 要求目标商品同为 zjmf 模块且同一供应商；上游差价从代理账户余额扣 |
+
+### 供应商配置（后台「商品管理 → 魔方财务」页维护）
+
+供应商凭据存 settings 键 `provisioning.zjmf.suppliers`（密码 AES-256-GCM 加密，格式与支付网关一致），
+商品 moduleConfig 只存非敏感映射：
+
+```json
+{ "supplierCode": "main", "upProductId": 42 }
+```
+
+推荐流程（全部在后台 UI 完成，无需手写 JSON）：
+
+1. **维护供应商**：`商品管理 → 魔方财务 → 供应商`：新增代理账号（密码加密落库、不回显），可测试连接、查上游余额。
+2. **同步上游商品**：`魔方财务 → 上游商品`：拉取上游商品列表 + 代理价/周期价，落库
+   `zjmf_upstream_products`（上游离线也能选商品；同步幂等可重复执行）。
+3. **创建映射商品**：商品编辑页选供应模块 `zjmf` → 页面出现「魔方财务上游映射」选择器
+   （选供应商 → 选上游商品），保存即完成 moduleConfig 映射；向客户收取的价格在「周期定价」独立配置。
+4. （可选）**主机指派**：`魔方财务 → 主机指派`：绑定上游已开通机器给客户（纯本地绑定，
+   到期日取上游，本地按期生成续费账单并同步上游），或按上游商品 0 元代开（走正常开通任务）。
+   已指派/已映射的上游机器与商品在列表中标注。
+5. **服务上游状态**：服务列表对 zjmf 服务提供「上游」按钮——实时拉取 `host/product`/`host/header`
+   展示上游状态/到期日/IP（只读，不改本地状态）。
+
+> 兼容：moduleConfig 也接受内联 `supplier` 对象（与 pve.auth 同模式），但不推荐——
+> 凭据散落在商品表且无法在供应商页统一轮换。
+
+### moduleConfig 字段表
+
+| 字段 | 类型 | 必填 | 默认 | 说明 |
+| --- | --- | --- | --- | --- |
+| `supplier` | object | 方式 B 必填 | — | `baseUrl`（https 强制）/ `username` / `password` / `apiTimeoutSec`（默认 30）/ `allowSelfSigned`（默认 false） |
+| `supplierCode` | string | 方式 A 必填 | — | 设置表 `provisioning.zjmf.suppliers` 中的供应商 code |
+| `upProductId` | number | 是 | — | 上游商品 ID |
+| `upCycles` | object | 否 | 自动别名匹配 | 本地周期 → 上游 billingcycle 键，如 `{"monthly":"monthly"}`；`onetime` 必须显式映射 |
+| `upConfigOption` | object | 否 | 自动探测默认值 | 上游配置项 `optionId → 子项ID/数量`；缺省时开通前经 `cart/get_product_config` 探测 |
+| `pollTimes` | number | 否 | 4 | 开通后轮询上游主机 ID 次数（每次间隔 2s） |
+
+### 生命周期要点（与核心的分工）
+
+- **到期日本地说了算**：核心续费结算推进本地 `next_due_date` 并创建 renew 任务 → 模块调上游
+  `host/renew` 对齐上游到期日。上游余额不足续费失败 → 任务退避重试 → 死信 → 人工工作台 + 告警，
+  本地账务不受影响。上游 `host/autorenew` 必须保持关闭，否则与本地生命周期抢控制权。
+- **供应商互斥锁**：魔方购物车是上游账号级共享资源（`cart/settle` 结算整辆购物车），provision /
+  renew / changePackage 全部在 Redis 锁（无 Redis 降级进程内链）内串行执行。
+- **幂等开通**：`deliverInfo.upHostId` 已存在 → 幂等重放；仅有 `upInvoiceId` → 对账（查账单支付
+  状态 + 主机 ID，必要时补 apply_credit），不重复购买。
+- **状态同步**（规划中）：每日 sync 任务拉 `host/product`/`host/header` 校对上游到期日与状态，
+  只告警不改本地状态——本地是账务事实源。
+
+### 安全约定
+
+- TLS 默认严格校验（`allowSelfSigned` 显式开启才放宽，undici Agent）；`baseUrl` 强制 https，
+  内网 http 需供应商级 `allowInsecureUrl=true` 显式放行。
+- JWT 仅进程内存缓存（2h），不落盘；PHP 版的文件缓存与 `verify_ssl=false` 硬编码为已知缺陷，勿移植。
+- 上游响应（含 `host/header` 明文密码）写入任务结果前一律过 `redactZjmf` 脱敏；供应商密码后台只写
+  不读。上游返回价格仅作成本记录（字符串精确换算分），从不参与本地收款计算。
+- 建议为上游单独开代理商账号：设置余额额度、开启 IP 白名单；管理端 API 凭据（如使用）按高危凭据管理。
+
+### deliverInfo
+
+```json
+{
+  "upHostId": 1201, "upInvoiceId": 908, "upProductId": 42, "upCycle": "monthly",
+  "upProductName": "轻量云 2C2G", "upUsername": "serxxxxxxxxxxx", "upPassword": "初始密码",
+  "upExpireAt": "2026-10-07"
+}
+```
+
+后续所有动作依赖 `upHostId` 定位上游主机；`upExpireAt` 用于状态同步校对。
+
+### 联调提示
+
+端点/字段因上游版本存在差异（MNBT 版 PRD Q1/Q3）：周期键（`monthly`/`月付`/大小写）、
+`cart/settle` 是否返回主机 ID、`add_to_shop` 是否返回购物车位置等均已做防御式处理与探测重试；
+联调异常时先看任务 `result.raw`（已脱敏）中的上游原始返回。

@@ -164,6 +164,7 @@ export type ServiceListItem = {
   name: string;
   productId: number;
   productName: string;
+  moduleCode: string;
   status: ServiceStatus;
   cycle: BillingCycle;
   renewalAmount: number;
@@ -559,4 +560,79 @@ export type SystemStatusQueue = {
   active: number;
   failed: number;
   delayed: number;
+};
+
+// ============ 魔方财务（zjmf 供应模块） ============
+
+export type ZjmfSupplierItem = {
+  code: string;
+  name: string;
+  baseUrl: string;
+  username: string;
+  hasPassword: boolean;
+  apiTimeoutSec: number;
+  allowSelfSigned: boolean;
+  allowInsecureUrl: boolean;
+  apiTier: 'member' | 'admin';
+};
+
+export type ZjmfSupplierSaveData = {
+  name: string;
+  baseUrl: string;
+  username: string;
+  /** 留空 = 保留既有密码 */
+  password?: string;
+  apiTimeoutSec?: number;
+  allowSelfSigned?: boolean;
+  allowInsecureUrl?: boolean;
+};
+
+export type ZjmfCycleEntry = {
+  cycle: string;
+  upCycle: string;
+  name: string;
+  agentPriceCents: number;
+};
+
+export type ZjmfUpstreamProductItem = {
+  upProductId: number;
+  name: string;
+  currency: string;
+  agentPriceCents: number;
+  cycles: ZjmfCycleEntry[];
+  module: string;
+  syncedAt: string;
+  mappedProduct: { id: number; name: string } | null;
+};
+
+export type ZjmfUpstreamHostStatus = 'active' | 'pending' | 'suspend' | 'terminated' | 'unknown';
+
+export type ZjmfUpstreamHostItem = {
+  upHostId: number;
+  name: string;
+  productName: string;
+  rawStatus: string;
+  status: ZjmfUpstreamHostStatus;
+  ip: string;
+  username: string;
+  cycle: string;
+  expireAt?: string;
+  assigned: boolean;
+};
+
+export type ZjmfUpstreamStatusInfo = {
+  upHostId: number;
+  status: ZjmfUpstreamHostStatus;
+  rawStatus: string;
+  expireAt?: string;
+  ip: string;
+  username: string;
+  productName: string;
+};
+
+export type ZjmfAssignResult = {
+  ok: boolean;
+  serviceId: number;
+  taskId?: number;
+  message: string;
 };

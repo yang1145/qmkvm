@@ -50,7 +50,7 @@ export const notificationDtoSchema = z.object({
 export const notificationListSchema = paginated(notificationDtoSchema);
 export type NotificationItem = z.infer<typeof notificationDtoSchema>;
 
-/** 余额流水（GET /credits → { balance, ledger }） */
+/** 余额流水（GET /credits → { balance, items, total, page, pageSize }） */
 export const creditLedgerDtoSchema = z.object({
   id: z.number(),
   type: creditTypeEnum,
@@ -61,10 +61,9 @@ export const creditLedgerDtoSchema = z.object({
   remark: z.string().nullable().catch(null),
   createdAt: z.string(),
 });
-export const creditOverviewSchema = z.object({
-  balance: moneySchema,
-  ledger: paginated(creditLedgerDtoSchema),
-});
+export const creditOverviewSchema = z
+  .object({ balance: moneySchema })
+  .merge(paginated(creditLedgerDtoSchema));
 export type CreditLedgerItem = z.infer<typeof creditLedgerDtoSchema>;
 
 /** POST /invoices/:id/pay → { paid, payUrl?, qrCode?, intentId? } */

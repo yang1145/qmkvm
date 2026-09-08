@@ -96,7 +96,8 @@ export default function CreditsPage() {
   };
 
   const balance = state.data?.balance ?? null;
-  const ledger = state.data?.ledger;
+  // creditOverviewSchema 已平铺合并分页结构：{ balance, items, total, page, pageSize }
+  const ledger = state.data;
   const totalPages = ledger ? Math.max(1, Math.ceil(ledger.total / LEDGER_PAGE_SIZE)) : 1;
 
   if (state.loading) {

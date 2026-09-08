@@ -86,6 +86,12 @@ export async function runProvisionTask(db: Db, taskId: number): Promise<void> {
   const ctx: ModuleCtx = { db, logger: log };
   log.info({ taskId: task.id, serviceId: service.id, action: task.action, module: module.code }, "开始执行供应任务");
 
+  // renew 能力探测：模块未实现 renew 视为"续费无需远端动作"，标记 skipped（非失败）
+  if (task.action === "renew" && typeof module.renew !== "function") {
+    await markSkipped(db, task, `模块 ${module.code} 未实现 renew 续费同步，无需远端动作`);
+    return;
+  }
+
   try {
     const result = await dispatchAction(ctx, module.code, task, service, module);
     if (result.ok) {
@@ -126,6 +132,8 @@ async function dispatchAction(
       const target = resolveChangeTarget(task.payload, service);
       return module.changePackage(ctx, service, target);
     }
+    case "renew":
+      return module.renew!(ctx, service);
     case "sync":
       // P0 无 sync 生产方；占位为成功 no-op，模块可不实现
       log.info({ taskId: task.id, module: moduleCode }, "sync 动作 P0 为 no-op，直接标记完成");
@@ -200,6 +208,16 @@ async function applySuccess(
     case "change_package": {
       const target = resolveChangeTarget(task.payload, service);
       await applyChangePackage(db, task, service, target, task.payload);
+      break;
+    }
+    case "renew": {
+      // 续费已在结算时推进本地 next_due_date，这里只合并模块返回的远端信息（如上游新到期日）
+      if (result.deliverInfo && Object.keys(result.deliverInfo).length > 0) {
+        const deliverInfo = mergeDeliverInfo(service.deliverInfo, result.deliverInfo);
+        if (deliverInfo !== undefined) {
+          await db.update(services).set({ deliverInfo }).where(eq(services.id, service.id));
+        }
+      }
       break;
     }
     case "sync":
@@ -279,6 +297,20 @@ async function maybeCompleteOrder(db: Db, orderId: number | null): Promise<void>
 }
 
 // —— 任务结果落库 ——
+
+/** 标记 skipped（renew 能力缺失等无需远端动作的场景；任务已领取为 processing） */
+async function markSkipped(db: Db, task: ProvisionTaskRow, reason: string): Promise<void> {
+  await db
+    .update(provisionTasks)
+    .set({
+      status: "skipped",
+      result: { ok: false, skipped: true, reason } as unknown as Json,
+      lastError: reason.slice(0, 2000),
+      executedAt: new Date(),
+    })
+    .where(eq(provisionTasks.id, task.id));
+  log.info({ taskId: task.id, action: task.action, reason }, "供应任务已跳过");
+}
 
 async function markSucceeded(db: Db, task: ProvisionTaskRow, result: ModuleResult): Promise<void> {
   await db

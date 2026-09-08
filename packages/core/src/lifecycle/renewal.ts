@@ -129,6 +129,9 @@ export async function generateDueRenewalInvoices(
 /**
  * 续费支付推进：next_due_date = addCycle(max(today, next_due_date), cycle)；
  * suspended_overdue 服务恢复 active 并建 unsuspend 供应任务。
+ * 同时为服务创建 renew 供应任务：本地续费只推进本地到期日，需要远端续费的
+ * 供应模块（如魔方财务上游主机，ProvisionModule.renew）据此同步远端到期日；
+ * 未实现 renew 的模块由 runner 将任务标记 skipped，不影响主流程。
  */
 export async function applyRenewalPayment(
   db: DbLike,
@@ -147,8 +150,13 @@ export async function applyRenewalPayment(
   const nextDue = addCycle(base, cycle);
 
   if (service.status === "suspended_overdue") {
-    // 欠费停机后补缴：恢复 active + 补排 unsuspend 任务
+    // 欠费停机后补缴：恢复 active + 补排 renew/unsuspend 任务
     await updateServiceStatus(db, serviceId, "active", { nextDueDate: nextDue });
+    await createProvisionTask(db, {
+      serviceId,
+      action: "renew",
+      payload: { reason: "renewal_paid", nextDueDate: nextDue },
+    });
     await createProvisionTask(db, {
       serviceId,
       action: "unsuspend",
@@ -156,6 +164,11 @@ export async function applyRenewalPayment(
     });
   } else {
     await db.update(services).set({ nextDueDate: nextDue }).where(eq(services.id, serviceId));
+    await createProvisionTask(db, {
+      serviceId,
+      action: "renew",
+      payload: { reason: "renewal_paid", nextDueDate: nextDue },
+    });
   }
 }
 

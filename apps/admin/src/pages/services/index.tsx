@@ -1,18 +1,27 @@
 /**
- * 服务列表页：供应操作 / 人工开通回填 / 改名
+ * 服务列表页：供应操作 / 人工开通回填 / 改名 / zjmf 上游状态查看
  */
 import { PageContainer, ProTable } from '@ant-design/pro-components';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
-import { App, Button, Input, Modal, Space } from 'antd';
+import { App, Button, Descriptions, Input, Modal, Space, Spin, Tag } from 'antd';
 import { useRef, useState } from 'react';
 import type React from 'react';
-import { getServices, manualCompleteService, renameService, serviceAction } from '@/services/admin';
-import type { ServiceListItem } from '@/services/types';
+import { getServices, getZjmfServiceUpstreamStatus, manualCompleteService, renameService, serviceAction } from '@/services/admin';
+import type { ServiceListItem, ZjmfUpstreamStatusInfo } from '@/services/types';
 import { tableRequestAdapter } from '@/utils/table';
 import { cny, formatDateTime } from '@/utils/format';
 import { StatusTag } from '@/utils/status';
 import { BILLING_CYCLE_LABEL, SERVICE_STATUS_LABEL } from '@/services/enums';
+
+/** zjmf 上游状态 → 展示 Tag */
+const ZJMF_STATUS_TAG: Record<string, { color: string; text: string }> = {
+  active: { color: 'green', text: '运行中' },
+  pending: { color: 'blue', text: '待开通' },
+  suspend: { color: 'orange', text: '已暂停' },
+  terminated: { color: 'red', text: '已终止' },
+  unknown: { color: 'default', text: '未知' },
+};
 
 const ServiceList: React.FC = () => {
   const actionRef = useRef<ActionType | undefined>(undefined);
@@ -22,14 +31,32 @@ const ServiceList: React.FC = () => {
   const [manualDeliver, setManualDeliver] = useState('');
   const [renameTarget, setRenameTarget] = useState<ServiceListItem | null>(null);
   const [renameVal, setRenameVal] = useState('');
+  /** zjmf 上游状态查看弹窗 */
+  const [upstreamStatus, setUpstreamStatus] = useState<{ name: string; info: ZjmfUpstreamStatusInfo | null } | null>(null);
+  const [upstreamLoading, setUpstreamLoading] = useState(false);
 
-  const doAction = (row: ServiceListItem, action: 'provision' | 'suspend' | 'unsuspend' | 'terminate' | 'sync') => {
+  const showUpstreamStatus = async (row: ServiceListItem) => {
+    setUpstreamStatus({ name: row.name, info: null });
+    setUpstreamLoading(true);
+    try {
+      const info = await getZjmfServiceUpstreamStatus(row.id);
+      setUpstreamStatus({ name: row.name, info });
+    } catch {
+      message.error('上游状态查询失败（上游不可达或服务未开通）');
+      setUpstreamStatus(null);
+    } finally {
+      setUpstreamLoading(false);
+    }
+  };
+
+  const doAction = (row: ServiceListItem, action: 'provision' | 'suspend' | 'unsuspend' | 'terminate' | 'sync' | 'renew') => {
     const titles: Record<string, string> = {
       provision: '开通服务',
       suspend: '暂停服务',
       unsuspend: '恢复服务',
       terminate: '终止服务',
       sync: '同步信息',
+      renew: '同步续费（远端续期）',
     };
     modal.confirm({
       title: titles[action] ?? action,
@@ -132,6 +159,12 @@ const ServiceList: React.FC = () => {
             {r.status !== 'terminated' && r.status !== 'cancelled' && (
               <a onClick={() => doAction(r, 'sync')}>同步</a>
             )}
+            {r.status === 'active' && r.cycle !== 'onetime' && (
+              <a onClick={() => doAction(r, 'renew')}>续费同步</a>
+            )}
+            {r.moduleCode === 'zjmf' && r.deliverInfo?.upHostId != null && (
+              <a onClick={() => void showUpstreamStatus(r)}>上游</a>
+            )}
             <a
               onClick={() => {
                 setRenameTarget(r);
@@ -201,6 +234,34 @@ const ServiceList: React.FC = () => {
         onCancel={() => setRenameTarget(null)}
       >
         <Input value={renameVal} onChange={(e) => setRenameVal(e.target.value)} placeholder="服务名称" />
+      </Modal>
+
+      <Modal
+        title={`上游状态 - ${upstreamStatus?.name ?? ''}`}
+        open={!!upstreamStatus}
+        footer={null}
+        onCancel={() => setUpstreamStatus(null)}
+        width={520}
+      >
+        {upstreamLoading || !upstreamStatus?.info ? (
+          <div style={{ textAlign: 'center', padding: 24 }}>
+            <Spin />
+          </div>
+        ) : (
+          <Descriptions column={1} size="small" bordered>
+            <Descriptions.Item label="上游主机 ID">{upstreamStatus.info.upHostId}</Descriptions.Item>
+            <Descriptions.Item label="状态">
+              <Tag color={ZJMF_STATUS_TAG[upstreamStatus.info.status]?.color}>
+                {ZJMF_STATUS_TAG[upstreamStatus.info.status]?.text ?? upstreamStatus.info.status}
+              </Tag>
+              <span style={{ color: '#999' }}>（上游原始值：{upstreamStatus.info.rawStatus || '-'}）</span>
+            </Descriptions.Item>
+            <Descriptions.Item label="上游商品">{upstreamStatus.info.productName || '-'}</Descriptions.Item>
+            <Descriptions.Item label="到期日">{upstreamStatus.info.expireAt ?? '-'}</Descriptions.Item>
+            <Descriptions.Item label="IP">{upstreamStatus.info.ip || '-'}</Descriptions.Item>
+            <Descriptions.Item label="上游账号">{upstreamStatus.info.username || '-'}</Descriptions.Item>
+          </Descriptions>
+        )}
       </Modal>
     </PageContainer>
   );
