@@ -142,6 +142,19 @@ hr
 read -r -p "确认以上信息并开始部署？[Y/n]: " _go
 [ "${_go:-Y}" = "Y" ] || [ "${_go:-Y}" = "y" ] || die "已中止"
 
+# registry 模式：VPS 上已有本地 registry（scripts/publish-images.sh 本地构建上传场景）
+# → 镜像改为从 127.0.0.1:5000 拉取（增量），跳过 VPS 构建；空则 VPS 本地构建
+IMAGE_PREFIX="${IMAGE_PREFIX:-}"
+if [ -n "$IMAGE_PREFIX" ]; then
+  say "沿用已有 IMAGE_PREFIX=$IMAGE_PREFIX（registry 拉取模式，跳过构建）"
+elif docker ps --format '{{.Names}}' | grep -qx registry; then
+  read -r -p "检测到本地 registry 容器（本地构建上传场景），本次只拉取镜像、不构建？[y/N]: " _reg
+  if [ "${_reg:-n}" = "y" ] || [ "${_reg:-n}" = "Y" ]; then
+    IMAGE_PREFIX="127.0.0.1:5000/"
+    say "已启用 registry 模式：镜像从 127.0.0.1:5000 拉取（配合 scripts/publish-images.sh）"
+  fi
+fi
+
 # ---------- 4) 写 .env ----------
 umask 077
 cat > .env <<ENV
@@ -204,15 +217,23 @@ SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD}
 
 # compose 用
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+# 镜像来源：空 = VPS 本地构建；127.0.0.1:5000/ = VPS 本地 registry 拉取（本地构建上传）
+IMAGE_PREFIX=${IMAGE_PREFIX}
 ENV
 chmod 600 .env
 say ".env 已生成（权限 600）：$ROOT/.env"
 
 # ---------- 5) 构建与启动 ----------
-say "构建并启动全部服务（首次构建约 5-15 分钟，取决于网络）..."
 # --env-file .env：compose 用 -f 指定编排文件时，插值 .env 默认从编排文件所在目录
 # （docker/）查找而非仓库根，必须显式指定（compose v2 行为，见 docs/deployment.md §2.1）
-docker compose -f "$COMPOSE" --env-file .env up -d --build
+if [ -n "${IMAGE_PREFIX:-}" ]; then
+  say "registry 模式：从本地 registry 拉取镜像（增量）..."
+  docker compose -f "$COMPOSE" --env-file .env pull
+  docker compose -f "$COMPOSE" --env-file .env up -d
+else
+  say "构建并启动全部服务（首次构建约 5-15 分钟，取决于网络）..."
+  docker compose -f "$COMPOSE" --env-file .env up -d --build
+fi
 
 say "等待 MySQL 就绪..."
 _mc=0
@@ -253,6 +274,7 @@ cat <<SUMMARY
     查看服务状态 : docker compose -f $COMPOSE --env-file .env ps
     查看日志     : docker compose -f $COMPOSE --env-file .env logs -f api gateway
     重启         : docker compose -f $COMPOSE --env-file .env restart api worker
+    镜像来源     : ${IMAGE_PREFIX:-VPS 本地构建}
 
   后续事项：
     1. 支付网关：管理后台「系统设置」录入商户参数（回调已指向 $API_PUBLIC_URL）
@@ -262,5 +284,12 @@ cat <<SUMMARY
     4. 官网「联系销售」表单需 NEXT_PUBLIC_CONTACT_API_URL（见 .env.example 说明）
     5. 建议：admin 域名加 IP 白名单；.env 含全部密钥，请妥善备份
 SUMMARY
+if [ -n "${IMAGE_PREFIX:-}" ]; then
+  echo -e "${C_Y}  发布新版本（registry 模式）：${C_0}"
+  echo "    1. 本地：REGISTRY_HOST=root@<VPS_IP> bash scripts/publish-images.sh（构建+增量上传）"
+  echo "    2. 本机：docker compose -f $COMPOSE --env-file .env pull && docker compose -f $COMPOSE --env-file .env up -d"
+  echo "    3. 迁移：docker compose -f $COMPOSE --env-file .env exec -T api pnpm --filter @qmkvm/db migrate"
+  echo "    详见 docs/deployment.md §2.2"
+fi
 hr
 [ "$_smoke_ok" = "1" ] || warn "部分冒烟未通过，请按上方提示查看日志后重试"

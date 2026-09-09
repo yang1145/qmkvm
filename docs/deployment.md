@@ -117,6 +117,58 @@ curl http://127.0.0.1:4000/healthz
 
 **API 多副本（标准版即可横向扩）**：API 无状态，`deploy: { replicas: N }` 或多起几个服务即可；前置负载均衡透传 `X-Forwarded-For`（限流依赖真实 IP）、健康检查 `/healthz`、**不用 sticky session**。多副本前必须 `STORAGE_PROVIDER=s3`（本地盘模式下副本间文件不可见）。
 
+### 2.2 本地构建 + registry 增量发布（VPS 构建网络受限时）
+
+**适用场景**：VPS 上 `docker build` 内依赖下载持续超时（npm/pnpm 源不可达），但宿主机网络
+正常（ssh / scp / git 均可用）。把构建放到本地，经 SSH 隧道把镜像推入 VPS 上的私有
+registry，VPS 只做**增量 pull**——利用 Docker layer cache，后续发布只传输变更层。
+
+**原理**：
+
+- VPS 上运行 `registry:2` 容器，**只绑 `127.0.0.1:5000`**，公网不可达 → 无需认证、无需 HTTPS
+- 本地经 SSH 隧道把 `localhost:5000` 映射到 VPS 回环；Docker 对 localhost 豁免 TLS 校验
+  → **无需 `docker login`、无需配置 `insecure-registries`**，复用现有 SSH 登录认证
+- `docker compose push`/`pull` 只传输**缺失的 layer**：首次全量（2-4GB，单流 SSH），
+  之后通常数百 MB；VPS pull 走回环瞬时完成
+- 编排里 6 个镜像名前缀由 `.env` 的 `IMAGE_PREFIX` 控制：
+  空（默认）= VPS 本地构建；`127.0.0.1:5000/` = 从本地 registry 拉取
+
+**首次部署**：
+
+```bash
+# ① VPS：拉取带 IMAGE_PREFIX 的最新编排并生成 .env（脚本检测到 registry 容器时
+#    选 y 启用 registry 拉取模式，跳过构建）
+cd /www/qmkvm && git pull
+bash scripts/deploy-prod.sh
+
+# ② 本地（Git Bash / WSL，可 ssh 登录 VPS）：构建 + 增量上传（首次会全量）
+scp root@<VPS_IP>:/www/qmkvm/.env ./.env     # 取回构建期变量（含密钥，勿提交 git）
+REGISTRY_HOST=root@<VPS_IP> bash scripts/publish-images.sh
+#    脚本会自动：在 VPS 启动 registry 容器（若缺失）→ 本地 docker compose build
+#    → 建 SSH 隧道 → tag+push 6 个镜像
+
+# ③ VPS：拉取并启动
+docker compose -f docker/docker-compose.prod.yml --env-file .env pull
+docker compose -f docker/docker-compose.prod.yml --env-file .env up -d
+#    首次的迁移/种子已由 deploy-prod.sh 完成（MySQL healthy 后自动执行）
+```
+
+**升级发布（此后每次）**：
+
+```bash
+# 本地改完代码后：
+REGISTRY_HOST=root@<VPS_IP> bash scripts/publish-images.sh   # 只传变更层
+# VPS：
+cd /www/qmkvm && git pull
+docker compose -f docker/docker-compose.prod.yml --env-file .env pull
+docker compose -f docker/docker-compose.prod.yml --env-file .env up -d
+docker compose -f docker/docker-compose.prod.yml --env-file .env exec -T api pnpm --filter @qmkvm/db migrate
+```
+
+**安全说明**：registry 不暴露公网端口，认证沿用服务器 SSH 登录；`.env` 含全部密钥，
+scp 回本地后**不要提交进 git**。回滚 = VPS 上 `docker compose up -d --force-recreate` 切回
+上一镜像 tag，或重新发布旧代码（迁移"只增不改"，见 §7.1）。
+
 ---
 
 ## 三、方式 B：集群版（微服务化形态）
@@ -331,6 +383,8 @@ pnpm install --frozen-lockfile
 pnpm db:migrate                 # 迁移先于应用发布，只在单点执行（CI 或第一台机），禁止多副本并行跑
 docker compose -f <对应compose> --env-file .env up -d --build   # 或 pm2 reload all
 ```
+
+registry 模式（VPS 构建网络受限时）升级见 §2.2：本地 `publish-images.sh` → VPS `pull + up -d`，跳过本机构建。
 
 **回滚**：应用回滚 = 切回上一镜像 tag / `git checkout` 上一 release；迁移以"只增不改"为前提，回滚应用一般无需回滚库。重大变更前 `mysqldump` 全量。
 

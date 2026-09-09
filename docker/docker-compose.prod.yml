@@ -6,12 +6,14 @@
 # 首次部署：先执行迁移与种子（见 README 部署方案）
 # 公网入口：内置 gateway 容器托管域名（80→443 + Let's Encrypt 免费证书自动签发续期，
 #           域名经 DOMAIN_BASE 推导）；需 DNS A 记录指向本机、80/443 公网可达
+# 镜像来源：image 名前缀 ${IMAGE_PREFIX:-}（空 = 本机构建；127.0.0.1:5000/ = VPS 本地
+#           registry 拉取，配合 scripts/publish-images.sh 本地构建增量发布）
 name: qmkvm
 
 services:
   # 公网 HTTPS 入口：按 .env 域名生成 server 块，ACME HTTP-01 自动签发/续期
   gateway:
-    image: qmkvm-gateway:prod
+    image: ${IMAGE_PREFIX:-}qmkvm-gateway:prod
     build:
       context: ..
       dockerfile: docker/Dockerfile.gateway
@@ -138,7 +140,7 @@ services:
       - "127.0.0.1:3000:80"
 
   admin:
-    image: qmkvm-admin:prod
+    image: ${IMAGE_PREFIX:-}qmkvm-admin:prod
     build:
       context: ..
       dockerfile: docker/Dockerfile.admin
