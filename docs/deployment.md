@@ -13,8 +13,9 @@
 | A. Docker Compose（标准版） | ≤ 1 万客户，峰值 < 500 QPS | 单机一键起，最简运维 | §二 |
 | B. Docker Compose（集群版） | 1~10 万客户，需要独立伸缩 | LB + API×3 + 四组 worker + MinIO | §三 / README-cluster.md |
 | C. 源码 + PM2 | 无 Docker 环境 / 定制构建 | 手工依赖管理 | §四 |
-| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（单库起步，主备高可用见 §六.2） | §五 |
-| 前置：对象存储 | 集群版必选 | S3 兼容（MinIO/OSS/COS） | §六.3 |
+| D. 前端 Pages 平台 + 后端独立部署 | 无运维诉求的前端 + 单点后端 | 三前端托管到静态 Pages 平台（免证书/CDN/免运维），api/worker 独立部署 | §五 |
+| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（单库起步，主备高可用见 §七.2） | §六 |
+| 前置：对象存储 | 集群版必选 | S3 兼容（MinIO/OSS/COS） | §七.3 |
 
 ---
 
@@ -41,10 +42,11 @@ cp .env.example .env    # 然后按下表修改
 | `REDIS_URL` | 生产必配（限流/验证码/队列的分布式后端） |
 | `CORS_ORIGINS` | 收敛为真实前端域名列表（逗号分隔） |
 | `COOKIE_DOMAIN` | `.example.com` 形式——portal 与 api 跨子域共享会话**必设**，否则出现"登录成功即掉线" |
+| `API_PUBLIC_URL` | API 公网地址（支付网关 webhook 回调基底），生产必配 |
 | `NODE_ENV=production` / `DEV_MOCK_PAYMENTS=false` | mock 网关必须关闭 |
 | `SEED_ADMIN_PASSWORD` | 初始管理员密码（首登后修改） |
 
-**按需项**：短信（`ALIYUN_SMS_*`）、邮件（`SMTP_*`）、告警（`ALERT_WEBHOOK_URL`）、对象存储（`STORAGE_*`，见 §六.3）、只读副本（`DATABASE_URL_RO`，见 §六.2）。
+**按需项**：短信（`ALIYUN_SMS_*`）、邮件（`SMTP_*`）、告警（`ALERT_WEBHOOK_URL`）、对象存储（`STORAGE_*`，见 §七.3）、只读副本（`DATABASE_URL_RO`，见 §七.2）。
 
 完整变量说明见 `.env.example` 注释与[开发者指南 §6](development.md)。
 
@@ -137,7 +139,116 @@ PM2 注意：`-i N` cluster 模式下 `mysql2`/`ioredis` 每进程独立连接�
 
 ---
 
-## 五、反向代理与 TLS
+## 五、方式 D：前端托管 Pages 平台 + API/Worker 独立部署
+
+三前端（www / portal / admin）均为**纯静态产物**，可托管到任意静态 Pages 平台
+（EdgeOne Pages / Cloudflare Pages / Netlify / Vercel / GitHub Pages 等），获得免费 TLS、
+CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独部署在一台 VPS/云主机
+（方式 A 的后端子集或方式 C），MySQL/Redis 用云托管或与后端同机。
+
+### 5.1 部署前必读的三个约束
+
+1. **前端必须绑定与 API 同主域的自定义域名**。会话 Cookie 为 `SameSite=Lax`
+   （`apps/api/src/middleware/auth.ts`），跨站请求不会携带——`portal.example.com` 与
+   `api.example.com` 同站可用，但 **Pages 平台默认域名**（如 `xxx.edgeone.app`、
+   `xxx.pages.dev`）与 `api.example.com` 跨站，登录会"成功即掉线"。
+   即三个前端都绑定 `*.example.com` 子域后才能使用。
+2. **admin 依赖平台的代理重写能力**。admin 的请求是相对路径 `/api/v1/*`
+   （同源假设），Pages 平台必须能把 `/api/*` 反向代理到 API 域名
+   （Netlify/Vercel/EdgeOne 支持重写代理；GitHub Pages 无服务端能力，不支持）。
+   平台不支持代理时，admin 改用方式 A/C 的 Nginx 托管。
+3. **前端环境变量全部在构建期烘焙**（Portal 的 `NEXT_PUBLIC_API_URL`、www 的全部
+   `NEXT_PUBLIC_*`）。在平台环境变量面板配置后需重新触发构建生效
+   （Git 集成下 push 即部署）。
+
+### 5.2 三个 Pages 项目配置
+
+构建命令在平台侧运行，需设置 Node ≥ 20、包管理器 pnpm（corepack）。monorepo 构建
+会自动装依赖（`pnpm install` 已含 workspace 联动）；contracts 以 TS 源码包参与构建，
+无需预编译步骤。
+
+| 项目 | 构建命令 | 输出目录 | 环境变量（构建期） | 平台设置 |
+|---|---|---|---|---|
+| www | `pnpm --filter @qmkvm/www build` | `apps/www/out` | 见下表 | 未知路径自动回退 `404.html`（产物自带）；无其他要求 |
+| portal | `pnpm --filter @qmkvm/portal build` | `apps/portal/out` | `NEXT_PUBLIC_API_URL` | 开启 HTML 扩展名省略（pretty URLs，多数平台默认）；未知路径回退 `404.html` |
+| admin | `pnpm --filter @qmkvm/admin build` | `apps/admin/dist` | 无（相对路径请求） | **SPA 回退**：所有路径 200 回 `/index.html`；**代理**：`/api/*` → `https://api.<域>/api/*` |
+
+**www 环境变量**（缺省项可留空，均有内置降级）：
+
+| 变量 | 必填 | 说明 |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | ✅ | 官网对外地址 `https://www.example.com`（canonical/hreflang/sitemap 用，留空则烘入 example.com） |
+| `NEXT_PUBLIC_PORTAL_URL` | ✅ | portal 地址 `https://portal.example.com`（主 CTA「进入控制台」入口，不配则回落「申请试用」） |
+| `NEXT_PUBLIC_BRAND_NAME` / `_EN` | — | 内置缺省品牌（首选做法是配 `BRANDING_API_URL` 拉 admin 站点信息） |
+| `BRANDING_API_URL` | — | `https://api.example.com/api/v1/public/settings`，构建前烘焙品牌；未配置/失败降级 env 与内置缺省 |
+| `NEXT_PUBLIC_CONTACT_API_URL` | — | 联系销售表单提交端点；不配则表单提交提示失败 |
+
+**portal 环境变量**：仅 `NEXT_PUBLIC_API_URL=https://api.example.com`（唯一变量；
+品牌由页面运行时拉取，改品牌无需重建）。
+
+**admin 平台规则示例**（Netlify `netlify.toml`，其他平台同理换成对应配置格式）：
+
+```toml
+# API 代理（同源假设的依赖）
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.example.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA 回退（必须 force=false 排在通配，仅未命中静态文件时生效）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### 5.3 API/Worker 独立部署
+
+后端即方式 A 的子集：一台 VPS 上 `docker compose -f docker/docker-compose.prod.yml up -d mysql redis api worker`
+（前端三个服务不启动），或按方式 C 用 PM2 跑 api + worker。MySQL/Redis 也可换成云托管
+（`DATABASE_URL`、`REDIS_URL` 指向云实例，自建部分只留 api/worker 两个容器）。
+
+api 是 HTTP 进程，公网暴露必须前置 Nginx/云 LB 做 TLS（参见 §六；若用云 LB 则开启
+X-Forwarded-For 透传，限流依赖真实 IP）。
+
+**环境变量清单**（`.env` 完整模板见 `.env.example`；api 与 worker 共用同一份）：
+
+| 变量 | 说明 |
+|---|---|
+| `DATABASE_URL` / `REDIS_URL` / `APP_KEY` | §一.1.2 必改三项 |
+| `API_PORT=4000` | API 监听端口 |
+| `CORS_ORIGINS` | **加上 Pages 平台的三个前端域名**：`https://www.example.com,https://portal.example.com,https://admin.example.com`（同时用于 CORS 与 CSRF Origin 校验，缺一个对应前端全部写请求被拒） |
+| `COOKIE_DOMAIN=.example.com` | portal 跨子域共享会话必设（§5.1 约束 1） |
+| `API_PUBLIC_URL=https://api.example.com` | 支付网关 webhook 回调地址（notifyUrl 用），公网必须可达，生产必配 |
+| `PORTAL_URL=https://portal.example.com` | 支付回跳 returnUrl 的基底（Pages 域名） |
+| `WWW_URL` / `ADMIN_URL` | 通知/邮件里各前端链接基底 |
+| `NODE_ENV=production`、`DEV_MOCK_PAYMENTS=false` | 生产基线 |
+| `SEED_ADMIN_PASSWORD` | 首次 seed 用，首登后修改 |
+| 短信/邮件/存储按需 | `ALIYUN_SMS_*`、`SMTP_*`、`STORAGE_*`（多副本才需 s3，见 §七.3） |
+| `PVE_*`（仅 worker） | 供应凭据，只应出现在 worker（supply 组）环境 |
+
+worker 启动（PM2 源码方式）：
+
+```bash
+pm2 start "pnpm --filter @qmkvm/worker start"                --name kvm-worker-tx
+pm2 start "pnpm --filter @qmkvm/worker start -- --group notify" --name kvm-worker-notify
+pm2 start "pnpm --filter @qmkvm/worker start -- --group supply" --name kvm-worker-supply
+pm2 start "pnpm --filter @qmkvm/worker start -- --group ocr"    --name kvm-worker-ocr
+```
+
+### 5.4 上线验证清单
+
+1. `curl https://api.example.com/healthz` 200；管理后台登录、`/api/v1/admin/*` 经平台代理可用
+2. portal 注册/登录后刷新页面不掉线（Cookie 域与 SameSite 生效）；下单支付 → 回跳
+   `portal…/invoices/detail?id=…&paid=1` 正常显示已支付
+3. 支付网关后台发起回调 → 账单状态流转（`API_PUBLIC_URL` 可达）
+4. www 品牌/表单/官网链接正确（构建日志确认 `fetch-branding` 成功烘焙）
+5. admin 刷新任意子路由 200（SPA 回退）；平台控制台确认 `/api/*` 走代理而非 404
+
+---
+
+## 六、反向代理与 TLS
 
 四个 server 块（www / portal / admin / api）分别反代到内网端口，统一 301 HTTPS：
 
@@ -155,9 +266,9 @@ location / {
 
 ---
 
-## 六、生产配套
+## 七、生产配套
 
-### 6.1 升级发布
+### 7.1 升级发布
 
 ```bash
 git pull
@@ -168,7 +279,7 @@ docker compose -f <对应compose> up -d --build   # 或 pm2 reload all
 
 **回滚**：应用回滚 = 切回上一镜像 tag / `git checkout` 上一 release；迁移以"只增不改"为前提，回滚应用一般无需回滚库。重大变更前 `mysqldump` 全量。
 
-### 6.2 数据库主备高可用（主 + 半同步备 + 只读从）
+### 7.2 数据库主备高可用（主 + 半同步备 + 只读从）
 
 三节点形态：**写路径高可用（备库可提升）+ 读扩展（从库扛报表流量）**，读写分离是它的自然产物。
 应用代码零改动——`DATABASE_URL` 指向"固定写入口"，`DATABASE_URL_RO` 指向从库，
@@ -277,12 +388,12 @@ SHOW STATUS LIKE 'Rpl_semi_sync_source%';
   超过 `REPLICA_LAG_ALERT_SECONDS`（缺省 60s）或线程断开时推送 `ALERT_WEBHOOK_URL`；
   状态转变时推送一次，连续异常不重复推送
 - 探测账号最小权限：`GRANT REPLICATION CLIENT ON *.* TO 'monitor'@'worker-ip'`
-- 详见 §6.5 与 `apps/worker/src/tasks/replica-health.ts`
+- 详见 §7.5 与 `apps/worker/src/tasks/replica-health.ts`
 
 #### 备份策略（主备形态下的调整）
 
 - 每日全量 `mysqldump --single-transaction` **改从从库取**（为主备减负）；binlog 增量仍从主库归档
-- 备库不替代备份：误删/逻辑损坏会原样复制到备/从，恢复仍靠全量+binlog 重放（§6.4）
+- 备库不替代备份：误删/逻辑损坏会原样复制到备/从，恢复仍靠全量+binlog 重放（§7.4）
 
 #### 集群样例与云 RDS 对应
 
@@ -292,7 +403,7 @@ SHOW STATUS LIKE 'Rpl_semi_sync_source%';
 - 云 RDS 高可用版：搭建/切换/VIP 全部由云托管，`DATABASE_URL` 指向 RDS 代理端点、
   `DATABASE_URL_RO` 指向只读地址即可，无需自建半同步与 Keepalived
 
-### 6.3 对象存储（S3 兼容）
+### 7.3 对象存储（S3 兼容）
 
 ```env
 STORAGE_PROVIDER=s3
@@ -307,21 +418,21 @@ STORAGE_S3_REGION=...      # 按云商
 - **历史数据迁移**（本地盘 → S3）：`packages/storage/src/migrate-local.ts` 遍历 `UPLOAD_DIR` 上传并输出 key 映射报告——先跑报告人工确认，再按报告二次确认；读侧自动兼容旧绝对路径
 - MinIO 生产建议 4 节点分布式或直接用云厂商 OSS/COS
 
-### 6.4 备份与恢复
+### 7.4 备份与恢复
 
 - MySQL：每日 `mysqldump --single-transaction` 全量 + binlog 增量，异地归档 ≥ 30 天
 - 对象存储：启用版本化/跨区复制（云商能力）
 - 恢复：导入全量 + 重放 binlog 至目标时间点；Redis 仅承载队列/缓存/会话，可清空重建（用户重新登录）
 - 恢复演练每季度一次
 
-### 6.5 监控与告警
+### 7.5 监控与告警
 
 - 存活：LB 健康检查 `/healthz`；**应用内监控**：admin 仪表盘"系统运行状态"卡片 + `GET /api/v1/admin/system/status`（API/DB/Redis 探活 + 四组 worker 心跳在线 + 队列积压）
 - 任务失败：`system.job_health` 每日汇总 `job_runs` 失败，`ALERT_WEBHOOK_URL` 推钉钉/飞书
-- 复制健康：`system.replica_health` 每 5 分钟探测备/从库复制线程与延迟（主备形态，见 §6.2）
+- 复制健康：`system.replica_health` 每 5 分钟探测备/从库复制线程与延迟（主备形态，见 §7.2）
 - 可选：Prometheus `/metrics`（预留，未实现）
 
-### 6.6 生产安全清单
+### 7.6 生产安全清单
 
 - [ ] `DEV_MOCK_PAYMENTS=false`；修改管理员初始密码
 - [ ] `APP_KEY` 妥善保管并离线备份（丢失 = 支付密钥/证件号不可解密）
@@ -335,15 +446,17 @@ STORAGE_S3_REGION=...      # 按云商
 
 ---
 
-## 七、常见问题
+## 八、常见问题
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | 登录成功即跳回登录页 | `COOKIE_DOMAIN` 未设/错误 | §一.1.2 表格 |
-| 后台看不到用户上传的证件照 | 多副本但仍是本地盘模式 | `STORAGE_PROVIDER=s3` + §六.3 迁移脚本 |
+| 后台看不到用户上传的证件照 | 多副本但仍是本地盘模式 | `STORAGE_PROVIDER=s3` + §七.3 迁移脚本 |
 | 队列任务大量 failed | worker 未启动或组未订阅该队列 | `/admin/system/status` 看各组在线与积压；缺省单队列模式下 tx 组兜底全部 |
 | 实名一直显示"OCR 识别中" | worker-ocr 未启动（或 tesseract 未安装） | 部署 tesseract + `chi_sim` 语言包，或接受 unavailable 降级走人工审核 |
-| 限流把正常用户挡了 | LB 未透传 X-Forwarded-For | §五 |
+| 限流把正常用户挡了 | LB 未透传 X-Forwarded-For | §六 |
 | 供应任务卡 pending | PVE 凭据未配置在 supply 组 / PVE 连接失败 | 后台「供应模块」连接测试；确认凭据只在 supply 组环境 |
-| 后台报表/审计打不开（500） | 只读从库宕机或未追平 | §6.2：重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 |
-| 收到"复制健康告警" | 备/从复制延迟超阈值或线程断开 | §6.2 监控小节：`SHOW REPLICA STATUS` 排错；线程断开按搭建步骤 ③ 重挂 |
+| 后台报表/审计打不开（500） | 只读从库宕机或未追平 | §7.2：重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 |
+| 收到"复制健康告警" | 备/从复制延迟超阈值或线程断开 | §7.2 监控小节：`SHOW REPLICA STATUS` 排错；线程断开按搭建步骤 ③ 重挂 |
+| Pages 部署的 portal 登录成功即掉线 | 前端用了平台默认域名，与 api 跨站（Cookie SameSite=Lax 不携带） | §5.1 约束 1：绑定 `*.example.com` 自定义子域 |
+| Pages 部署的 admin 请求 /api 404 | 平台无代理重写或规则未配置 | §5.1 约束 2：配 `/api/*` 代理规则，或 admin 改用 Nginx 托管 |

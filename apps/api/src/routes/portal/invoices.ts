@@ -160,7 +160,7 @@ portalInvoiceRoutes.post("/invoices/:id/pay", async (c) => {
     outTradeNo,
     amountFen: inv.total,
     subject: `账单 ${inv.invoiceNo}`,
-    returnUrl: `${process.env.PORTAL_URL ?? "http://localhost:3001"}/invoices/${inv.id}?paid=1`,
+    returnUrl: `${process.env.PORTAL_URL ?? "http://localhost:3001"}/invoices/detail?id=${inv.id}&paid=1`,
     notifyUrl: `${process.env.API_PUBLIC_URL ?? process.env.PORTAL_URL ?? ""}/api/v1/webhooks/${gatewayCode}`,
   });
 
