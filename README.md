@@ -86,7 +86,7 @@ pnpm dev:worker           # 定时任务（需 Redis；生产按 --group 分组�
 ### 一键部署（推荐）
 
 ```bash
-git clone <repo> && cd pinhaoji-web
+git clone https://github.com/yang1145/qmkvm.git && cd qmkvm
 bash scripts/deploy-prod.sh
 ```
 

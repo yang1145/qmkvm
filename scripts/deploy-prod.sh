@@ -2,7 +2,7 @@
 # 启明智联 prod 路线一键部署：干净 Linux VPS → 交互引导收集配置 → 自动安装部署
 #
 # 用法（root）：
-#   git clone <repo> && cd pinhaoji-web
+#   git clone https://github.com/yang1145/qmkvm.git && cd qmkvm
 #   bash scripts/deploy-prod.sh
 #   重新配置/升级：再次运行即可（已有 .env 会预填旧值，回车沿用）
 #

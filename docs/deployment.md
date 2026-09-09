@@ -72,7 +72,7 @@ pnpm db:seed             # 管理员/角色/示例商品/通知模板
 
 ```bash
 # 全新 Linux VPS（Ubuntu/Debian 等，root，2C/4G 起步，80/443 空闲）
-git clone <repo> && cd pinhaoji-web
+git clone https://github.com/yang1145/qmkvm.git && cd qmkvm
 bash scripts/deploy-prod.sh
 ```
 
