@@ -129,6 +129,8 @@ pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker
 
 宿主机 Nginx 四个 server 块（www / portal / admin / api）：www/portal/admin 为静态产物（portal/www 静态导出，compose 部署时容器内已带 nginx，反代到 `127.0.0.1:3000/3001/8000` 即可；PM2 模式由宿主机 Nginx 直接 root 托管 out/ 与 dist/），api 反代到 `127.0.0.1:4000`。统一 301 到 HTTPS，`proxy_set_header X-Forwarded-For` 传递客户端 IP（限流依赖此头）。TLS 证书用 certbot 或云厂商免费证书，生产 `COOKIE_DOMAIN=.你的域名` 使 portal/api 跨子域共享会话。
 
+admin 的 API 请求默认走同源 `/api/*`（其 server 块需把 `/api` 反代到 api）；独立域名直连部署时在构建期设 `ADMIN_API_URL=https://api.example.com`（并把它加入 api 的 `CORS_ORIGINS`），server 块则无需 `/api` 反代，仅托管静态文件。
+
 ### 升级发布
 
 ```bash

@@ -16,6 +16,11 @@ export default defineConfig({
   ignoreMomentLocale: true,
   proxy: proxy[UMI_ENV as keyof typeof proxy] || proxy.dev,
   fastRefresh: true,
+  // 构建期注入 API 地址：独立域名部署时设为 API 绝对地址（如 https://api.example.com，
+  // 跨域直连，需 CORS_ORIGINS 收录 admin 域名）；不设置走同源相对路径（/api 反代模式）
+  define: {
+    'process.env.ADMIN_API_URL': JSON.stringify(process.env.ADMIN_API_URL ?? ''),
+  },
   //============== max 插件配置 ===============
   model: {},
   initialState: {},

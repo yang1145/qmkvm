@@ -46,7 +46,9 @@ import type {
   ZjmfUpstreamStatusInfo,
 } from './types';
 
-const BASE = '/api/v1/admin';
+/** API 基址：构建期注入 ADMIN_API_URL（独立域名部署，跨域直连）；缺省同源相对路径 */
+const API_ORIGIN = process.env.ADMIN_API_URL || '';
+const BASE = `${API_ORIGIN}/api/v1/admin`;
 
 /** 分页参数（ProTable params: current/pageSize → page/pageSize） */
 export function pageParams(params: Record<string, unknown>) {

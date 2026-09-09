@@ -153,10 +153,11 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
    `api.example.com` 同站可用，但 **Pages 平台默认域名**（如 `xxx.edgeone.app`、
    `xxx.pages.dev`）与 `api.example.com` 跨站，登录会"成功即掉线"。
    即三个前端都绑定 `*.example.com` 子域后才能使用。
-2. **admin 依赖平台的代理重写能力**。admin 的请求是相对路径 `/api/v1/*`
-   （同源假设），Pages 平台必须能把 `/api/*` 反向代理到 API 域名
+2. **admin 的两种 API 模式**。admin 构建期读取 `ADMIN_API_URL`：**设为 API 绝对地址**
+   （如 `https://api.example.com`）即独立域名直连，跨域请求需 API 侧 `CORS_ORIGINS`
+   收录 admin 域名（Cookie 同主域子域场景可携带，见约束 1）；**不设置**则走同源相对
+   路径 `/api/v1/*`，此时托管层必须能把 `/api/*` 反向代理到 API 域名
    （Netlify/Vercel/EdgeOne 支持重写代理；GitHub Pages 无服务端能力，不支持）。
-   平台不支持代理时，admin 改用方式 A/C 的 Nginx 托管。
 3. **前端环境变量全部在构建期烘焙**（Portal 的 `NEXT_PUBLIC_API_URL`、www 的全部
    `NEXT_PUBLIC_*`）。在平台环境变量面板配置后需重新触发构建生效
    （Git 集成下 push 即部署）。
@@ -171,7 +172,7 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
 |---|---|---|---|---|
 | www | `pnpm --filter @qmkvm/www build` | `apps/www/out` | 见下表 | 未知路径自动回退 `404.html`（产物自带）；无其他要求 |
 | portal | `pnpm --filter @qmkvm/portal build` | `apps/portal/out` | `NEXT_PUBLIC_API_URL` | 开启 HTML 扩展名省略（pretty URLs，多数平台默认）；未知路径回退 `404.html` |
-| admin | `pnpm --filter @qmkvm/admin build` | `apps/admin/dist` | 无（相对路径请求） | **SPA 回退**：所有路径 200 回 `/index.html`；**代理**：`/api/*` → `https://api.<域>/api/*` |
+| admin | `pnpm --filter @qmkvm/admin build` | `apps/admin/dist` | `ADMIN_API_URL`（可选：配了=独立域名直连；不配=同源代理） | **SPA 回退**：所有路径 200 回 `/index.html`；**代理**仅同源模式需要：`/api/*` → `https://api.<域>/api/*` |
 
 **www 环境变量**（缺省项可留空，均有内置降级）：
 
@@ -473,4 +474,4 @@ STORAGE_S3_REGION=...      # 按云商
 | 后台报表/审计打不开（500） | 只读从库宕机或未追平 | §7.2：重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 |
 | 收到"复制健康告警" | 备/从复制延迟超阈值或线程断开 | §7.2 监控小节：`SHOW REPLICA STATUS` 排错；线程断开按搭建步骤 ③ 重挂 |
 | Pages 部署的 portal 登录成功即掉线 | 前端用了平台默认域名，与 api 跨站（Cookie SameSite=Lax 不携带） | §5.1 约束 1：绑定 `*.example.com` 自定义子域 |
-| Pages 部署的 admin 请求 /api 404 | 平台无代理重写或规则未配置 | §5.1 约束 2：配 `/api/*` 代理规则，或 admin 改用 Nginx 托管 |
+| Pages 部署的 admin 请求 /api 404 | 同源模式但平台无代理重写或规则未配置 | §5.1 约束 2：构建时设 `ADMIN_API_URL` 直连，或配 `/api/*` 代理规则，或 admin 改用 Nginx 托管 |

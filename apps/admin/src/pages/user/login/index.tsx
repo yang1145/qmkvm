@@ -19,7 +19,9 @@ const getSafeRedirectUrl = (redirect: string | null): string => {
   }
 };
 
-const CAPTCHA_PATH = '/api/v1/admin/auth/captcha';
+// 构建期注入 ADMIN_API_URL（独立域名部署，跨域直连）；缺省同源相对路径
+const API_ORIGIN = process.env.ADMIN_API_URL || '';
+const CAPTCHA_PATH = `${API_ORIGIN}/api/v1/admin/auth/captcha`;
 
 const Login: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);

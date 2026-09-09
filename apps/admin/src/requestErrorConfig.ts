@@ -86,9 +86,11 @@ export const errorConfig: RequestConfig = {
       handleApiError(error);
     },
   },
-  // Cookie 会话：同源代理自动携带；直连时也带上
+  // Cookie 会话：跨域直连（独立域名部署）时必须 withCredentials 才能携带会话 Cookie；
+  // 同源模式下该选项无副作用
   requestInterceptors: [
     (config: any) => {
+      config.withCredentials = true;
       config.headers = { ...(config.headers ?? {}) };
       return config;
     },
