@@ -60,7 +60,12 @@ ask() { # ask 变量名 提示 默认值
 ask_secret() { # ask_secret 变量名 提示（换行走 stderr，避免混入命令替换捕获值）
   local __v; read -r -s -p "$2（回车=自动生成）: " __v; echo >&2; echo "$__v"
 }
-gen() { openssl rand "$1" 2>/dev/null || head -c 64 /dev/urandom | base64; }
+gen() { # gen -hex N | -base64 N；openssl 异常（缺失/输出为空）时回落 /dev/urandom
+  local __v
+  __v="$(openssl rand "$1" 2>/dev/null)"
+  [ -n "$__v" ] || __v="$(head -c 64 /dev/urandom | base64)"
+  echo "$__v"
+}
 
 hr; say "开始收集配置（回车接受默认值）"; hr
 
@@ -95,9 +100,10 @@ for _s in www portal admin api; do
 done
 [ "$_dns_ok" = "1" ] || { echo -e "${C_Y}本机公网 IP（对照用）：$(curl -fs4 https://ifconfig.me 2>/dev/null || echo 未知)${C_0}"; read -r -p "已了解，继续安装？[Y/n]: " _go; [ "${_go:-Y}" = "Y" ] || [ "${_go:-Y}" = "y" ] || die "已中止"; }
 
-# 密钥与密码（自动生成；管理员密码允许自定义）
-APP_KEY="$(gen -base64 32)"
-MYSQL_ROOT_PASSWORD="$(gen -hex 16)"
+# 密钥与密码（自动生成；已有 .env 时沿用旧值：重跑/升级不得更换 APP_KEY 与数据库密码，
+# 否则已加密数据无法解密 / MySQL 数据卷密码失配）
+APP_KEY="${APP_KEY:-$(gen -base64 32)}"
+MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-$(gen -hex 16)}"
 SEED_ADMIN_PASSWORD="$(ask_secret SEED_ADMIN_PASSWORD "管理后台初始密码")"
 [ -n "$SEED_ADMIN_PASSWORD" ] || SEED_ADMIN_PASSWORD="$(gen -hex 12)"
 
@@ -128,8 +134,8 @@ echo "  主域名          : $DOMAIN_BASE（www / portal / admin / api 四个子
 echo "  证书邮箱        : $ACME_EMAIL"
 echo "  品牌名          : ${NEXT_PUBLIC_BRAND_NAME:-（未设置，走缺省/后台配置）}"
 echo "  管理后台        : https://admin.$DOMAIN_BASE （$SEED_ADMIN_USERNAME / $SEED_ADMIN_PASSWORD）"
-echo "  数据库密码      : $MYSQL_ROOT_PASSWORD（自动生成）"
-echo "  APP_KEY         : 已生成（32B base64）"
+echo "  数据库密码      : $MYSQL_ROOT_PASSWORD（自动生成/重跑沿用）"
+echo "  APP_KEY         : 已生成/沿用（32B base64）"
 echo "  短信            : ${SMS_PROVIDER:-mock}"
 [ -n "${SMTP_HOST:-}" ] && echo "  邮件            : $SMTP_HOST" || echo "  邮件            : 未配置"
 hr
