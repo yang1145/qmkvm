@@ -83,8 +83,8 @@ curl http://127.0.0.1:4000/healthz
 **品牌定制（logo / 站点名 / 版权 / 联系邮箱）**：入口在 admin「系统设置 → 站点信息」
 （存 settings 表 key='site'，公开端点 `GET /api/v1/public/settings` 分发）。
 
-- portal：SPA 静态导出无 Node 服务，品牌由页面客户端拉取（logo/favicon/页脚即时生效；
-  标题等元信息构建期烘焙，改站点名后需重建 portal 镜像）
+- portal：SPA 静态导出无 Node 服务，品牌（站点名/logo/favicon/页脚）由页面客户端拉取，
+  admin 保存后刷新即生效；元信息为通用格式（"客户中心"），**portal 无需因品牌变更而重建**
 - www：静态导出无运行时，构建时经 `BRANDING_API_URL` 拉取烘焙（compose 的 www build args 已接线，
   在 `.env` 配 `BRANDING_API_URL=http://api:4000/api/v1/public/settings` 即可）；**改品牌后需重建 www 镜像**
 - 未配置/拉取失败时构建自动降级为 `NEXT_PUBLIC_*` 环境变量与内置缺省，官网可独立构建

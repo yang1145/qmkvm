@@ -4,27 +4,20 @@ import type { ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastProvider } from "@/components/ui/toast";
 import { BrandingProvider } from "@/components/branding-provider";
-import { getBranding } from "@/lib/branding";
 import "./globals.css";
 
 /**
- * 品牌定制：站点名/favicon 走 admin 站点信息设置。
- * 静态导出下此处为构建期取值（API 不可达时回落内置缺省），
- * 运行时品牌（logo/favicon/页脚）由 BrandingProvider 客户端拉取更新。
+ * 元信息用通用格式、不内置品牌名与缺省图标：品牌（站点名/logo/favicon）
+ * 全部由 BrandingProvider 客户端拉取 admin「站点信息」运行时生效，
+ * admin 更新后无需重新构建。
  */
-export async function generateMetadata(): Promise<Metadata> {
-  const b = await getBranding();
-  return {
-    title: {
-      default: `${b.siteName} · 客户中心`,
-      template: `%s · ${b.siteName}`,
-    },
-    description: `${b.siteName} ${b.siteNameEn} 客户门户：购买、管理您的云服务。`,
-    icons: b.logo
-      ? { icon: b.logo, apple: b.logo }
-      : { icon: "/favicon.ico", apple: "/logo.png" },
-  };
-}
+export const metadata: Metadata = {
+  title: {
+    default: "客户中心",
+    template: "%s · 客户中心",
+  },
+  description: "客户门户：购买、管理您的云服务。",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
