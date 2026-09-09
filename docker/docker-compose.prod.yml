@@ -14,6 +14,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.gateway
+      # 构建走宿主机网络：规避 BuildKit 桥接网络 DNS/转发导致的依赖下载超时
+      network: host
     restart: unless-stopped
     env_file: ../.env
     environment:
@@ -130,6 +132,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.admin
+      network: host
       args:
         # admin 统一走构建期注入的 API 绝对地址直连（跨域），不使用反代；
         # 需将 admin 域名加入 CORS_ORIGINS
