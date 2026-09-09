@@ -205,12 +205,26 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
 
 ### 5.3 API/Worker 独立部署
 
-后端即方式 A 的子集：一台 VPS 上 `docker compose -f docker/docker-compose.prod.yml up -d mysql redis api worker`
-（前端三个服务不启动），或按方式 C 用 PM2 跑 api + worker。MySQL/Redis 也可换成云托管
-（`DATABASE_URL`、`REDIS_URL` 指向云实例，自建部分只留 api/worker 两个容器）。
+后端用专用编排文件 `docker/docker-compose.backend.yml`——**只含 api + worker 两个容器**，
+不部署前端/Nginx/MySQL/Redis，依赖全部走外部托管（云 RDS、云 Redis，或另一台自建机）：
 
-api 是 HTTP 进程，公网暴露必须前置 Nginx/云 LB 做 TLS（参见 §六；若用云 LB 则开启
-X-Forwarded-For 透传，限流依赖真实 IP）。
+```bash
+# 1) .env 中 DATABASE_URL / REDIS_URL 填外部实例地址（容器内 localhost ≠ 宿主机）；
+#    外部 Redis 必须开启持久化且 --maxmemory-policy noeviction（BullMQ 依赖）
+# 2) 构建 + 启动（首次会自动构建两个镜像）
+docker compose -f docker/docker-compose.backend.yml up -d --build
+# 3) 首次部署：迁移 + 种子（迁移只增不改，只在单点执行，先于应用启动）
+docker compose -f docker/docker-compose.backend.yml run --rm api pnpm --filter @qmkvm/db migrate
+docker compose -f docker/docker-compose.backend.yml run --rm api pnpm --filter @qmkvm/db seed
+# 4) 验证
+curl http://127.0.0.1:4000/healthz
+```
+
+worker 缺省为单队列模式单实例兜底全部队列；要按组拆分（tx/notify/supply/ocr）时复制
+compose 里的 worker 服务加 `command: ["pnpm","start","--","--group","<组>"]`
+（组语义见 §三 与 docker/README-cluster.md）。也可不用 Docker，按方式 C 用 PM2 跑
+api + worker。api 是 HTTP 进程，公网暴露必须前置 Nginx/云 LB 做 TLS（参见 §六；若用
+云 LB 则开启 X-Forwarded-For 透传，限流依赖真实 IP）。
 
 **环境变量清单**（`.env` 完整模板见 `.env.example`；api 与 worker 共用同一份）：
 

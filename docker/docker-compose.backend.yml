@@ -1,0 +1,40 @@
+# 仅后端编排：api + worker 两个容器，前端托管 Pages 平台时使用（docs/deployment.md §5.3）
+# MySQL/Redis 为外部托管（云 RDS / 云 Redis 或其他机器自建），不在本编排内——
+# 前提 .env 的 DATABASE_URL / REDIS_URL 填外部实例地址（容器内 localhost ≠ 宿主机；
+# 外部 Redis 必须配置 --maxmemory-policy noeviction，BullMQ 依赖，见 deployment.md §一.1.2）
+# 构建上下文 = 仓库根：docker compose -f docker/docker-compose.backend.yml up -d --build
+name: qmkvm-backend
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: api }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      API_PORT: "4000"
+      NODE_ENV: production
+      DEV_MOCK_PAYMENTS: "false"
+    # 仅在内网暴露；公网经宿主机反向代理或云 LB（TLS + X-Forwarded-For 透传）
+    ports:
+      - "127.0.0.1:4000:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+      args: { APP: worker }
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      NODE_ENV: production
+    # 缺省单队列模式：单实例兜底全部队列；需按组拆分节奏/隔离凭据时复制本服务
+    # 并加 command（组语义见 deployment.md §一 与 README-cluster.md）：
+    # command: ["pnpm", "start", "--", "--group", "tx"]
