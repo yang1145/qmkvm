@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# shell 脚本必须 LF（否则 Linux 上 CRLF 报错）
+*.sh text eol=lf

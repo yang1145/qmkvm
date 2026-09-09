@@ -1,7 +1,6 @@
 # Ant Design Pro 管理后台：构建产物由 nginx 托管
-# API 模式二选一（构建期烘焙，改配置需重建）：
-#   同源反代（缺省）：不设 ADMIN_API_URL，nginx-admin.conf 的 /api 反代承担
-#   独立域名直连：--build-arg ADMIN_API_URL=https://api.example.com（需 CORS_ORIGINS 收录 admin 域名）
+# API 地址统一构建期注入（跨域直连，不用反代）：--build-arg ADMIN_API_URL=https://api.example.com
+# 需将 admin 域名加入 api 的 CORS_ORIGINS；dev 模式可留空走 umi 本地 proxy
 # 构建上下文 = 仓库根：docker build -f docker/Dockerfile.admin -t kvm-admin .
 FROM node:22-alpine AS builder
 RUN corepack enable

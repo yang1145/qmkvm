@@ -14,7 +14,7 @@
 | B. Docker Compose（集群版） | 1~10 万客户，需要独立伸缩 | LB + API×3 + 四组 worker + MinIO | §三 / README-cluster.md |
 | C. 源码 + PM2 | 无 Docker 环境 / 定制构建 | 手工依赖管理 | §四 |
 | D. 前端 Pages 平台 + 后端独立部署 | 无运维诉求的前端 + 单点后端 | 三前端托管到静态 Pages 平台（免证书/CDN/免运维），api/worker 独立部署 | §五 |
-| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（单库起步，主备高可用见 §七.2） | §六 |
+| 前置：数据库 | 全部方式 | MySQL 8 自建或云 RDS（单库起步，主备高可用见 §七.2） | §七 |
 | 前置：对象存储 | 集群版必选 | S3 兼容（MinIO/OSS/COS） | §七.3 |
 
 ---
@@ -63,6 +63,27 @@ pnpm db:seed             # 管理员/角色/示例商品/通知模板
 
 ## 二、方式 A：Docker Compose 标准版（推荐起步）
 
+### 2.0 一键部署（干净 VPS 推荐）
+
+`scripts/deploy-prod.sh` 把方式 A 的全部步骤自动化：环境自检（无 Docker 则经官方脚本安装）、
+交互引导收集配置（必填仅 3 项：主域名、证书邮箱、品牌名可选；密钥/数据库密码/管理员密码
+自动生成）、写 `.env`（权限 600）、build + 启动全部服务、数据库迁移与种子、冒烟检查、
+输出站点入口与后续事项清单。重入安全：已有 `.env` 会预填旧值。
+
+```bash
+# 全新 Linux VPS（Ubuntu/Debian 等，root，2C/4G 起步，80/443 空闲）
+git clone <repo> && cd pinhaoji-web
+bash scripts/deploy-prod.sh
+```
+
+**唯一无法自动化的前提**：到域名商后台把 `www` / `portal` / `admin` / `api`
+四个子域 A 记录指向本机公网 IP（脚本会检测解析并提示；未生效不阻断，
+gateway 容器会后台重试签发证书，生效后自动完成 HTTPS）。
+
+部署完成后建议通读 §六（域名与 HTTPS）与 §八（常见问题）。
+
+### 2.1 手动部署
+
 ```bash
 # 1) 构建（api/worker 共用 Dockerfile.node；portal/www 均为静态导出
 #    （Dockerfile.next / Dockerfile.www，容器内 nginx 托管 out/），admin 用 Dockerfile.admin）
@@ -80,7 +101,8 @@ docker compose -f docker/docker-compose.prod.yml up -d
 curl http://127.0.0.1:4000/healthz
 ```
 
-服务端口仅绑定 `127.0.0.1`，公网经宿主机反代（`docker/deploy/` 有 Nginx 示例）。管理后台建议加 IP 白名单或 VPN。
+服务端口仅绑定 `127.0.0.1`；公网入口默认由编排内置 gateway 承担（`.env` 配 `DOMAIN_BASE` +
+`ACME_EMAIL`，自动签发免费证书，见 §6.0）。管理后台建议加 IP 白名单或 VPN。
 
 **品牌定制（logo / 站点名 / 版权 / 联系邮箱）**：入口在 admin「系统设置 → 站点信息」
 （存 settings 表 key='site'，公开端点 `GET /api/v1/public/settings` 分发）。
@@ -153,11 +175,10 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
    `api.example.com` 同站可用，但 **Pages 平台默认域名**（如 `xxx.edgeone.app`、
    `xxx.pages.dev`）与 `api.example.com` 跨站，登录会"成功即掉线"。
    即三个前端都绑定 `*.example.com` 子域后才能使用。
-2. **admin 的两种 API 模式**。admin 构建期读取 `ADMIN_API_URL`：**设为 API 绝对地址**
-   （如 `https://api.example.com`）即独立域名直连，跨域请求需 API 侧 `CORS_ORIGINS`
-   收录 admin 域名（Cookie 同主域子域场景可携带，见约束 1）；**不设置**则走同源相对
-   路径 `/api/v1/*`，此时托管层必须能把 `/api/*` 反向代理到 API 域名
-   （Netlify/Vercel/EdgeOne 支持重写代理；GitHub Pages 无服务端能力，不支持）。
+2. **admin 统一为构建期注入直连**。admin 构建期读取 `ADMIN_API_URL`（API 绝对地址，
+   如 `https://api.example.com`），产物跨域直连 API——**任何部署场景都不使用
+   `/api` 反代**。要求 API 侧 `CORS_ORIGINS` 收录 admin 域名（Cookie 同主域子域场景
+   可携带，见约束 1）；托管层只需静态托管能力（SPA 回退），Pages 平台无任何代理要求。
 3. **前端环境变量全部在构建期烘焙**（Portal 的 `NEXT_PUBLIC_API_URL`、www 的全部
    `NEXT_PUBLIC_*`）。在平台环境变量面板配置后需重新触发构建生效
    （Git 集成下 push 即部署）。
@@ -172,7 +193,7 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
 |---|---|---|---|---|
 | www | `pnpm --filter @qmkvm/www build` | `apps/www/out` | 见下表 | 未知路径自动回退 `404.html`（产物自带）；无其他要求 |
 | portal | `pnpm --filter @qmkvm/portal build` | `apps/portal/out` | `NEXT_PUBLIC_API_URL` | 开启 HTML 扩展名省略（pretty URLs，多数平台默认）；未知路径回退 `404.html` |
-| admin | `pnpm --filter @qmkvm/admin build` | `apps/admin/dist` | `ADMIN_API_URL`（可选：配了=独立域名直连；不配=同源代理） | **SPA 回退**：所有路径 200 回 `/index.html`；**代理**仅同源模式需要：`/api/*` → `https://api.<域>/api/*` |
+| admin | `pnpm --filter @qmkvm/admin build` | `apps/admin/dist` | `ADMIN_API_URL`（必填，构建期直连） | **SPA 回退**：所有路径 200 回 `/index.html`；无代理要求 |
 
 **www 环境变量**（缺省项可留空，均有内置降级）：
 
@@ -190,14 +211,7 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
 **admin 平台规则示例**（Netlify `netlify.toml`，其他平台同理换成对应配置格式）：
 
 ```toml
-# API 代理（同源假设的依赖）
-[[redirects]]
-  from = "/api/*"
-  to = "https://api.example.com/api/:splat"
-  status = 200
-  force = true
-
-# SPA 回退（必须 force=false 排在通配，仅未命中静态文件时生效）
+# SPA 回退（仅未命中静态文件时生效）
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -224,8 +238,9 @@ curl http://127.0.0.1:4000/healthz
 worker 缺省为单队列模式单实例兜底全部队列；要按组拆分（tx/notify/supply/ocr）时复制
 compose 里的 worker 服务加 `command: ["pnpm","start","--","--group","<组>"]`
 （组语义见 §三 与 docker/README-cluster.md）。也可不用 Docker，按方式 C 用 PM2 跑
-api + worker。api 是 HTTP 进程，公网暴露必须前置 Nginx/云 LB 做 TLS（参见 §六；若用
-云 LB 则开启 X-Forwarded-For 透传，限流依赖真实 IP）。
+api + worker。backend 编排是最简形态、**不含 gateway/nginx**：api 是 HTTP 进程，
+公网暴露必须前置宿主机 Nginx/云 LB 做 TLS（参见 §6.1；若用云 LB 则开启
+X-Forwarded-For 透传，限流依赖真实 IP）。
 
 **环境变量清单**（`.env` 完整模板见 `.env.example`；api 与 worker 共用同一份）：
 
@@ -259,13 +274,36 @@ pm2 start "pnpm --filter @qmkvm/worker start -- --group ocr"    --name kvm-worke
    `portal…/invoices/detail?id=…&paid=1` 正常显示已支付
 3. 支付网关后台发起回调 → 账单状态流转（`API_PUBLIC_URL` 可达）
 4. www 品牌/表单/官网链接正确（构建日志确认 `fetch-branding` 成功烘焙）
-5. admin 刷新任意子路由 200（SPA 回退）；平台控制台确认 `/api/*` 走代理而非 404
+5. admin 刷新任意子路由 200（SPA 回退）；登录/任一列表页请求直连 `https://api…`（构建期 `ADMIN_API_URL` 生效）
 
 ---
 
-## 六、反向代理与 TLS
+## 六、域名与 HTTPS
 
-四个 server 块（www / portal / admin / api）分别反代到内网端口，统一 301 HTTPS：
+### 6.0 默认方案：compose 内置 gateway（prod 编排）
+
+**prod 编排**自带 `gateway` 容器（nginx + acme.sh），承担**域名分流 + 免费证书**：
+（backend 编排为最简化形态、不含 gateway，api 的公网暴露见 §6.1 与 §5.3）
+
+- `.env` 设两项：`DOMAIN_BASE=example.com`（推导 `www.` / `portal.` / `admin.` / `api.`
+  四个子域）、`ACME_EMAIL`（证书注册邮箱）
+- 证书：Let's Encrypt，**HTTP-01 文件验证**（80 端口 `/.well-known/acme-challenge/`）；
+  签发成功前 443 用自签占位证书（浏览器提示不安全属预期），签成自动替换并 reload；
+  DNS 未生效时后台每 60s 重试（约 1 小时窗口）
+- 续期：容器内 crond 每日 03:00 `acme.sh --cron`，续期后自动 reload，无需人工干预
+- 80 端口全部 301 → 443；网关透传 `X-Forwarded-For`（限流依赖）
+
+**使用前提**：DNS 四条 A 记录指向本机、服务器安全组/防火墙放行 80 与 443、
+宿主机 80/443 未被占用（nginx-gateway 是唯一公网入口；api/前端容器只绑 127.0.0.1）。
+
+**换域名**：改 `.env` 的 `DOMAIN_BASE` 后 `docker compose up -d --force-recreate gateway`，
+同时同步 `CORS_ORIGINS`、`COOKIE_DOMAIN`、`PORTAL_URL` 等应用层域名变量与前端构建期变量。
+
+### 6.1 替代方案：宿主机反代 / 云 LB
+
+不使用内置 gateway 时（如端口 80/443 已被占用、或证书托管在云上），
+在 compose 命令中去掉 gateway 服务即可，其余容器端口仍只绑 `127.0.0.1`，
+由宿主机 Nginx/Caddy 或云 LB 承担证书与分流。四个 server 块分别反代到内网端口，统一 301 HTTPS：
 
 ```nginx
 location / {
@@ -474,4 +512,5 @@ STORAGE_S3_REGION=...      # 按云商
 | 后台报表/审计打不开（500） | 只读从库宕机或未追平 | §7.2：重建从库，或临时撤 `DATABASE_URL_RO` 回落主库 |
 | 收到"复制健康告警" | 备/从复制延迟超阈值或线程断开 | §7.2 监控小节：`SHOW REPLICA STATUS` 排错；线程断开按搭建步骤 ③ 重挂 |
 | Pages 部署的 portal 登录成功即掉线 | 前端用了平台默认域名，与 api 跨站（Cookie SameSite=Lax 不携带） | §5.1 约束 1：绑定 `*.example.com` 自定义子域 |
-| Pages 部署的 admin 请求 /api 404 | 同源模式但平台无代理重写或规则未配置 | §5.1 约束 2：构建时设 `ADMIN_API_URL` 直连，或配 `/api/*` 代理规则，或 admin 改用 Nginx 托管 |
+| admin 全部请求 404/打到静态托管 | 构建时未设 `ADMIN_API_URL`（产物退化为同源相对路径） | §5.1 约束 2：构建期注入 `ADMIN_API_URL`（prod compose 已强制）后重建；`CORS_ORIGINS` 同步收录 admin 域名 |
+| gateway 证书一直"自签占位" | DNS 未生效 / 安全组未放行 80 / 80 被占用 | §6.0：`docker logs` 看 gateway 重试日志；四条 A 记录 + 放行 80/443 后 `docker compose restart gateway` |

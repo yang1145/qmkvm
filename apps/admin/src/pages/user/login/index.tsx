@@ -19,7 +19,7 @@ const getSafeRedirectUrl = (redirect: string | null): string => {
   }
 };
 
-// 构建期注入 ADMIN_API_URL（独立域名部署，跨域直连）；缺省同源相对路径
+// 构建期注入 ADMIN_API_URL（统一方案，跨域直连，不用反代）；留空仅限本地 dev（umi proxy）
 const API_ORIGIN = process.env.ADMIN_API_URL || '';
 const CAPTCHA_PATH = `${API_ORIGIN}/api/v1/admin/auth/captcha`;
 

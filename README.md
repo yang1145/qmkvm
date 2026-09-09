@@ -71,74 +71,30 @@ pnpm dev:worker           # 定时任务（需 Redis；生产按 --group 分组�
 
 无 Redis 时 API 自动降级：限流走进程内存、队列任务内联执行，开发无需 Redis 也能跑通全链路。
 
-## 部署方案
+## 部署
 
-### 架构
+### 环境要求
 
-微服务化高并发形态：API 无状态多副本，任务按域分组独立伸缩（交易 / 通知 / 供应 / OCR 四个 worker 组，同一镜像不同启动参数），用户资产走对象存储。完整架构图、改造点与实施顺序见 `docs/architecture-evolution.md`。
+| 项目 | 要求 |
+| --- | --- |
+| 服务器 | Linux x86_64（Ubuntu 20.04+ / Debian 11+ 等主流发行版），root 权限 |
+| 最低配置 | 2 核 · 4G 内存 · 40G 磁盘 |
+| 推荐配置 | 4 核 · 8G 内存 · 80G SSD 磁盘 |
+| 网络 | 可访问公网（拉取镜像 / 签发证书），80 / 443 端口未被占用 |
+| 域名 | **需在域名商后台为 `www` / `portal` / `admin` / `api` 四个子域添加 A 记录，指向服务器公网 IP**（HTTPS 证书自动签发与续期） |
 
-```text
-                 ┌────────── L7 负载均衡（Nginx/云 LB，健康检查 /healthz）──────────┐
-                 │      www 域名        portal 域名      admin 域名     api 域名     │
-                 └───────┬──────────────────┬────────────────┬──────────┬─────────┘
-                         ▼                  ▼                ▼          ▼
-                    www(CDN)           portal(CDN)      admin(nginx)  API 副本 ×N（无状态）
-                                                                           │
-                                              ┌────────────────┬───────────┤
-                                              ▼                ▼           ▼
-                                     MySQL 主 + 只读副本   Redis Cluster   对象存储(S3/OSS/MinIO)
-                                              ▲                │           证件照/工单附件
-                                              └── worker ×N ───┘
-                                       交易组 | 通知组 | 供应组(PVE 凭据隔离) | OCR 组
-```
-
-### 方式 A：Docker Compose（推荐）
+### 一键部署（推荐）
 
 ```bash
-# 1) 准备配置
-cp .env.example .env   # 修改 DATABASE_URL / REDIS_URL / APP_KEY / CORS_ORIGINS / 各域名
-                       # 生产必改：DEV_MOCK_PAYMENTS=false、SEED_ADMIN_PASSWORD、MYSQL_ROOT_PASSWORD
-
-# 2) 构建并启动（MySQL/Redis 数据落 volume）
-docker compose -f docker/docker-compose.prod.yml build
-docker compose -f docker/docker-compose.prod.yml up -d mysql redis
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db migrate
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db seed
-docker compose -f docker/docker-compose.prod.yml up -d
-
-# 3) 验证
-curl http://127.0.0.1:4000/healthz
+git clone <repo> && cd pinhaoji-web
+bash scripts/deploy-prod.sh
 ```
 
-服务端口仅绑定 `127.0.0.1`，公网访问经宿主机反向代理（`docker/deploy/` 提供示例）。管理后台建议额外加 IP 白名单或 VPN。
+脚本自动完成：Docker 安装、配置引导（其余配置全部自动生成）、服务构建启动、数据库初始化、冒烟检查，完成后输出各站点入口与管理员账号。
 
-### 方式 B：源码 + PM2
+升级发布：`git pull` 后重新运行脚本即可（迁移自动执行，数据不受影响）。
 
-```bash
-pnpm install --frozen-lockfile
-pnpm build                      # 三前端产物 + 全仓类型检查
-pnpm db:migrate && pnpm db:seed
-pm2 start "pnpm --filter @qmkvm/api start"    --name kvm-api
-pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker
-# 三个前端均为纯静态产物，无 Node 常驻进程，由 Nginx 直接托管：
-#   portal：apps/portal/out（SPA/静态导出，托管参考 docker/nginx-portal.conf）
-#   admin：apps/admin/dist；www：apps/www/out（SSG，托管参考 docker/nginx-www.conf）
-```
-
-### 反向代理与 TLS
-
-宿主机 Nginx 四个 server 块（www / portal / admin / api）：www/portal/admin 为静态产物（portal/www 静态导出，compose 部署时容器内已带 nginx，反代到 `127.0.0.1:3000/3001/8000` 即可；PM2 模式由宿主机 Nginx 直接 root 托管 out/ 与 dist/），api 反代到 `127.0.0.1:4000`。统一 301 到 HTTPS，`proxy_set_header X-Forwarded-For` 传递客户端 IP（限流依赖此头）。TLS 证书用 certbot 或云厂商免费证书，生产 `COOKIE_DOMAIN=.你的域名` 使 portal/api 跨子域共享会话。
-
-admin 的 API 请求默认走同源 `/api/*`（其 server 块需把 `/api` 反代到 api）；独立域名直连部署时在构建期设 `ADMIN_API_URL=https://api.example.com`（并把它加入 api 的 `CORS_ORIGINS`），server 块则无需 `/api` 反代，仅托管静态文件。
-
-### 升级发布
-
-```bash
-git pull
-pnpm install --frozen-lockfile
-pnpm db:migrate                 # 迁移只增不改，先于应用发布
-docker compose -f docker/docker-compose.prod.yml up -d --build   # 或 pm2 reload all
-```
+> 更多部署方案（集群版 / PM2 / Pages 前端托管 / backend 最简编排）见 [docs/deployment.md](docs/deployment.md)。
 
 ### 备份与恢复
 

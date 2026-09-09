@@ -1,9 +1,37 @@
 # 生产部署编排：docker compose -f docker/docker-compose.prod.yml up -d
-# 前置：仓库根 .env 已配置（DATABASE_URL 指向可写 MySQL、REDIS_URL、APP_KEY、CORS_ORIGINS 等）
+# 前置：仓库根 .env 已配置（DOMAIN_BASE、ACME_EMAIL、DATABASE_URL 指向可写 MySQL、
+#       REDIS_URL、APP_KEY、CORS_ORIGINS 等）
 # 首次部署：先执行迁移与种子（见 README 部署方案）
+# 公网入口：内置 gateway 容器托管域名（80→443 + Let's Encrypt 免费证书自动签发续期，
+#           域名经 DOMAIN_BASE 推导）；需 DNS A 记录指向本机、80/443 公网可达
 name: qmkvm
 
 services:
+  # 公网 HTTPS 入口：按 .env 域名生成 server 块，ACME HTTP-01 自动签发/续期
+  gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gateway
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      GATEWAY_WWW_DOMAIN: "www.${DOMAIN_BASE:?请在 .env 设置 DOMAIN_BASE（如 example.com）}"
+      GATEWAY_PORTAL_DOMAIN: "portal.${DOMAIN_BASE:?}"
+      GATEWAY_ADMIN_DOMAIN: "admin.${DOMAIN_BASE:?}"
+      GATEWAY_API_DOMAIN: "api.${DOMAIN_BASE:?}"
+      ACME_EMAIL: ${ACME_EMAIL:?请在 .env 设置 ACME_EMAIL（证书注册邮箱）}
+    depends_on:
+      - api
+      - portal
+      - www
+      - admin
+    ports:
+      - "80:80"     # ACME HTTP-01 验证 + 80→443 跳转，必须公网可达
+      - "443:443"
+    volumes:
+      - gateway-ssl:/etc/nginx/ssl
+      - gateway-acme:/var/lib/acme
+
   mysql:
     image: mysql:8.4
     restart: unless-stopped
@@ -101,11 +129,10 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.admin
       args:
-        # 独立域名直连时在 .env 设置 ADMIN_API_URL=https://api.example.com；缺省同源 /api 反代
-        ADMIN_API_URL: ${ADMIN_API_URL:-}
+        # admin 统一走构建期注入的 API 绝对地址直连（跨域），不使用反代；
+        # 需将 admin 域名加入 CORS_ORIGINS
+        ADMIN_API_URL: ${ADMIN_API_URL:?请在 .env 设置 ADMIN_API_URL（如 https://api.example.com）}
     restart: unless-stopped
-    depends_on:
-      - api
     ports:
       # 管理后台建议只走反代 + IP 白名单 / VPN
       - "127.0.0.1:8000:80"
@@ -113,3 +140,5 @@ services:
 volumes:
   mysql-data:
   redis-data:
+  gateway-ssl:
+  gateway-acme:
