@@ -204,32 +204,34 @@ say ".env 已生成（权限 600）：$ROOT/.env"
 
 # ---------- 5) 构建与启动 ----------
 say "构建并启动全部服务（首次构建约 5-15 分钟，取决于网络）..."
-docker compose -f "$COMPOSE" up -d --build
+# --env-file .env：compose 用 -f 指定编排文件时，插值 .env 默认从编排文件所在目录
+# （docker/）查找而非仓库根，必须显式指定（compose v2 行为，见 docs/deployment.md §2.1）
+docker compose -f "$COMPOSE" --env-file .env up -d --build
 
 say "等待 MySQL 就绪..."
 _mc=0
-until [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose -f "$COMPOSE" ps -q mysql)" 2>/dev/null)" = "healthy" ]; do
-  _mc=$((_mc + 5)); [ "$_mc" -ge 180 ] && die "MySQL 120s 未就绪，查看日志：docker compose -f $COMPOSE logs mysql"
+until [ "$(docker inspect --format '{{.State.Health.Status}}' "$(docker compose -f "$COMPOSE" --env-file .env ps -q mysql)" 2>/dev/null)" = "healthy" ]; do
+  _mc=$((_mc + 5)); [ "$_mc" -ge 180 ] && die "MySQL 120s 未就绪，查看日志：docker compose -f $COMPOSE --env-file .env logs mysql"
   sleep 5
 done
 say "MySQL 就绪，执行数据库迁移与种子..."
-docker compose -f "$COMPOSE" exec -T api pnpm --filter @qmkvm/db migrate
-docker compose -f "$COMPOSE" exec -T api pnpm --filter @qmkvm/db seed
+docker compose -f "$COMPOSE" --env-file .env exec -T api pnpm --filter @qmkvm/db migrate
+docker compose -f "$COMPOSE" --env-file .env exec -T api pnpm --filter @qmkvm/db seed
 say "数据库初始化完成"
 
 # ---------- 6) 冒烟 ----------
 hr; say "冒烟检查"; hr
 _smoke_ok=1
 curl -fsS http://127.0.0.1:4000/healthz >/dev/null 2>&1 \
-  && say "API  : http://127.0.0.1:4000/healthz ✓" || { _smoke_ok=0; warn "API healthz 未通过：docker compose -f $COMPOSE logs api"; }
+  && say "API  : http://127.0.0.1:4000/healthz ✓" || { _smoke_ok=0; warn "API healthz 未通过：docker compose -f $COMPOSE --env-file .env logs api"; }
 for _p in 3000 3001 8000; do
   curl -kfsS "http://127.0.0.1:$_p/" >/dev/null 2>&1 \
-    && say "前端 : 127.0.0.1:$_p ✓" || { _smoke_ok=0; warn "127.0.0.1:$_p 无响应：docker compose -f $COMPOSE ps"; }
+    && say "前端 : 127.0.0.1:$_p ✓" || { _smoke_ok=0; warn "127.0.0.1:$_p 无响应：docker compose -f $COMPOSE --env-file .env ps"; }
 done
 if [ "$_dns_ok" = "1" ] && curl -fsS "https://api.$DOMAIN_BASE/healthz" >/dev/null 2>&1; then
   say "公网 : https://api.$DOMAIN_BASE/healthz ✓（证书已生效）"
 else
-  warn "公网 HTTPS 暂未生效（DNS 未解析或证书还在签发）。观察签发进度：docker compose -f $COMPOSE logs -f gateway"
+  warn "公网 HTTPS 暂未生效（DNS 未解析或证书还在签发）。观察签发进度：docker compose -f $COMPOSE --env-file .env logs -f gateway"
 fi
 
 # ---------- 7) 部署摘要 ----------
@@ -242,15 +244,15 @@ cat <<SUMMARY
     API       : https://api.$DOMAIN_BASE/healthz
 
   常用命令：
-    查看服务状态 : docker compose -f $COMPOSE ps
-    查看日志     : docker compose -f $COMPOSE logs -f api gateway
-    重启         : docker compose -f $COMPOSE restart api worker
+    查看服务状态 : docker compose -f $COMPOSE --env-file .env ps
+    查看日志     : docker compose -f $COMPOSE --env-file .env logs -f api gateway
+    重启         : docker compose -f $COMPOSE --env-file .env restart api worker
 
   后续事项：
     1. 支付网关：管理后台「系统设置」录入商户参数（回调已指向 $API_PUBLIC_URL）
-    2. 短信/邮件：如未配置，编辑 .env 后 docker compose -f $COMPOSE up -d api worker
+    2. 短信/邮件：如未配置，编辑 .env 后 docker compose -f $COMPOSE --env-file .env up -d api worker
     3. 品牌定制：管理后台「站点信息」上传 logo/改站点名 → portal/admin 刷新即生效；
-       www 需重建：docker compose -f $COMPOSE build www && docker compose -f $COMPOSE up -d www
+       www 需重建：docker compose -f $COMPOSE --env-file .env build www && docker compose -f $COMPOSE --env-file .env up -d www
     4. 官网「联系销售」表单需 NEXT_PUBLIC_CONTACT_API_URL（见 .env.example 说明）
     5. 建议：admin 域名加 IP 白名单；.env 含全部密钥，请妥善备份
 SUMMARY

@@ -87,15 +87,17 @@ gateway 容器会后台重试签发证书，生效后自动完成 HTTPS）。
 ```bash
 # 1) 构建（api/worker 共用 Dockerfile.node；portal/www 均为静态导出
 #    （Dockerfile.next / Dockerfile.www，容器内 nginx 托管 out/），admin 用 Dockerfile.admin）
-docker compose -f docker/docker-compose.prod.yml build
+#    注意：--env-file .env 必须显式指定——compose 用 -f 指定编排文件时，
+#    插值 .env 默认从编排文件所在目录（docker/）查找而非仓库根（compose v2 行为）
+docker compose -f docker/docker-compose.prod.yml --env-file .env build
 
 # 2) 起依赖并初始化
-docker compose -f docker/docker-compose.prod.yml up -d mysql redis
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db migrate
-docker compose -f docker/docker-compose.prod.yml exec api pnpm --filter @qmkvm/db seed
+docker compose -f docker/docker-compose.prod.yml --env-file .env up -d mysql redis
+docker compose -f docker/docker-compose.prod.yml --env-file .env exec api pnpm --filter @qmkvm/db migrate
+docker compose -f docker/docker-compose.prod.yml --env-file .env exec api pnpm --filter @qmkvm/db seed
 
 # 3) 全量启动
-docker compose -f docker/docker-compose.prod.yml up -d
+docker compose -f docker/docker-compose.prod.yml --env-file .env up -d
 
 # 4) 验证
 curl http://127.0.0.1:4000/healthz
@@ -122,10 +124,10 @@ curl http://127.0.0.1:4000/healthz
 18 服务：Nginx LB（轮询 API×3，无 sticky，XFF 透传）+ 四组 worker（`--group tx|notify|supply|ocr`，同一镜像不同启动参数）+ MinIO 建桶 + MySQL 三节点主备样例（主/半同步备/只读从，链式复制）+ Redis + 三前端。
 
 ```bash
-docker compose -f docker/docker-compose.cluster.yml build
-docker compose -f docker/docker-compose.cluster.yml up -d
+docker compose -f docker/docker-compose.cluster.yml --env-file .env build
+docker compose -f docker/docker-compose.cluster.yml --env-file .env up -d
 # 验证（四步详见 docker/README-cluster.md）
-docker compose -f docker/docker-compose.cluster.yml ps
+docker compose -f docker/docker-compose.cluster.yml --env-file .env ps
 curl -s http://<lb>/healthz
 ```
 
@@ -226,11 +228,11 @@ CDN、Git push 自动部署；api 与 worker 是**常驻 Node 进程**，单独�
 ```bash
 # 1) .env 中 DATABASE_URL / REDIS_URL 填外部实例地址（容器内 localhost ≠ 宿主机）；
 #    外部 Redis 必须开启持久化且 --maxmemory-policy noeviction（BullMQ 依赖）
-# 2) 构建 + 启动（首次会自动构建两个镜像）
-docker compose -f docker/docker-compose.backend.yml up -d --build
+# 2) 构建 + 启动（首次会自动构建两个镜像；--env-file 必须显式指定，见 §2.1 说明）
+docker compose -f docker/docker-compose.backend.yml --env-file .env up -d --build
 # 3) 首次部署：迁移 + 种子（迁移只增不改，只在单点执行，先于应用启动）
-docker compose -f docker/docker-compose.backend.yml run --rm api pnpm --filter @qmkvm/db migrate
-docker compose -f docker/docker-compose.backend.yml run --rm api pnpm --filter @qmkvm/db seed
+docker compose -f docker/docker-compose.backend.yml --env-file .env run --rm api pnpm --filter @qmkvm/db migrate
+docker compose -f docker/docker-compose.backend.yml --env-file .env run --rm api pnpm --filter @qmkvm/db seed
 # 4) 验证
 curl http://127.0.0.1:4000/healthz
 ```
@@ -327,7 +329,7 @@ location / {
 git pull
 pnpm install --frozen-lockfile
 pnpm db:migrate                 # 迁移先于应用发布，只在单点执行（CI 或第一台机），禁止多副本并行跑
-docker compose -f <对应compose> up -d --build   # 或 pm2 reload all
+docker compose -f <对应compose> --env-file .env up -d --build   # 或 pm2 reload all
 ```
 
 **回滚**：应用回滚 = 切回上一镜像 tag / `git checkout` 上一 release；迁移以"只增不改"为前提，回滚应用一般无需回滚库。重大变更前 `mysqldump` 全量。

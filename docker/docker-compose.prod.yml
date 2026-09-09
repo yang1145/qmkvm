@@ -1,4 +1,6 @@
-# 生产部署编排：docker compose -f docker/docker-compose.prod.yml up -d
+# 生产部署编排：docker compose -f docker/docker-compose.prod.yml --env-file .env up -d
+# （--env-file 必须显式指定：compose v2 用 -f 时，插值 .env 从编排文件所在目录查找
+#  而非仓库根，DOMAIN_BASE/ACME_EMAIL/ADMIN_API_URL/MYSQL_ROOT_PASSWORD 等 :? 必填项会误报缺失）
 # 前置：仓库根 .env 已配置（DOMAIN_BASE、ACME_EMAIL、DATABASE_URL 指向可写 MySQL、
 #       REDIS_URL、APP_KEY、CORS_ORIGINS 等）
 # 首次部署：先执行迁移与种子（见 README 部署方案）

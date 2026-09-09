@@ -83,22 +83,22 @@ admin 后台 `/admin/system/status` 应看到 `tx / notify / supply / ocr` 四�
 docker compose -f docker/docker-compose.cluster.yml --env-file .env up -d
 
 # 查看状态（等 30~60s 后全部应 healthy / running / exited(0, minio-init)）
-docker compose -f docker/docker-compose.cluster.yml ps
+docker compose -f docker/docker-compose.cluster.yml --env-file .env ps
 
 # 经 lb 验证 API 池（curl 多次，nginx 默认轮询到 api-1/2/3）
 curl -s http://localhost/healthz
 
 # 验证 worker 分组心跳（连主库查看）
-docker compose -f docker/docker-compose.cluster.yml exec mysql-master \
+docker compose -f docker/docker-compose.cluster.yml --env-file .env exec mysql-master \
   mysql -uroot -p"$MYSQL_ROOT_PASSWORD" qmkvm \
   -e "SELECT \`group\`, host, last_seen_at FROM worker_heartbeats ORDER BY last_seen_at DESC;"
 
 # 验证三节点复制（mysql-replica-init 完成后 exited(0)；备/从线程均 Yes、延迟 ≈0）
-docker compose -f docker/docker-compose.cluster.yml exec mysql-standby \
+docker compose -f docker/docker-compose.cluster.yml --env-file .env exec mysql-standby \
   mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW REPLICA STATUS\G" | grep -E "Running:|Seconds_Behind"
 
 # 停止（-v 连卷一起删，MinIO 上传数据会清空；不加 -v 保留卷数据）
-docker compose -f docker/docker-compose.cluster.yml down -v
+docker compose -f docker/docker-compose.cluster.yml --env-file .env down -v
 ```
 
 **扩缩说明（单机局限与生产对应）：**
@@ -159,7 +159,7 @@ k6 覆盖登录/下单/回调/实名四链路）。本节届时更新实测数�
 docker compose -f docker/docker-compose.cluster.yml --env-file .env up -d minio api-1 lb
 
 # 2) 等 30~60s 后检查状态
-docker compose -f docker/docker-compose.cluster.yml ps
+docker compose -f docker/docker-compose.cluster.yml --env-file .env ps
 #    预期：mysql-master/standby/readonly healthy，mysql-replica-init exited(0)，
 #          redis healthy，minio healthy，minio-init exited(0)，api-1 healthy，lb healthy
 
@@ -167,7 +167,7 @@ docker compose -f docker/docker-compose.cluster.yml ps
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost/healthz   # 预期 200
 
 # 4) 验证完清理（-v 清掉 minio/mysql 三节点/redis 卷）
-docker compose -f docker/docker-compose.cluster.yml down -v
+docker compose -f docker/docker-compose.cluster.yml --env-file .env down -v
 #    若要保留数据库数据做多次验证，去掉 -v：down（仅停容器删网络，卷保留）
 ```
 
