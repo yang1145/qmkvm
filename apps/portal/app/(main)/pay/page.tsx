@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { invoiceDto } from "@qmkvm/contracts";
 import QRCode from "qrcode";
 import { CheckCircle2, ExternalLink, Wallet } from "lucide-react";
@@ -26,9 +26,24 @@ const METHOD_LABELS: Record<string, { label: string; desc: string }> = {
   mock: { label: "模拟支付（测试）", desc: "开发环境模拟网关回调" },
 };
 
+/** 静态导出：账单 id 走查询参数（/pay?id=），useSearchParams 需 Suspense 边界 */
 export default function PayPage() {
-  const params = useParams<{ invoiceId: string }>();
-  const invoiceId = typeof params.invoiceId === "string" ? params.invoiceId : "";
+  return (
+    <React.Suspense
+      fallback={
+        <div className="mx-auto max-w-lg space-y-4 py-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-72" />
+        </div>
+      }
+    >
+      <PayContent />
+    </React.Suspense>
+  );
+}
+
+function PayContent() {
+  const invoiceId = useSearchParams().get("id") ?? "";
   const paidQuery = useInitialQueryParam("paid");
   const { user, refresh } = useAuth();
   const { toast } = useToast();
@@ -190,7 +205,7 @@ export default function PayPage() {
         <CardContent className="space-y-1.5">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">账单编号</span>
-            <Link href={`/invoices/${invoice.id}`} className="text-primary hover:underline">
+            <Link href={`/invoices/detail?id=${invoice.id}`} className="text-primary hover:underline">
               {invoice.invoiceNo}
             </Link>
           </div>

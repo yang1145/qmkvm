@@ -71,7 +71,7 @@ export default function ProductsPage() {
                   return (
                     <Link
                       key={product.id}
-                      href={`/products/${product.slug}`}
+                      href={`/products/detail?slug=${product.slug}`}
                       className="flex flex-col rounded-lg border bg-card p-5 shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/30"
                     >
                       <div className="flex items-start justify-between gap-2">

@@ -123,7 +123,7 @@ export default function InvoicesPage() {
                 <TableRow key={invoice.id}>
                   <TableCell>
                     <Link
-                      href={`/invoices/${invoice.id}`}
+                      href={`/invoices/detail?id=${invoice.id}`}
                       className="font-medium text-primary hover:underline"
                     >
                       {invoice.invoiceNo}
@@ -138,10 +138,10 @@ export default function InvoicesPage() {
                   <TableCell className="text-right">
                     {invoice.status === "unpaid" ? (
                       <Button asChild size="sm" variant="outline">
-                        <Link href={`/pay/${invoice.id}`}>去支付</Link>
+                        <Link href={`/pay?id=${invoice.id}`}>去支付</Link>
                       </Button>
                     ) : (
-                      <Link href={`/invoices/${invoice.id}`} className="text-sm text-primary hover:underline">
+                      <Link href={`/invoices/detail?id=${invoice.id}`} className="text-sm text-primary hover:underline">
                         详情
                       </Link>
                     )}

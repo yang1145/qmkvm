@@ -244,7 +244,7 @@ export default function FapiaoPage() {
                     <TableRow key={r.id}>
                       <TableCell className="text-muted-foreground">{formatDateTime(r.createdAt)}</TableCell>
                       <TableCell>
-                        <Link href={`/invoices/${r.invoiceId}`} className="text-primary hover:underline">
+                        <Link href={`/invoices/detail?id=${r.invoiceId}`} className="text-primary hover:underline">
                           {r.invoiceNo ?? `#${r.invoiceId}`}
                         </Link>
                       </TableCell>

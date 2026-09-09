@@ -1,12 +1,14 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { renderCopyright } from "@qmkvm/contracts";
 
-import { getBranding } from "@/lib/branding";
+import { useBranding } from "@/components/branding-provider";
 
-/** 认证页布局：居中卡片 + 品牌标识（品牌信息走 admin 站点信息设置，未配置回落内置） */
-export default async function AuthLayout({ children }: { children: ReactNode }) {
-  const b = await getBranding();
+/** 认证页布局：居中卡片 + 品牌标识（品牌走 BrandingProvider 客户端拉取，未配置回落内置） */
+export default function AuthLayout({ children }: { children: ReactNode }) {
+  const b = useBranding();
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-10">
       <Link href="/" className="mb-8 flex items-center gap-2.5">

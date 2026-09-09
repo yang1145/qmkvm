@@ -89,7 +89,7 @@ export default function NewTicketPage() {
     try {
       const created = await api.post<{ id: number }>("/tickets", parsed.data);
       toast({ title: "工单已提交", variant: "success" });
-      router.push(`/tickets/${created.id}`);
+      router.push(`/tickets/detail?id=${created.id}`);
     } catch {
       // Toast 已由 api 层弹出
     } finally {

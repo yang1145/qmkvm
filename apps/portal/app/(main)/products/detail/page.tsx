@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   addToCartSchema,
   productGroupDto,
@@ -31,9 +31,27 @@ interface OptionSelection {
   quantity?: number;
 }
 
+/** 静态导出：商品 slug 走查询参数（/products/detail?slug=），useSearchParams 需 Suspense 边界 */
 export default function ProductConfiguratorPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = typeof params.slug === "string" ? params.slug : "";
+  return (
+    <React.Suspense
+      fallback={
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-40" />
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            <Skeleton className="h-96" />
+            <Skeleton className="h-72" />
+          </div>
+        </div>
+      }
+    >
+      <ProductConfiguratorContent />
+    </React.Suspense>
+  );
+}
+
+function ProductConfiguratorContent() {
+  const slug = useSearchParams().get("slug") ?? "";
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -203,7 +221,7 @@ export default function ProductConfiguratorPage() {
     }
     // 登录守卫
     if (!user) {
-      const next = encodeURIComponent(`/products/${slug}`);
+      const next = encodeURIComponent(`/products/detail?slug=${slug}`);
       router.push(`/login?next=${next}`);
       return;
     }

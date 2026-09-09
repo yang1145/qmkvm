@@ -92,7 +92,7 @@ export default function TicketsPage() {
                     <TableCell className="tabular-nums">#{ticket.id}</TableCell>
                     <TableCell>
                       <Link
-                        href={`/tickets/${ticket.id}`}
+                        href={`/tickets/detail?id=${ticket.id}`}
                         className="font-medium text-primary hover:underline"
                       >
                         {ticket.subject}

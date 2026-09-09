@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 
 import { api, ApiError } from "@/lib/api";
@@ -27,9 +27,24 @@ const kbArticleDetailDto = z.object({
 
 type KbArticleDetail = z.infer<typeof kbArticleDetailDto>;
 
+/** 静态导出：文章 slug 走查询参数（/kb/article?slug=），useSearchParams 需 Suspense 边界 */
 export default function KbArticlePage() {
-  const params = useParams<{ slug: string }>();
-  const slug = typeof params.slug === "string" ? params.slug : "";
+  return (
+    <React.Suspense
+      fallback={
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-64" />
+        </div>
+      }
+    >
+      <KbArticleContent />
+    </React.Suspense>
+  );
+}
+
+function KbArticleContent() {
+  const slug = useSearchParams().get("slug") ?? "";
   const { user, loading: authLoading } = useAuth();
   const [article, setArticle] = React.useState<KbArticleDetail | null>(null);
   const [needLogin, setNeedLogin] = React.useState(false);
@@ -75,7 +90,10 @@ export default function KbArticlePage() {
   }
 
   if (needLogin) {
-    const next = typeof window === "undefined" ? "" : encodeURIComponent(window.location.pathname);
+    const next =
+      typeof window === "undefined"
+        ? ""
+        : encodeURIComponent(window.location.pathname + window.location.search);
     return (
       <div className="mx-auto max-w-md space-y-4 rounded-lg border border-dashed bg-card px-6 py-12 text-center">
         <div className="text-3xl">🔒</div>

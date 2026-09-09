@@ -31,6 +31,9 @@ const contractsCompatEntry = generateContractsCompat();
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // SPA/纯静态导出：构建产物 out/ 由任意静态服务器（nginx）托管，无 Node 运行时。
+  // 动态数据全部客户端拉取（API 直连），原 [id]/[slug] 路由已迁移为查询参数取参。
+  output: "export",
   transpilePackages: ["@qmkvm/contracts"],
   turbopack: {
     resolveAlias: {

@@ -51,9 +51,9 @@ export default function CheckoutPage() {
       void refresh(); // 余额可能已变动
       if (result.paid || result.payable === 0) {
         toast({ title: "订单已支付", description: "服务开通处理中", variant: "success" });
-        router.replace(`/pay/${result.invoiceId}?paid=1`);
+        router.replace(`/pay?id=${result.invoiceId}&paid=1`);
       } else {
-        router.replace(`/pay/${result.invoiceId}`);
+        router.replace(`/pay?id=${result.invoiceId}`);
       }
     } catch {
       // Toast 已由 api 层弹出

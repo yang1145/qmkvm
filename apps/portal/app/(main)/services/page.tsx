@@ -92,7 +92,7 @@ export default function ServicesPage() {
                   <TableRow key={service.id}>
                     <TableCell>
                       <Link
-                        href={`/services/${service.id}`}
+                        href={`/services/detail?id=${service.id}`}
                         className="font-medium text-primary hover:underline"
                       >
                         {service.name}
@@ -109,7 +109,7 @@ export default function ServicesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Link
-                        href={`/services/${service.id}`}
+                        href={`/services/detail?id=${service.id}`}
                         className="text-sm text-primary hover:underline"
                       >
                         管理

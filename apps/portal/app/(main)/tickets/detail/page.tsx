@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ticketReplySchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
@@ -55,10 +55,25 @@ function ReplyBubble({ reply }: { reply: TicketDetail["replies"][number] }) {
   );
 }
 
+/** 静态导出：工单 id 走查询参数（/tickets/detail?id=），useSearchParams 需 Suspense 边界 */
 export default function TicketDetailPage() {
-  const params = useParams<{ id: string }>();
-  const id = typeof params.id === "string" ? params.id : "";
-  const router = useRouter();
+  return (
+    <React.Suspense
+      fallback={
+        <div className="mx-auto max-w-3xl space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      }
+    >
+      <TicketDetailContent />
+    </React.Suspense>
+  );
+}
+
+function TicketDetailContent() {
+  const id = useSearchParams().get("id") ?? "";
   const { toast, success } = useToast();
 
   const state = useApiData(

@@ -198,7 +198,7 @@ export default function DashboardPage() {
                   <TableRow key={inv.id}>
                     <TableCell>
                       <Link
-                        href={`/invoices/${inv.id}`}
+                        href={`/invoices/detail?id=${inv.id}`}
                         className="font-medium text-primary hover:underline"
                       >
                         {inv.invoiceNo}

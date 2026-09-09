@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   serviceDto,
   productGroupDto,
@@ -51,9 +51,27 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+/** 静态导出：服务 id 走查询参数（/services/detail?id=），useSearchParams 需 Suspense 边界 */
 export default function ServiceDetailPage() {
-  const params = useParams<{ id: string }>();
-  const id = typeof params.id === "string" ? params.id : "";
+  return (
+    <React.Suspense
+      fallback={
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-56" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-64" />
+          </div>
+        </div>
+      }
+    >
+      <ServiceDetailContent />
+    </React.Suspense>
+  );
+}
+
+function ServiceDetailContent() {
+  const id = useSearchParams().get("id") ?? "";
   const router = useRouter();
   const { toast, success } = useToast();
 
@@ -116,7 +134,7 @@ export default function ServiceDetailPage() {
         { parse: renewResultSchema },
       );
       setRenewOpen(false);
-      router.push(`/pay/${result.invoiceId}`);
+      router.push(`/pay?id=${result.invoiceId}`);
     } catch {
       // Toast 已由 api 层弹出
     } finally {
@@ -157,7 +175,7 @@ export default function ServiceDetailPage() {
           state.reload();
           setUpgradeOpen(false);
         } else {
-          router.push(`/pay/${raw.invoiceId}`);
+          router.push(`/pay?id=${raw.invoiceId}`);
         }
         return;
       }

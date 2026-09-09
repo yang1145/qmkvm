@@ -75,7 +75,7 @@ export default function CreditsPage() {
       setOpen(false);
       setCustom("");
       if (typeof result.invoiceId === "number") {
-        window.location.href = `/pay/${result.invoiceId}`;
+        window.location.href = `/pay?id=${result.invoiceId}`;
         return;
       }
       if (result.payUrl) {

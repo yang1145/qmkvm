@@ -50,7 +50,7 @@ services:
           server api-3:4000;
           keepalive 32;
       }
-      upstream portal_pool { server portal:3000; }
+      upstream portal_pool { server portal:80; }
       upstream www_pool    { server www:80; }
       upstream admin_pool  { server admin:80; }
 
@@ -483,20 +483,17 @@ services:
       - redis-data:/data
 
   # ------------------------------------------------------------------
-  # 三个前端（复用 prod 版构建：Next SSR portal/www + 静态 admin）
+  # 三个前端（portal/www 为静态导出 + 静态 admin，均由容器内 nginx 托管）
   # ------------------------------------------------------------------
+  # portal 客户中心：SPA/静态导出，nginx 托管 out/；NEXT_PUBLIC_API_URL 构建期烘焙
   portal:
     build:
       context: ..
       dockerfile: docker/Dockerfile.next
-      args: { APP: portal }
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
     restart: unless-stopped
     container_name: qmkvm-cluster-portal
-    env_file: ../.env
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
     depends_on:
       - api-1
     # 不暴露宿主机端口，统一经 lb /portal/ 进入

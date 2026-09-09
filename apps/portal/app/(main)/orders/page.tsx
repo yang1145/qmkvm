@@ -101,7 +101,7 @@ export default function OrdersPage() {
                           {item.description} × {item.qty}
                           {item.serviceId ? (
                             <Link
-                              href={`/services/${item.serviceId}`}
+                              href={`/services/detail?id=${item.serviceId}`}
                               className="ml-2 text-xs text-primary hover:underline"
                             >
                               查看服务

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { fapiaoRequestDto, fapiaoTitleDto, invoiceDto, paginated } from "@qmkvm/contracts";
 
@@ -30,9 +30,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 
+/** 静态导出：账单 id 走查询参数（/invoices/detail?id=），useSearchParams 需 Suspense 边界 */
 export default function InvoiceDetailPage() {
-  const params = useParams<{ id: string }>();
-  const id = typeof params.id === "string" ? params.id : "";
+  return (
+    <React.Suspense
+      fallback={
+        <div className="mx-auto max-w-2xl space-y-6">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-72" />
+        </div>
+      }
+    >
+      <InvoiceDetailContent />
+    </React.Suspense>
+  );
+}
+
+function InvoiceDetailContent() {
+  const id = useSearchParams().get("id") ?? "";
   const { toast } = useToast();
 
   const state = useApiData(
@@ -248,7 +263,7 @@ export default function InvoiceDetailPage() {
       {invoice.status === "unpaid" ? (
         <div className="flex justify-end">
           <Button asChild size="lg">
-            <Link href={`/pay/${invoice.id}`}>立即支付 {formatCny(Math.max(0, invoice.total - invoice.balanceUsed))}</Link>
+            <Link href={`/pay?id=${invoice.id}`}>立即支付 {formatCny(Math.max(0, invoice.total - invoice.balanceUsed))}</Link>
           </Button>
         </div>
       ) : null}

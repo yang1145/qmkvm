@@ -62,8 +62,8 @@ pnpm db:seed             # 管理员/角色/示例商品/通知模板
 ## 二、方式 A：Docker Compose 标准版（推荐起步）
 
 ```bash
-# 1) 构建（api/worker 共用 Dockerfile.node；portal 用 Dockerfile.next，
-#    www 用 Dockerfile.www（SSG 静态导出），admin 用 Dockerfile.admin）
+# 1) 构建（api/worker 共用 Dockerfile.node；portal/www 均为静态导出
+#    （Dockerfile.next / Dockerfile.www，容器内 nginx 托管 out/），admin 用 Dockerfile.admin）
 docker compose -f docker/docker-compose.prod.yml build
 
 # 2) 起依赖并初始化
@@ -83,7 +83,8 @@ curl http://127.0.0.1:4000/healthz
 **品牌定制（logo / 站点名 / 版权 / 联系邮箱）**：入口在 admin「系统设置 → 站点信息」
 （存 settings 表 key='site'，公开端点 `GET /api/v1/public/settings` 分发）。
 
-- portal：运行时拉取（60s 缓存），admin 保存后自动生效
+- portal：SPA 静态导出无 Node 服务，品牌由页面客户端拉取（logo/favicon/页脚即时生效；
+  标题等元信息构建期烘焙，改站点名后需重建 portal 镜像）
 - www：静态导出无运行时，构建时经 `BRANDING_API_URL` 拉取烘焙（compose 的 www build args 已接线，
   在 `.env` 配 `BRANDING_API_URL=http://api:4000/api/v1/public/settings` 即可）；**改品牌后需重建 www 镜像**
 - 未配置/拉取失败时构建自动降级为 `NEXT_PUBLIC_*` 环境变量与内置缺省，官网可独立构建
@@ -124,11 +125,12 @@ pm2 start "pnpm --filter @qmkvm/api start"    --name kvm-api -i 3   # -i 3 = 3 �
 pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker-tx  # --group tx
 pm2 start "pnpm --filter @qmkvm/worker start -- --group notify" --name kvm-worker-notify
 pm2 start "pnpm --filter @qmkvm/worker start -- --group supply" --name kvm-worker-supply
-pm2 start "pnpm --filter @qmkvm/worker start -- --group ocr"    --name kvm-worker-ocr
-pm2 start "pnpm --filter @qmkvm/portal start" --name kvm-portal
+pm2 start "pnpm --filter @qmkvm/worker start -- --group ocr" --name kvm-worker-ocr
 pm2 save
-# admin 为纯静态产物（apps/admin/dist）；www 为 SSG 静态导出（apps/www/out），
-# 二者均由 Nginx 直接托管（www 参考 docker/nginx-www.conf：404 回退 + 静态资源长缓存）
+# portal 与 admin、www 一样为纯静态产物，无 Node 服务：
+#   portal：apps/portal/out（SPA/静态导出；NEXT_PUBLIC_API_URL 构建期烘焙，
+#           Nginx 托管参考 docker/nginx-portal.conf：$uri.html 命中 + 404 回退 + 静态资源长缓存）
+#   admin：apps/admin/dist；www：apps/www/out（www 参考 docker/nginx-www.conf）
 ```
 
 PM2 注意：`-i N` cluster 模式下 `mysql2`/`ioredis` 每进程独立连接池，连接数 = N × pool(10)，按 DB `max_connections` 反推副本上限。

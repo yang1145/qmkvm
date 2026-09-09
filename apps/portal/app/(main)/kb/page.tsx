@@ -145,7 +145,7 @@ export default function KbListPage() {
               {articles.map((a) => (
                 <Link
                   key={a.id}
-                  href={`/kb/${a.slug}`}
+                  href={`/kb/article?slug=${a.slug}`}
                   className="block rounded-lg border bg-card px-4 py-3 shadow-sm transition-colors hover:bg-accent/40"
                 >
                   <div className="flex items-center justify-between gap-3">
