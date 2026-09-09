@@ -14,10 +14,10 @@ export async function generateMetadata({
   const { locale } = await params;
   return {
     alternates: {
-      canonical: locale === "zh" ? "/terms" : "/en/terms",
+      canonical: locale === "zh" ? "/zh/terms/" : "/en/terms/",
       languages: {
-        "zh-CN": "/terms",
-        "en-US": "/en/terms",
+        "zh-CN": "/zh/terms/",
+        "en-US": "/en/terms/",
       },
     },
   };

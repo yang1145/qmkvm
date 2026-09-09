@@ -32,8 +32,9 @@ export function Header({ portalUrl }: HeaderProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
-  /** 锚点导航在非首页页面上没有对应区块，统一指向首页路径 + hash */
-  const homePath = locale === "zh" ? "/" : "/en";
+  /** 锚点导航在非首页页面上没有对应区块，统一指向首页路径 + hash；
+   *  i18n Link 会按 localePrefix 自动加当前语言前缀（/zh/、/en/），这里只给根路径 */
+  const homePath = "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);

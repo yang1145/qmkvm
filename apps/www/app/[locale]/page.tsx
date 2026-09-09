@@ -23,11 +23,12 @@ export async function generateMetadata({
   const { locale } = await params;
   return {
     alternates: {
-      canonical: locale === "zh" ? "/" : "/en",
+      // 根路径 / 是构建产物中的语言协商页（out/index.html），canonical 指向语言实体页
+      canonical: locale === "zh" ? "/zh/" : "/en/",
       languages: {
         "x-default": "/",
-        "zh-CN": "/",
-        "en-US": "/en",
+        "zh-CN": "/zh/",
+        "en-US": "/en/",
       },
     },
   };

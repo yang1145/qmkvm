@@ -1,4 +1,4 @@
-# Next.js 前端镜像（portal / www）：ARG APP=portal|www
+# Next.js 前端镜像（portal）：ARG APP=portal（www 已改为 SSG 静态导出，见 Dockerfile.www）
 # 构建上下文 = 仓库根：docker build -f docker/Dockerfile.next --build-arg APP=portal -t kvm-portal .
 FROM node:22-alpine AS builder
 RUN corepack enable

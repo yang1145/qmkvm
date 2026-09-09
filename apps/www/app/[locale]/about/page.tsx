@@ -29,10 +29,10 @@ export async function generateMetadata({
   const { locale } = await params;
   return {
     alternates: {
-      canonical: locale === "zh" ? "/about" : "/en/about",
+      canonical: locale === "zh" ? "/zh/about/" : "/en/about/",
       languages: {
-        "zh-CN": "/about",
-        "en-US": "/en/about",
+        "zh-CN": "/zh/about/",
+        "en-US": "/en/about/",
       },
     },
   };

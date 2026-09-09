@@ -6,8 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "next build && node scripts/write-root-index.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

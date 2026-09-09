@@ -121,8 +121,7 @@ pnpm db:migrate && pnpm db:seed
 pm2 start "pnpm --filter @qmkvm/api start"    --name kvm-api
 pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker
 pm2 start "pnpm --filter @qmkvm/portal start" --name kvm-portal
-pm2 start "pnpm --filter @qmkvm/www start"    --name kvm-www
-# admin 为纯静态产物（apps/admin/dist），由 Nginx 直接托管
+# admin 为纯静态产物（apps/admin/dist）；www 为 SSG 静态导出（apps/www/out），均由 Nginx 直接托管
 ```
 
 ### 反向代理与 TLS

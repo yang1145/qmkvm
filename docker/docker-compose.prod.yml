@@ -85,18 +85,19 @@ services:
     ports:
       - "127.0.0.1:3001:3000"
 
+  # www 官网：SSG 静态导出，nginx 托管 out/；NEXT_PUBLIC_* 为构建期烘焙，改动需重建
   www:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.next
-      args: { APP: www }
+      dockerfile: docker/Dockerfile.www
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+        NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-}
+        NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-}
+        NEXT_PUBLIC_BRAND_NAME_EN: ${NEXT_PUBLIC_BRAND_NAME_EN:-}
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-}
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3000:80"
 
   admin:
     build:

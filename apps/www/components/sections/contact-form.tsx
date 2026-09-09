@@ -56,9 +56,16 @@ export function ContactForm() {
   });
 
   const onSubmit = async (values: FormValues) => {
+    // 静态导出无内置 API：提交目标由构建时 NEXT_PUBLIC_CONTACT_API_URL 注入
+    // （如 apps/api 公开端点或第三方表单服务）；未配置时直接提示失败
+    const endpoint = process.env.NEXT_PUBLIC_CONTACT_API_URL;
+    if (!endpoint) {
+      setStatus("error");
+      return;
+    }
     setStatus("loading");
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),

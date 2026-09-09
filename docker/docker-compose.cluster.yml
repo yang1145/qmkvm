@@ -51,7 +51,7 @@ services:
           keepalive 32;
       }
       upstream portal_pool { server portal:3000; }
-      upstream www_pool    { server www:3000; }
+      upstream www_pool    { server www:80; }
       upstream admin_pool  { server admin:80; }
 
       server {
@@ -501,18 +501,18 @@ services:
       - api-1
     # 不暴露宿主机端口，统一经 lb /portal/ 进入
 
+  # www 官网：SSG 静态导出，nginx 托管 out/；NEXT_PUBLIC_* 为构建期烘焙，改动需重建
   www:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.next
-      args: { APP: www }
+      dockerfile: docker/Dockerfile.www
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+        NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-/portal}
+        NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-}
+        NEXT_PUBLIC_BRAND_NAME_EN: ${NEXT_PUBLIC_BRAND_NAME_EN:-}
     restart: unless-stopped
     container_name: qmkvm-cluster-www
-    env_file: ../.env
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-/portal}
     # 不暴露宿主机端口，统一经 lb / 进入
 
   admin:

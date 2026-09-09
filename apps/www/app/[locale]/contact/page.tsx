@@ -11,10 +11,10 @@ export async function generateMetadata({
   const { locale } = await params;
   return {
     alternates: {
-      canonical: locale === "zh" ? "/contact" : "/en/contact",
+      canonical: locale === "zh" ? "/zh/contact/" : "/en/contact/",
       languages: {
-        "zh-CN": "/contact",
-        "en-US": "/en/contact",
+        "zh-CN": "/zh/contact/",
+        "en-US": "/en/contact/",
       },
     },
   };

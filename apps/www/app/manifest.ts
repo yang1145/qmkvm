@@ -2,6 +2,9 @@ import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/site";
 
+// 静态导出要求元数据路由显式声明为构建期静态生成
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: siteConfig.name,

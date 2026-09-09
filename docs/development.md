@@ -11,7 +11,8 @@
 pnpm workspaces + Turborepo · TypeScript 严格模式 · Node.js ≥ 20
 
 apps/
-  www        官网（Next.js 16 App Router，中/英，端口 3000）
+  www        官网（Next.js 16 App Router，中/英，SSG 静态导出 apps/www/out，
+             nginx / pages 平台直接托管，无 Node 运行时；NEXT_PUBLIC_* 构建期烘焙）
   portal     客户门户（Next.js 16，端口 3001）—— Next.js 破坏性变更见 AGENTS.md 顶部提示
   admin      管理后台（Ant Design Pro / umi max，端口 8000，静态产物）
   api        Hono REST API（端口 4000，唯一后端服务）
@@ -41,7 +42,7 @@ pnpm db:seed                # 管理员 admin/admin12345、示例商品、通知
 pnpm dev:api                # API :4000（tsx watch）
 pnpm dev:portal             # 门户 :3001
 pnpm dev:admin              # 后台 :8000（先 pnpm --filter @qmkvm/admin exec max setup）
-pnpm dev:www                # 官网 :3000
+pnpm dev:www                # 官网 :3000（dev 模式根路径 / 是 404——语言协商页只存在于构建产物，请直接访问 /zh 或 /en）
 pnpm dev:worker             # worker（需 Redis；缺省 --group tx）
 ```
 

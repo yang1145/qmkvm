@@ -62,7 +62,8 @@ pnpm db:seed             # 管理员/角色/示例商品/通知模板
 ## 二、方式 A：Docker Compose 标准版（推荐起步）
 
 ```bash
-# 1) 构建（api/worker 共用 Dockerfile.node；portal/www/admin 各自镜像）
+# 1) 构建（api/worker 共用 Dockerfile.node；portal 用 Dockerfile.next，
+#    www 用 Dockerfile.www（SSG 静态导出），admin 用 Dockerfile.admin）
 docker compose -f docker/docker-compose.prod.yml build
 
 # 2) 起依赖并初始化
@@ -117,9 +118,9 @@ pm2 start "pnpm --filter @qmkvm/worker start -- --group notify" --name kvm-worke
 pm2 start "pnpm --filter @qmkvm/worker start -- --group supply" --name kvm-worker-supply
 pm2 start "pnpm --filter @qmkvm/worker start -- --group ocr"    --name kvm-worker-ocr
 pm2 start "pnpm --filter @qmkvm/portal start" --name kvm-portal
-pm2 start "pnpm --filter @qmkvm/www start"    --name kvm-www
 pm2 save
-# admin 为纯静态产物（apps/admin/dist），由 Nginx 直接托管
+# admin 为纯静态产物（apps/admin/dist）；www 为 SSG 静态导出（apps/www/out），
+# 二者均由 Nginx 直接托管（www 参考 docker/nginx-www.conf：404 回退 + 静态资源长缓存）
 ```
 
 PM2 注意：`-i N` cluster 模式下 `mysql2`/`ioredis` 每进程独立连接池，连接数 = N × pool(10)，按 DB `max_connections` 反推副本上限。
