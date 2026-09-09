@@ -4,7 +4,8 @@
 
 用户需求：在 admin 后台设置 logo、站点标题、版权信息等通用品牌信息，展示于 www 官网与 portal 客户门户。www 是纯静态导出（无 Node 运行时），物理上无法运行时读库，故采用分层策略：
 
-* **portal（SSR）**：运行时从公开 API 拉取品牌设置，admin 保存后 ≤60s 自动生效
+* **portal（SPA 静态导出，2026-09-09 起）**：客户端拉取公开 API，admin 保存后刷新即生效；
+  元信息为通用格式（"客户中心"）、不内置缺省 favicon，portal 无需因品牌变更重建
 
 * **www（SSG）**：构建前脚本从公开 API 拉取烘焙进产物（`branding.json`），改品牌后需重新构建部署 www（静态站固有属性，非本方案缺陷）
 
@@ -141,7 +142,7 @@ pnpm typecheck      # 23 任务
 
 1. admin 系统设置页：上传 logo、填品牌/版权/邮箱 → 保存
 2. `curl http://localhost:4000/api/v1/public/settings` 返回品牌字段
-3. portal（:3001）刷新 ≤60s：favicon/标题/登录页品牌区/页脚版权生效
+3. portal 刷新即生效：favicon/logo/登录页品牌区/页脚版权（浏览器标签标题为通用格式，不含品牌名）
 4. www 配 `BRANDING_API_URL` 重新构建 + `npx serve apps/www/out`：logo、页脚版权占位替换、404 页 favicon、协商页标题
 5. 通知模板 `{{site.name}}` 渲染为 admin 设置的站点名（顺带修复的验证）
 

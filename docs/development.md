@@ -13,7 +13,9 @@ pnpm workspaces + Turborepo · TypeScript 严格模式 · Node.js ≥ 20
 apps/
   www        官网（Next.js 16 App Router，中/英，SSG 静态导出 apps/www/out，
              nginx / pages 平台直接托管，无 Node 运行时；NEXT_PUBLIC_* 构建期烘焙）
-  portal     客户门户（Next.js 16，端口 3001）—— Next.js 破坏性变更见 AGENTS.md 顶部提示
+  portal     客户门户（Next.js 16 App Router，SPA 静态导出 apps/portal/out，dev 端口 3001；
+             生产 nginx 托管 out/ 无 Node 运行时，NEXT_PUBLIC_API_URL 构建期烘焙）
+             —— Next.js 破坏性变更见 AGENTS.md 顶部提示
   admin      管理后台（Ant Design Pro / umi max，端口 8000，静态产物）
   api        Hono REST API（端口 4000，唯一后端服务）
   worker     BullMQ 消费者 + 11 定时任务（--group 分组，无端口）

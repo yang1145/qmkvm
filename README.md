@@ -120,13 +120,14 @@ pnpm build                      # 三前端产物 + 全仓类型检查
 pnpm db:migrate && pnpm db:seed
 pm2 start "pnpm --filter @qmkvm/api start"    --name kvm-api
 pm2 start "pnpm --filter @qmkvm/worker start" --name kvm-worker
-pm2 start "pnpm --filter @qmkvm/portal start" --name kvm-portal
-# admin 为纯静态产物（apps/admin/dist）；www 为 SSG 静态导出（apps/www/out），均由 Nginx 直接托管
+# 三个前端均为纯静态产物，无 Node 常驻进程，由 Nginx 直接托管：
+#   portal：apps/portal/out（SPA/静态导出，托管参考 docker/nginx-portal.conf）
+#   admin：apps/admin/dist；www：apps/www/out（SSG，托管参考 docker/nginx-www.conf）
 ```
 
 ### 反向代理与 TLS
 
-宿主机 Nginx 四个 server 块（www / portal / admin / api）分别反代到 `127.0.0.1:3000/3001/8000/4000`，统一 301 到 HTTPS，`proxy_set_header X-Forwarded-For` 传递客户端 IP（限流依赖此头）。TLS 证书用 certbot 或云厂商免费证书，生产 `COOKIE_DOMAIN=.你的域名` 使 portal/api 跨子域共享会话。
+宿主机 Nginx 四个 server 块（www / portal / admin / api）：www/portal/admin 为静态产物（portal/www 静态导出，compose 部署时容器内已带 nginx，反代到 `127.0.0.1:3000/3001/8000` 即可；PM2 模式由宿主机 Nginx 直接 root 托管 out/ 与 dist/），api 反代到 `127.0.0.1:4000`。统一 301 到 HTTPS，`proxy_set_header X-Forwarded-For` 传递客户端 IP（限流依赖此头）。TLS 证书用 certbot 或云厂商免费证书，生产 `COOKIE_DOMAIN=.你的域名` 使 portal/api 跨子域共享会话。
 
 ### 升级发布
 
