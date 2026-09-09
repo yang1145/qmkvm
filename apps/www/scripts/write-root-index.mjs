@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 // 静态导出产物补丁脚本：
@@ -9,10 +9,30 @@ import path from "node:path";
 // 2) out/404.html —— 品牌化中文 404 页。Next 导出的是内置英文默认页
 //    （app/[locale]/not-found.tsx 属于 locale 布局，无法成为根级 404.html），
 //    这里用 messages/zh.json 同款文案覆写，两处产物（404.html、404/index.html）保持一致。
+//
+// 品牌取值三级回落：branding.json（fetch-branding.mjs 构建前生成）> NEXT_PUBLIC_* env > 内置缺省。
+// 手写 HTML 插值一律经 escapeHtml（品牌名/域名来自 admin 设置，防 HTML 注入）。
 
-const brand = process.env.NEXT_PUBLIC_BRAND_NAME ?? "启明智联";
-const brandEn = process.env.NEXT_PUBLIC_BRAND_NAME_EN ?? "QmKvm";
-const domain = process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
+let branding = { siteName: null, siteNameEn: null, logoFile: null };
+try {
+  branding = JSON.parse(
+    await readFile(path.resolve(import.meta.dirname, "../branding.json"), "utf8"),
+  );
+} catch {
+  // branding.json 缺失时回退 env（正常流程 build 前已无条件生成）
+}
+
+const escapeHtml = (s) =>
+  String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
+const brand = escapeHtml(
+  branding.siteName ?? process.env.NEXT_PUBLIC_BRAND_NAME ?? "启明智联",
+);
+const brandEn = escapeHtml(
+  branding.siteNameEn ?? process.env.NEXT_PUBLIC_BRAND_NAME_EN ?? "QmKvm",
+);
+const domain = escapeHtml(process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com");
+const favicon = escapeHtml(branding.logoFile ?? "/logo.png");
 
 const html = `<!doctype html>
 <html lang="zh">
@@ -48,7 +68,7 @@ const notFoundHtml = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>404 · ${brand}</title>
-<link rel="icon" href="/logo.png">
+<link rel="icon" href="${favicon}">
 <style>
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;color:#0f172a;background:#fff}
 main{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px}

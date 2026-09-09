@@ -31,9 +31,14 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
  * 后端就绪后如 contracts 补齐，应迁移过去；此处保持宽松以兼容联调期。
  */
 
-/** GET /settings */
+/** GET /settings（公开品牌/站点端点：logo 等定制字段缺失或异常时宽松回落） */
 export const settingsSchema = z.object({
   siteName: z.string(),
+  siteNameEn: z.string().catch(""),
+  logo: z.string().nullable().catch(null),
+  copyright: z.string().nullable().catch(null),
+  contactEmail: z.string().nullable().catch(null),
+  portalUrl: z.string().nullable().catch(null),
   announcement: z.string().nullable(),
   paymentMethods: z.array(z.string()),
 });

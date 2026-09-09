@@ -12,7 +12,7 @@ import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@qmkvm/db";
-import { settingsUpsertSchema } from "@qmkvm/contracts";
+import { settingsUpsertSchema, siteSettingsUpsertSchema } from "@qmkvm/contracts";
 import { appError } from "@qmkvm/core";
 import {
   encryptSettingValue,
@@ -233,6 +233,40 @@ adminSettingRoutes.post("/settings/templates/test", requireAdmin("templates.mana
     subject,
     body: html,
   });
+});
+
+// ============ 站点品牌（site）设置 ============
+
+const SITE_SETTING_KEY = "site";
+
+/** 读取站点品牌设置（settings key='site'；缺省时返回空对象，前端用内置缺省占位） */
+adminSettingRoutes.get("/settings/site", requireAdmin("settings.manage"), async (c) => {
+  const value = await readSettingValue(SITE_SETTING_KEY);
+  return c.json({ value: value ?? {} });
+});
+
+/** 写站点品牌设置：浅合并（未提交字段保留）；字段传 null 清空恢复内置缺省 */
+adminSettingRoutes.put("/settings/site", requireAdmin("settings.manage"), async (c) => {
+  const body = siteSettingsUpsertSchema.parse(await c.req.json());
+  const admin = c.get("admin");
+  const existing = (await readSettingValue(SITE_SETTING_KEY)) ?? {};
+
+  const next: Record<string, unknown> = { ...existing };
+  const changed: string[] = [];
+  for (const [field, val] of Object.entries(body)) {
+    if (val === undefined) continue;
+    next[field] = val;
+    changed.push(field);
+  }
+  if (changed.length === 0) throw appError("VALIDATION_FAILED", "站点品牌设置不能为空");
+
+  await upsertSetting(SITE_SETTING_KEY, next);
+  await writeAdminAudit(c, admin, {
+    action: "settings.site.update",
+    targetType: "settings",
+    after: { keys: [SITE_SETTING_KEY], fields: changed },
+  });
+  return c.json({ ok: true });
 });
 
 // ============ 共享工具 ============

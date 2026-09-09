@@ -40,5 +40,9 @@ next-env.d.ts
 # uploads
 uploads/
 
+# www 品牌构建产物（scripts/fetch-branding.mjs 生成，不入库）
+apps/www/branding.json
+apps/www/public/branding/
+
 # pnpm 本地 store（用户手动安装产物，勿入库）
 .pnpm-store/

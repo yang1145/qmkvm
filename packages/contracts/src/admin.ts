@@ -123,6 +123,23 @@ export const settingsUpsertSchema = z.object({
   values: z.record(z.string(), z.unknown()),
 });
 
+/**
+ * PUT /settings/site：站点品牌定制（settings key='site'）。
+ * logo 为 data URL（≤200KB 图片，base64 后 ≤300KB，上限放宽到 400_000 含头部开销）；
+ * 字段传 null 表示清空（恢复内置缺省），未提交字段保留。
+ */
+export const siteSettingsUpsertSchema = z
+  .object({
+    siteName: z.string().trim().min(1).max(100).optional(),
+    siteNameEn: z.string().trim().max(100).optional(),
+    logo: z.string().startsWith("data:image/").max(400_000).nullable().optional(),
+    copyright: z.string().max(200).nullable().optional(),
+    contactEmail: z.union([z.email(), z.literal("")]).nullable().optional(),
+    portalUrl: z.union([z.url(), z.literal("")]).nullable().optional(),
+    announcement: z.string().max(500).nullable().optional(),
+  })
+  .strict();
+
 export const dashboardDto = z.object({
   today: z.object({
     newUsers: z.number(),

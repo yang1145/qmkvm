@@ -128,7 +128,14 @@ export async function Footer() {
         <Separator className="my-8" />
 
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>{t("copyright", { year, brand })}</p>
+          {/* 版权行：admin「站点信息」定制文本优先（占位符 {year}/{brand}），否则用 i18n 缺省 */}
+          <p>
+            {siteConfig.copyright
+              ? siteConfig.copyright
+                  .replaceAll("{year}", String(year))
+                  .replaceAll("{brand}", brand)
+              : t("copyright", { year, brand })}
+          </p>
           <span>
             {resources[2]} ·{" "}
             <a

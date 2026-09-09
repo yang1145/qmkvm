@@ -80,6 +80,14 @@ curl http://127.0.0.1:4000/healthz
 
 服务端口仅绑定 `127.0.0.1`，公网经宿主机反代（`docker/deploy/` 有 Nginx 示例）。管理后台建议加 IP 白名单或 VPN。
 
+**品牌定制（logo / 站点名 / 版权 / 联系邮箱）**：入口在 admin「系统设置 → 站点信息」
+（存 settings 表 key='site'，公开端点 `GET /api/v1/public/settings` 分发）。
+
+- portal：运行时拉取（60s 缓存），admin 保存后自动生效
+- www：静态导出无运行时，构建时经 `BRANDING_API_URL` 拉取烘焙（compose 的 www build args 已接线，
+  在 `.env` 配 `BRANDING_API_URL=http://api:4000/api/v1/public/settings` 即可）；**改品牌后需重建 www 镜像**
+- 未配置/拉取失败时构建自动降级为 `NEXT_PUBLIC_*` 环境变量与内置缺省，官网可独立构建
+
 **API 多副本（标准版即可横向扩）**：API 无状态，`deploy: { replicas: N }` 或多起几个服务即可；前置负载均衡透传 `X-Forwarded-For`（限流依赖真实 IP）、健康检查 `/healthz`、**不用 sticky session**。多副本前必须 `STORAGE_PROVIDER=s3`（本地盘模式下副本间文件不可见）。
 
 ---

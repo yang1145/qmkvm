@@ -5,10 +5,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && node scripts/write-root-index.mjs",
+    "dev": "node scripts/fetch-branding.mjs && next dev",
+    "build": "node scripts/fetch-branding.mjs && next build && node scripts/write-root-index.mjs",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "node scripts/fetch-branding.mjs && tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

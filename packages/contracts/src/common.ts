@@ -121,3 +121,39 @@ export const errorResponseSchema = z.object({
   requestId: z.string(),
   details: z.record(z.string(), z.unknown()).optional(),
 });
+
+/** —— 站点品牌定制（settings key='site'，经 GET /api/v1/public/settings 分发）—— */
+
+/** 品牌缺省值：portal（运行时）/ www（构建期）消费端统一回落用 */
+export const DEFAULT_BRANDING = {
+  siteName: "启明智联",
+  siteNameEn: "QmKvm",
+  logo: null,
+  copyright: null,
+  contactEmail: null,
+  portalUrl: null,
+  announcement: null,
+} as const;
+
+/** 品牌字段结构：null = 未定制，消费端用 DEFAULT_BRANDING 兜底 */
+export const brandingSchema = z.object({
+  siteName: z.string(),
+  siteNameEn: z.string(),
+  logo: z.string().nullable(),
+  copyright: z.string().nullable(),
+  contactEmail: z.string().nullable(),
+  portalUrl: z.string().nullable(),
+  announcement: z.string().nullable(),
+});
+export type Branding = z.infer<typeof brandingSchema>;
+
+/** copyright 文本占位符替换：{year} → 当前年，{brand} → 站点名 */
+export function renderCopyright(
+  text: string | null | undefined,
+  brand: string,
+  year: number = new Date().getFullYear(),
+): string {
+  const fallback = `© ${year} ${brand}`;
+  if (!text || !text.trim()) return fallback;
+  return text.replaceAll("{year}", String(year)).replaceAll("{brand}", brand);
+}

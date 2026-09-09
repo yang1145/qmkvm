@@ -460,6 +460,27 @@ export async function putSettings(values: SettingsMap) {
   return request<{ ok: boolean }>(`${BASE}/settings`, { method: 'PUT', data: { values } });
 }
 
+// ============ 站点品牌设置（settings/site 子路由） ============
+
+/** 站点品牌定制（settings key='site'）；logo 为 data URL，null = 清空恢复内置缺省 */
+export interface SiteSettings {
+  siteName?: string;
+  siteNameEn?: string | null;
+  logo?: string | null;
+  copyright?: string | null;
+  contactEmail?: string | null;
+  portalUrl?: string | null;
+  announcement?: string | null;
+}
+
+export async function getSiteSettings() {
+  return request<{ value: SiteSettings }>(`${BASE}/settings/site`);
+}
+
+export async function putSiteSettings(value: SiteSettings) {
+  return request<{ ok: boolean }>(`${BASE}/settings/site`, { method: 'PUT', data: value });
+}
+
 // ============ 支付设置 / 邮件设置（settings 子路由） ============
 
 /** 支付网关配置：敏感字段（privateKey/apiv3Key）读取时为 "******" 掩码，原样回传表示不修改 */

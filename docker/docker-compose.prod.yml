@@ -95,6 +95,8 @@ services:
         NEXT_PUBLIC_PORTAL_URL: ${NEXT_PUBLIC_PORTAL_URL:-}
         NEXT_PUBLIC_BRAND_NAME: ${NEXT_PUBLIC_BRAND_NAME:-}
         NEXT_PUBLIC_BRAND_NAME_EN: ${NEXT_PUBLIC_BRAND_NAME_EN:-}
+        # 品牌定制拉取端点（admin「站点信息」→ GET /api/v1/public/settings），构建期烘焙
+        BRANDING_API_URL: ${BRANDING_API_URL:-}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:80"

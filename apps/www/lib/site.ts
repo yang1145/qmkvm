@@ -2,19 +2,34 @@
  * 站点级配置（PRD 9.2：CTA 与外部链接通过配置管理）
  * 未配置的入口不得渲染为可点击死链 —— 对应组件需按 undefined 判断隐藏。
  *
- * 品牌不硬编码：文案（messages/*.json）一律使用 {brand} 占位符，
- * 由 siteConfig 注入；更换品牌只需设置 NEXT_PUBLIC_BRAND_NAME* 环境变量，
- * 并替换 public/ 下的 logo 图片（或在下方 logo 配置中改路径）。
+ * 品牌三级回落：branding.json（构建前 scripts/fetch-branding.mjs 从业务系统
+ * 拉取烘焙，admin「站点信息」维护）> NEXT_PUBLIC_* 环境变量 > 内置缺省。
+ * 文案（messages/*.json）一律使用 {brand} 占位符，由 siteConfig 注入；
+ * 更换品牌只需在 admin 设置并重新构建，或设置 NEXT_PUBLIC_BRAND_NAME* 环境变量。
  *
  * 域名不硬编码：通过 NEXT_PUBLIC_SITE_URL 注入（缺省 https://example.com）。
  */
+import brandingJson from "../branding.json";
 
-const brandName = (process.env.NEXT_PUBLIC_BRAND_NAME as string | undefined) ?? "启明智联";
+interface BrandingFile {
+  siteName: string | null;
+  siteNameEn: string | null;
+  logoFile: string | null;
+  copyright: string | null;
+  contactEmail: string | null;
+  portalUrl: string | null;
+}
+
+// branding.json 由 scripts/fetch-branding.mjs 在 build/dev/typecheck 前无条件写出
+const branding = brandingJson as BrandingFile;
+
+const brandName =
+  branding.siteName ?? (process.env.NEXT_PUBLIC_BRAND_NAME as string | undefined) ?? "启明智联";
 const brandNameEn =
-  (process.env.NEXT_PUBLIC_BRAND_NAME_EN as string | undefined) ?? "QmKvm";
+  branding.siteNameEn ?? (process.env.NEXT_PUBLIC_BRAND_NAME_EN as string | undefined) ?? "QmKvm";
 
 export const siteConfig = {
-  /** 中文品牌名（env：NEXT_PUBLIC_BRAND_NAME） */
+  /** 中文品牌名（branding.json > env：NEXT_PUBLIC_BRAND_NAME） */
   name: brandName,
   /** 英文/拉丁品牌名（env：NEXT_PUBLIC_BRAND_NAME_EN），用于标题模板、OG 等 */
   nameEn: brandNameEn,
@@ -23,9 +38,9 @@ export const siteConfig = {
     return locale === "zh" ? brandName : brandNameEn;
   },
   domain: (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ?? "https://example.com",
-  /** Logo 资源：换品牌时替换 public/ 同名文件，或改这里的路径 */
+  /** Logo 资源：icon 为 admin 上传的定制 logo（branding.json），white/horizontal 变体不跟随定制 */
   logo: {
-    icon: "/logo.png",
+    icon: branding.logoFile ?? "/logo.png",
     white: "/logo-white.png",
     horizontal: "/logo-horizontal.png",
   },
@@ -42,17 +57,20 @@ export const siteConfig = {
     status: undefined as string | undefined,
   },
   contact: {
-    email: "sales@example.com", // TODO: 待业务方确认（示例占位，部署时替换）
+    email: branding.contactEmail ?? "sales@example.com",
   },
+  /** 版权行定制文本（null = 用 messages 的 footer.copyright 缺省）；占位符 {year}/{brand} */
+  copyright: branding.copyright as string | null,
 } as const;
 
 /**
- * Portal（用户控制台）地址：服务端组件在请求时读取，
- * 支持 NEXT_PUBLIC_PORTAL_URL（构建/运行时均可）与 PORTAL_URL（复用根 .env）。
+ * Portal（用户控制台）地址：branding.json（admin 站点信息）优先，
+ * 其次 NEXT_PUBLIC_PORTAL_URL / PORTAL_URL 环境变量。
  * 未配置时不渲染控制台入口（PRD 9.2：未配置的入口不得渲染为可点击死链）。
  */
 export function getPortalUrl(): string | undefined {
   return (
+    branding.portalUrl ??
     (process.env.NEXT_PUBLIC_PORTAL_URL as string | undefined) ??
     (process.env.PORTAL_URL as string | undefined) ??
     undefined

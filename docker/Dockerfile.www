@@ -9,6 +9,8 @@ ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_PORTAL_URL
 ARG NEXT_PUBLIC_BRAND_NAME
 ARG NEXT_PUBLIC_BRAND_NAME_EN
+# 品牌定制拉取端点（GET /api/v1/public/settings）；未配置时用 NEXT_PUBLIC_* / 内置缺省
+ARG BRANDING_API_URL
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json

@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { getDb, schema } from "@qmkvm/db";
 import { z } from "zod";
 import { formatCny } from "@qmkvm/core";
+import { DEFAULT_BRANDING } from "@qmkvm/contracts";
 
 /**
  * 公开接口：无需登录（目录用于门户商品页，也供官网后续集成）。
@@ -91,11 +92,19 @@ export async function getSetting<T>(key: string): Promise<T | undefined> {
 }
 
 publicRoutes.get("/settings", async (c) => {
-  const site = await getSetting<Record<string, unknown>>("site");
+  const site = (await getSetting<Record<string, unknown>>("site")) ?? {};
   const gateways = await getSetting<Record<string, unknown>>("payment.gateways");
+  // 空串/非字符串一律归一为 null（= 未定制，消费端用 DEFAULT_BRANDING 兜底）
+  const str = (v: unknown): string | null =>
+    typeof v === "string" && v.trim() ? v.trim() : null;
   return c.json({
-    siteName: (site?.["siteName"] as string) ?? "启明智联",
-    announcement: (site?.["announcement"] as string) ?? null,
+    siteName: str(site["siteName"]) ?? DEFAULT_BRANDING.siteName,
+    siteNameEn: str(site["siteNameEn"]) ?? DEFAULT_BRANDING.siteNameEn,
+    logo: str(site["logo"]),
+    copyright: str(site["copyright"]),
+    contactEmail: str(site["contactEmail"]),
+    portalUrl: str(site["portalUrl"]),
+    announcement: str(site["announcement"]),
     paymentMethods: gateways
       ? Object.entries(gateways)
           .filter(([, v]) => (v as { enabled?: boolean })?.enabled)

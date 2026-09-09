@@ -144,6 +144,7 @@ pnpm dev:worker             # worker（需 Redis；缺省 --group tx）
 | 通知 | `SMTP_*` / `ALIYUN_SMS_*` / `ALERT_WEBHOOK_URL` | 可选 | 邮件/短信/钉钉飞书告警 |
 | 开发 | `DEV_MOCK_PAYMENTS` | 仅 dev | mock 支付网关；生产必须 false |
 | 种子 | `SEED_ADMIN_USERNAME/PASSWORD` | 可选 | 初始管理员 |
+| 前端 | `BRANDING_API_URL` | 可选 | www 构建期拉取品牌定制（指向 `GET /api/v1/public/settings`）；未配置降级 env/内置缺省。portal 运行时经 `NEXT_PUBLIC_API_URL` 自动拉取，无需此变量 |
 
 ## 7. 已知设计决策（不要"修复"它们）
 
