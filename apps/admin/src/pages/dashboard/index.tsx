@@ -180,16 +180,16 @@ const Dashboard: React.FC = () => {
 
       <ProCard title="今日概览" gutter={16} style={{ marginBottom: 16 }}>
         <ProCard colSpan={6}>
-          <Statistic title="新增用户" value={data?.today.newUsers ?? 0} />
+          <Statistic title="新增用户" value={data?.today?.newUsers ?? 0} />
         </ProCard>
         <ProCard colSpan={6}>
-          <Statistic title="订单数" value={data?.today.orders ?? 0} />
+          <Statistic title="订单数" value={data?.today?.orders ?? 0} />
         </ProCard>
         <ProCard colSpan={6}>
-          <Statistic title="GMV" value={cny(data?.today.gmv ?? 0)} />
+          <Statistic title="GMV" value={cny(data?.today?.gmv ?? 0)} />
         </ProCard>
         <ProCard colSpan={6}>
-          <Statistic title="支付成功率" value={data?.today.paymentSuccessRate ?? 0} suffix="%" />
+          <Statistic title="支付成功率" value={data?.today?.paymentSuccessRate ?? 0} suffix="%" />
         </ProCard>
       </ProCard>
 
