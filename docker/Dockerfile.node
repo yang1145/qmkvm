@@ -32,4 +32,4 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm i
 
 WORKDIR /app/apps/${APP}
 # 环境变量由 compose env_file 注入；迁移在部署流程中执行（pnpm --filter @qmkvm/db migrate）
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start:prod"]
