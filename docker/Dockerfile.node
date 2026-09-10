@@ -1,6 +1,9 @@
 # API / Worker 共用镜像：ARG APP=api|worker
 # 构建上下文 = 仓库根：docker build -f docker/Dockerfile.node --build-arg APP=api -t kvm-api .
 FROM node:22-alpine AS base
+# 构建应用包名（api|worker…）：必须显式 ARG 声明，否则 compose 的 build-arg 不注入，下面的
+# ${APP} 会展开成空 → WORKDIR 变 /app/apps/、--filter 匹配所有包，导致 CMD pnpm start 找不到 start 脚本
+ARG APP=api
 # npm 源走镜像加速（corepack 下载 pnpm 本体也走它）；海外可用 --build-arg NPM_REGISTRY=https://registry.npmjs.org 覆盖
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 ENV COREPACK_NPM_REGISTRY=${NPM_REGISTRY}
