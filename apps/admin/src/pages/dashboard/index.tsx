@@ -152,9 +152,9 @@ const Dashboard: React.FC = () => {
           </Space>
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 8, lg: 9 }} title="Worker 分组" style={{ height: '100%' }}>
-          {(WORKER_GROUP_ORDER.map((g) => sysStatus?.workers.find((w) => w.group === g))
+          {(WORKER_GROUP_ORDER.map((g) => (sysStatus?.workers ?? []).find((w) => w.group === g))
             .filter((w): w is SystemStatusWorker => !!w).length > 0
-            ? WORKER_GROUP_ORDER.map((g) => sysStatus?.workers.find((w) => w.group === g)).filter(
+            ? WORKER_GROUP_ORDER.map((g) => (sysStatus?.workers ?? []).find((w) => w.group === g)).filter(
                 (w): w is SystemStatusWorker => !!w,
               )
             : (sysStatus?.workers ?? [])
