@@ -5,7 +5,9 @@ FROM node:22-alpine AS builder
 # npm 源走镜像加速（corepack 下载 pnpm 本体也走它）；海外可用 --build-arg NPM_REGISTRY=https://registry.npmjs.org 覆盖
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 ENV COREPACK_NPM_REGISTRY=${NPM_REGISTRY}
-RUN corepack enable && printf 'registry=%s\nfetch-timeout=120000\nfetch-retries=5\nnetwork-concurrency=1\n' "${NPM_REGISTRY}" > /root/.npmrc
+# store-dir 显式固定，配合下方 RUN --mount=type=cache 跨构建复用 pnpm store（reused>0）；
+# 去掉 network-concurrency=1（串行放大单请求卡顿），抬高超时/重试对抗 registry 偶发卡顿
+RUN corepack enable && printf 'registry=%s\nfetch-timeout=300000\nfetch-retries=8\nstore-dir=/root/.local/share/pnpm/store\n' "${NPM_REGISTRY}" > /root/.npmrc
 WORKDIR /app
 
 ARG NEXT_PUBLIC_SITE_URL
@@ -18,12 +20,12 @@ ARG BRANDING_API_URL
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/config/tsconfig.base.json packages/config/tsconfig.base.json
 COPY apps/www/package.json apps/www/
-RUN pnpm install --frozen-lockfile --filter @qmkvm/www... --ignore-scripts
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --filter @qmkvm/www... --ignore-scripts
 
 COPY packages ./packages
 COPY apps/www ./apps/www
 WORKDIR /app/apps/www
-RUN pnpm install --frozen-lockfile --filter @qmkvm/www... --ignore-scripts \
+RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --filter @qmkvm/www... --ignore-scripts \
   && pnpm build
 
 # 运行层：纯静态托管
