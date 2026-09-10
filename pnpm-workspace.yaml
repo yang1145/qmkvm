@@ -8,6 +8,14 @@ packages:
 # 自建私有部署不需该护栏，置 0 关闭，让 install 只依赖已解包的元数据缓存。
 minimumReleaseAge: 0
 
+# pnpm 11 的网络/fetch 设置只从 pnpm-workspace.yaml 读（camelCase），写进 .npmrc 会被静默忽略。
+# 调大单请求超时与重试，否则 next/@next/swc/sharp 等几十 MB 的大 tarball 在慢链路上
+# 常超 pnpm 默认 60s 的 fetchTimeout 而整盘失败（error 23 / The operation was aborted due to timeout）。
+fetchTimeout: 300000
+fetchRetries: 8
+fetchRetryMintimeout: 10000
+fetchRetryMaxtimeout: 120000
+
 allowBuilds:
   '@alicloud/openapi-core': true
   '@parcel/watcher': true
