@@ -10,12 +10,12 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "tsx --env-file=../../.env src/migrate.ts",
-    "seed": "tsx --env-file=../../.env src/seed.ts",
+    "migrate": "tsx --env-file-if-exists=../../.env src/migrate.ts",
+    "seed": "tsx --env-file-if-exists=../../.env src/seed.ts",
     "studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit",
-    "reset": "tsx --env-file=../../.env src/reset.ts"
+    "reset": "tsx --env-file-if-exists=../../.env src/reset.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",
