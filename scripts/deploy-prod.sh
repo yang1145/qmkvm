@@ -176,28 +176,30 @@ APP_KEY="${APP_KEY}"
 
 # ===== API =====
 API_PORT="4000"
-CORS_ORIGINS="https://www.${DOMAIN_BASE},https://portal.${DOMAIN_BASE},https://admin.${DOMAIN_BASE},https://api.${DOMAIN_BASE}"
-COOKIE_DOMAIN=".${DOMAIN_BASE}"
-API_PUBLIC_URL="https://api.${DOMAIN_BASE}"
+# 注意：URL/域名类值一律不带引号。带引号会经 compose 注入 Dockerfile ARG 时被当成 URL 一部分，
+# 导致前端请求畸形（如 https://admin.x/%22https://api...%22/...），必须保持裸值。
+CORS_ORIGINS=https://www.${DOMAIN_BASE},https://portal.${DOMAIN_BASE},https://admin.${DOMAIN_BASE},https://api.${DOMAIN_BASE}
+COOKIE_DOMAIN=.${DOMAIN_BASE}
+API_PUBLIC_URL=https://api.${DOMAIN_BASE}
 
 # ===== 管理后台（构建期直连，不用反代）=====
-ADMIN_API_URL="https://api.${DOMAIN_BASE}"
+ADMIN_API_URL=https://api.${DOMAIN_BASE}
 
 # ===== 公网 HTTPS 入口（gateway 自动签发/续期证书）=====
-DOMAIN_BASE="${DOMAIN_BASE}"
-ACME_EMAIL="${ACME_EMAIL}"
+DOMAIN_BASE=${DOMAIN_BASE}
+ACME_EMAIL=${ACME_EMAIL}
 
 # ===== 前端地址 =====
-WWW_URL="https://www.${DOMAIN_BASE}"
-PORTAL_URL="https://portal.${DOMAIN_BASE}"
-ADMIN_URL="https://admin.${DOMAIN_BASE}"
-NEXT_PUBLIC_SITE_URL="https://www.${DOMAIN_BASE}"
-NEXT_PUBLIC_PORTAL_URL="https://portal.${DOMAIN_BASE}"
-NEXT_PUBLIC_BRAND_NAME="${NEXT_PUBLIC_BRAND_NAME}"
-NEXT_PUBLIC_BRAND_NAME_EN="${NEXT_PUBLIC_BRAND_NAME_EN}"
-BRANDING_API_URL="http://api:4000/api/v1/public/settings"
+WWW_URL=https://www.${DOMAIN_BASE}
+PORTAL_URL=https://portal.${DOMAIN_BASE}
+ADMIN_URL=https://admin.${DOMAIN_BASE}
+NEXT_PUBLIC_SITE_URL=https://www.${DOMAIN_BASE}
+NEXT_PUBLIC_PORTAL_URL=https://portal.${DOMAIN_BASE}
+NEXT_PUBLIC_BRAND_NAME=${NEXT_PUBLIC_BRAND_NAME}
+NEXT_PUBLIC_BRAND_NAME_EN=${NEXT_PUBLIC_BRAND_NAME_EN}
+BRANDING_API_URL=http://api:4000/api/v1/public/settings
 
-DEV_MOCK_PAYMENTS="false"
+DEV_MOCK_PAYMENTS=false
 
 # ===== 通知 =====
 SMS_PROVIDER="${SMS_PROVIDER:-mock}"

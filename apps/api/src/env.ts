@@ -2,9 +2,12 @@ export const env = {
   port: Number(process.env.API_PORT ?? 4000),
   corsOrigins: (process.env.CORS_ORIGINS ?? "")
     .split(",")
-    .map((s) => s.trim())
+    // 剥两端空白与多余引号（deploy-prod.sh 早期生成的 .env 对值加了引号，破坏跨域匹配）
+    .map((s) => s.trim().replace(/^[\s"'`]+|[\s"'`]+$/g, ""))
     .filter(Boolean),
-  cookieDomain: process.env.COOKIE_DOMAIN || undefined,
+  cookieDomain: (process.env.COOKIE_DOMAIN || "")
+    .replace(/^[\s"'`]+|[\s"'`]+$/g, "")
+    .trim() || undefined,
   isProd: process.env.NODE_ENV === "production",
   devMockPayments: process.env.DEV_MOCK_PAYMENTS === "true",
   portalUrl: process.env.PORTAL_URL ?? "http://localhost:3001",

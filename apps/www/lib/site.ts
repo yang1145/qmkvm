@@ -24,9 +24,15 @@ interface BrandingFile {
 const branding = brandingJson as BrandingFile;
 
 const brandName =
-  branding.siteName ?? (process.env.NEXT_PUBLIC_BRAND_NAME as string | undefined) ?? "启明智联";
+  branding.siteName ?? trimEnv(process.env.NEXT_PUBLIC_BRAND_NAME) ?? "启明智联";
 const brandNameEn =
-  branding.siteNameEn ?? (process.env.NEXT_PUBLIC_BRAND_NAME_EN as string | undefined) ?? "QmKvm";
+  branding.siteNameEn ?? trimEnv(process.env.NEXT_PUBLIC_BRAND_NAME_EN) ?? "QmKvm";
+
+/** 剥掉环境值两端多余引号/空白（deploy-prod.sh 生成的 .env 对值加了引号） */
+function trimEnv(s: string | undefined): string | undefined {
+  if (s === undefined) return undefined;
+  return s.replace(/^[\s"'`]+|[\s"'`]+$/g, "");
+}
 
 export const siteConfig = {
   /** 中文品牌名（branding.json > env：NEXT_PUBLIC_BRAND_NAME） */
@@ -37,7 +43,7 @@ export const siteConfig = {
   brandName(locale: string): string {
     return locale === "zh" ? brandName : brandNameEn;
   },
-  domain: (process.env.NEXT_PUBLIC_SITE_URL as string | undefined) ?? "https://example.com",
+  domain: trimEnv(process.env.NEXT_PUBLIC_SITE_URL) ?? "https://example.com",
   /** Logo 资源：icon 为 admin 上传的定制 logo（branding.json），white/horizontal 变体不跟随定制 */
   logo: {
     icon: branding.logoFile ?? "/logo.png",
@@ -71,8 +77,8 @@ export const siteConfig = {
 export function getPortalUrl(): string | undefined {
   return (
     branding.portalUrl ??
-    (process.env.NEXT_PUBLIC_PORTAL_URL as string | undefined) ??
-    (process.env.PORTAL_URL as string | undefined) ??
+    trimEnv(process.env.NEXT_PUBLIC_PORTAL_URL) ??
+    trimEnv(process.env.PORTAL_URL) ??
     undefined
   );
 }

@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { errorResponseSchema } from "@qmkvm/contracts";
 
+/** 剥掉环境值两端多余引号/空白（deploy-prod.sh 生成的 .env 对值加了引号） */
+function trimQuoted(s: string | undefined): string {
+  return (s ?? "").replace(/^[\s"'`]+|[\s"'`]+$/g, "");
+}
+
 /** 后端 API 基准地址（同源反向代理或独立域名均可） */
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  trimQuoted(process.env.NEXT_PUBLIC_API_URL) || "http://localhost:4000";
 
 const API_PREFIX = "/api/v1/portal";
 

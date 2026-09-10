@@ -20,7 +20,9 @@ const getSafeRedirectUrl = (redirect: string | null): string => {
 };
 
 // 构建期注入 ADMIN_API_URL（统一方案，跨域直连，不用反代）；留空仅限本地 dev（umi proxy）
-const API_ORIGIN = process.env.ADMIN_API_URL || '';
+const API_ORIGIN = (process.env.ADMIN_API_URL || '')
+  // 构建期注入值可能带多余引号/空白（deploy-prod.sh 生成的 .env 对值加了引号），剥掉两端
+  .replace(/^[\s"'`]+|[\s"'`]+$/g, '');
 const CAPTCHA_PATH = `${API_ORIGIN}/api/v1/admin/auth/captcha`;
 
 const Login: React.FC = () => {
