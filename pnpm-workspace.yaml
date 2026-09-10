@@ -2,6 +2,12 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# pnpm 11 默认开启 minimumReleaseAge=1440（1天），会在取 tarball 前对 lockfile 每条做
+# 发布年龄校验（supply-chain policy check），需回源重抓元数据；慢链路上会因超时整盘失败
+# （ERR_PNPM_BROKEN_METADATA_JSON / Lockfile failed supply-chain policy check）。
+# 自建私有部署不需该护栏，置 0 关闭，让 install 只依赖已解包的元数据缓存。
+minimumReleaseAge: 0
+
 allowBuilds:
   '@alicloud/openapi-core': true
   '@parcel/watcher': true
