@@ -48,7 +48,9 @@ import type {
 
 /** API 基址：构建期注入 ADMIN_API_URL（统一方案，跨域直连，不用反代）；
  * 留空仅限本地 dev（走 umi 本地 proxy） */
-const API_ORIGIN = process.env.ADMIN_API_URL || '';
+const API_ORIGIN = (process.env.ADMIN_API_URL || '')
+  // 构建期注入值可能带多余引号/空白（.env 为兼容 compose 解析对值加了引号），统一剥掉两端
+  .replace(/^[\s"'`]+|[\s"'`]+$/g, '')
 const BASE = `${API_ORIGIN}/api/v1/admin`;
 
 /** 分页参数（ProTable params: current/pageSize → page/pageSize） */
