@@ -146,9 +146,9 @@ const Dashboard: React.FC = () => {
       <ProCard title="系统运行状态" gutter={16} style={{ marginBottom: 16 }}>
         <ProCard colSpan={{ xs: 24, sm: 8, lg: 5 }} style={{ height: '100%' }}>
           <Space direction="vertical" size={4}>
-            {probeBadge(sysStatus?.api.ok ?? false, 'API', null)}
-            {probeBadge(sysStatus?.db.ok ?? false, 'DB', sysStatus?.db.latencyMs ?? null)}
-            {probeBadge(sysStatus?.redis.ok ?? false, 'Redis', sysStatus?.redis.latencyMs ?? null)}
+            {probeBadge(sysStatus?.api?.ok ?? false, 'API', null)}
+            {probeBadge(sysStatus?.db?.ok ?? false, 'DB', sysStatus?.db?.latencyMs ?? null)}
+            {probeBadge(sysStatus?.redis?.ok ?? false, 'Redis', sysStatus?.redis?.latencyMs ?? null)}
           </Space>
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 8, lg: 9 }} title="Worker 分组" style={{ height: '100%' }}>
@@ -195,13 +195,13 @@ const Dashboard: React.FC = () => {
 
       <ProCard title="本月概览" gutter={16} style={{ marginBottom: 16 }}>
         <ProCard colSpan={8}>
-          <Statistic title="新增用户" value={data?.month.newUsers ?? 0} />
+          <Statistic title="新增用户" value={data?.month?.newUsers ?? 0} />
         </ProCard>
         <ProCard colSpan={8}>
-          <Statistic title="订单数" value={data?.month.orders ?? 0} />
+          <Statistic title="订单数" value={data?.month?.orders ?? 0} />
         </ProCard>
         <ProCard colSpan={8}>
-          <Statistic title="GMV" value={cny(data?.month.gmv ?? 0)} />
+          <Statistic title="GMV" value={cny(data?.month?.gmv ?? 0)} />
         </ProCard>
       </ProCard>
 
@@ -256,19 +256,19 @@ const Dashboard: React.FC = () => {
 
       <ProCard title="待办事项" gutter={16} style={{ marginBottom: 16 }}>
         <ProCard colSpan={{ xs: 24, sm: 12, lg: 4 }} style={{ height: '100%' }}>
-          <Statistic title="未付账单" value={data?.pending.unpaidInvoices ?? 0} valueStyle={{ color: '#faad14' }} />
+          <Statistic title="未付账单" value={data?.pending?.unpaidInvoices ?? 0} valueStyle={{ color: '#faad14' }} />
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 12, lg: 4 }} style={{ height: '100%' }}>
-          <Statistic title="逾期服务" value={data?.pending.overdueServices ?? 0} valueStyle={{ color: '#cf1322' }} />
+          <Statistic title="逾期服务" value={data?.pending?.overdueServices ?? 0} valueStyle={{ color: '#cf1322' }} />
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 12, lg: 4 }} style={{ height: '100%' }}>
-          <Statistic title="待回复工单" value={data?.pending.openTickets ?? 0} valueStyle={{ color: '#faad14' }} />
+          <Statistic title="待回复工单" value={data?.pending?.openTickets ?? 0} valueStyle={{ color: '#faad14' }} />
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 12, lg: 4 }} style={{ height: '100%' }}>
-          <Statistic title="供应任务" value={data?.pending.provisionTasks ?? 0} />
+          <Statistic title="供应任务" value={data?.pending?.provisionTasks ?? 0} />
         </ProCard>
         <ProCard colSpan={{ xs: 24, sm: 12, lg: 4 }} style={{ height: '100%' }}>
-          <Statistic title="死信任务" value={data?.pending.deadTasks ?? 0} valueStyle={{ color: '#cf1322' }} />
+          <Statistic title="死信任务" value={data?.pending?.deadTasks ?? 0} valueStyle={{ color: '#cf1322' }} />
         </ProCard>
       </ProCard>
 
