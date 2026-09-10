@@ -72,9 +72,14 @@ hr; say "开始收集配置（回车接受默认值）"; hr
 # 已有 .env → 读旧值作默认
 if [ -f .env ]; then
   warn "检测到已有 .env，将预填旧值（回车沿用）"
-  . ./.env
-  _old_domain="${DOMAIN_BASE:-}"; _old_email="${ACME_EMAIL:-}"
-  _old_brand="${NEXT_PUBLIC_BRAND_NAME:-}"; _old_brand_en="${NEXT_PUBLIC_BRAND_NAME_EN:-}"
+  # 不整文件 source：.env 值可含特殊字符（/ @ : == 等）或历史坏行，source 可能把整个脚本弄崩。
+  # 只按需读取所需字段，坏行只被忽略，不再阻断部署；密钥（APP_KEY/MYSQL_ROOT_PASSWORD）照常沿用
+  _read_env() { grep -E "^${1}=" .env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"' ; }
+  _old_domain="$(_read_env DOMAIN_BASE)"; _old_email="$(_read_env ACME_EMAIL)"
+  _old_brand="$(_read_env NEXT_PUBLIC_BRAND_NAME)"; _old_brand_en="$(_read_env NEXT_PUBLIC_BRAND_NAME_EN)"
+  APP_KEY="${APP_KEY:-$(_read_env APP_KEY)}"
+  MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-$(_read_env MYSQL_ROOT_PASSWORD)}"
+  SEED_ADMIN_USERNAME="${SEED_ADMIN_USERNAME:-$(_read_env SEED_ADMIN_USERNAME)}"
 else
   _old_domain=""; _old_email=""; _old_brand=""; _old_brand_en=""
 fi
