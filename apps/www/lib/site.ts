@@ -44,8 +44,10 @@ export const siteConfig = {
     return locale === "zh" ? brandName : brandNameEn;
   },
   domain: trimEnv(process.env.NEXT_PUBLIC_SITE_URL) ?? "https://example.com",
-  /** Logo 资源：icon 为 admin 上传的定制 logo（branding.json），white/horizontal 变体不跟随定制 */
+  /** Logo 资源：custom 为 admin 上传的定制 logo（branding.json，构建期烘焙）；
+   *  icon/favicon/OG/footer 跟随定制（回落内置）；white/horizontal 为内置深浅变体 */
   logo: {
+    custom: branding.logoFile,
     icon: branding.logoFile ?? "/logo.png",
     white: "/logo-white.png",
     horizontal: "/logo-horizontal.png",

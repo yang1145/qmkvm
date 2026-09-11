@@ -24,6 +24,24 @@ export function Logo({
   const brand = siteConfig.brandName(locale);
 
   if (variant === "horizontal") {
+    // 有定制 logo（admin 上传）：图标 + 品牌文字组合；未定制时用内置横向图
+    if (siteConfig.logo.custom) {
+      return (
+        <span className={cn("inline-flex items-center gap-2.5", className)}>
+          <Image
+            src={siteConfig.logo.custom}
+            alt={brand}
+            width={32}
+            height={32}
+            priority
+            className="h-8 w-8 shrink-0 object-contain"
+          />
+          <span className="whitespace-nowrap text-lg font-semibold tracking-tight">
+            {brand}
+          </span>
+        </span>
+      );
+    }
     return (
       <span className={cn("inline-flex items-center", className)}>
         <Image
