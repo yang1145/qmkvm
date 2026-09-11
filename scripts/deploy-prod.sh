@@ -200,7 +200,10 @@ NEXT_PUBLIC_SITE_URL=https://www.${DOMAIN_BASE}
 NEXT_PUBLIC_PORTAL_URL=https://portal.${DOMAIN_BASE}
 NEXT_PUBLIC_BRAND_NAME=${NEXT_PUBLIC_BRAND_NAME}
 NEXT_PUBLIC_BRAND_NAME_EN=${NEXT_PUBLIC_BRAND_NAME_EN}
-BRANDING_API_URL=http://api:4000/api/v1/public/settings
+# 必须是构建期可达的完整公网 URL：docker build 沙箱不接入 compose 网络，
+# http://api:4000 这类服务名在构建期不可解析，会静默降级为缺省品牌。
+# 公网地址本地构建机（publish-images.sh）与 VPS 均可达；首次部署 DNS/证书未生效时降级，之后重建 www 即可。
+BRANDING_API_URL=https://api.${DOMAIN_BASE}/api/v1/public/settings
 
 DEV_MOCK_PAYMENTS=false
 
