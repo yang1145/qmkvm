@@ -295,7 +295,9 @@ cat <<SUMMARY
     1. 支付网关：管理后台「系统设置」录入商户参数（回调已指向 $API_PUBLIC_URL）
     2. 短信/邮件：如未配置，编辑 .env 后 docker compose -f $COMPOSE --env-file .env up -d api worker
     3. 品牌定制：管理后台「站点信息」上传 logo/改站点名 → portal/admin 刷新即生效；
-       www 需重建：docker compose -f $COMPOSE --env-file .env build www && docker compose -f $COMPOSE --env-file .env up -d www
+       www 重建（BRANDING_HASH 为内容指纹：内容没变复用缓存，变了自动重建）：
+         export BRANDING_HASH="\$(curl -fsS "\$(grep -E '^BRANDING_API_URL=' .env | cut -d= -f2-)" | sha256sum | cut -d' ' -f1)"
+         docker compose -f $COMPOSE --env-file .env build www && docker compose -f $COMPOSE --env-file .env up -d www
     4. 官网「联系销售」表单需 NEXT_PUBLIC_CONTACT_API_URL（见 .env.example 说明）
     5. 建议：admin 域名加 IP 白名单；.env 含全部密钥，请妥善备份
 SUMMARY

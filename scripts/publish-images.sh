@@ -43,11 +43,32 @@ ssh "$REGISTRY_HOST" '
   fi
 ' || die "无法连接或操作 $REGISTRY_HOST（请确认可 ssh 登录且已安装 Docker）"
 
-# ---------- 2) 本地构建 ----------
+# ---------- 2) 构建期品牌变量（生产值，来自 VPS 生产 .env，不写入本地任何文件） ----------
+_prod_branding_url="${BRANDING_API_URL:-}"
+if [ -z "$_prod_branding_url" ]; then
+  say "从 VPS 生产 .env 读取 BRANDING_API_URL..."
+  _prod_branding_url="$(ssh "$REGISTRY_HOST" "grep -hE '^BRANDING_API_URL=' /www/qmkvm/.env ~/qmkvm/.env 2>/dev/null | head -n1 | cut -d= -f2-" || true)"
+fi
+if [ -n "$_prod_branding_url" ]; then
+  export BRANDING_API_URL="$_prod_branding_url"
+  say "BRANDING_API_URL=$_prod_branding_url"
+  # 内容指纹：API 响应变化 → 指纹变化 → www 构建层缓存失效；内容没变则正常复用缓存
+  _hash="$(curl -fsS --max-time 10 "$_prod_branding_url" | sha256sum | cut -d' ' -f1 || true)"
+  if [ -n "$_hash" ]; then
+    export BRANDING_HASH="$_hash"
+    say "BRANDING_HASH=$_hash"
+  else
+    warn "无法计算品牌内容指纹（API 不可达？），www 可能以缓存中的旧品牌构建"
+  fi
+else
+  warn "未获取到 BRANDING_API_URL（本地未 export 且 VPS .env 无此键），www 将以缺省品牌构建"
+fi
+
+# ---------- 3) 本地构建 ----------
 say "本地构建全部服务镜像（docker compose build）..."
 docker compose -f "$COMPOSE" --env-file .env build
 
-# ---------- 3) SSH 隧道：本地 5000 → VPS 127.0.0.1:5000 ----------
+# ---------- 4) SSH 隧道：本地 5000 → VPS 127.0.0.1:5000 ----------
 say "建立 SSH 隧道 localhost:5000 → ${REGISTRY_HOST}:5000 ..."
 ssh -N -L 5000:127.0.0.1:5000 "$REGISTRY_HOST" &
 TUNNEL_PID=$!
@@ -58,7 +79,7 @@ for _i in $(seq 1 15); do
 done
 (echo >/dev/tcp/127.0.0.1/5000) 2>/dev/null || die "SSH 隧道未就绪（请检查 ssh 登录与 VPS registry 状态）"
 
-# ---------- 4) tag + push（首次全量，之后增量） ----------
+# ---------- 5) tag + push（首次全量，之后增量） ----------
 for img in "${IMAGES[@]}"; do
   say "push qmkvm-$img:prod → registry ..."
   docker tag "qmkvm-$img:prod" "localhost:5000/qmkvm-$img:prod"

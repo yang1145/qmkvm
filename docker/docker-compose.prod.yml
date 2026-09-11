@@ -136,6 +136,8 @@ services:
         NEXT_PUBLIC_BRAND_NAME_EN: ${NEXT_PUBLIC_BRAND_NAME_EN:-}
         # 品牌定制拉取端点（admin「站点信息」→ GET /api/v1/public/settings），构建期烘焙
         BRANDING_API_URL: ${BRANDING_API_URL:-}
+        # 品牌内容指纹（API 响应 sha256）：内容变化才重建 www 构建层（发布/重建命令导出）
+        BRANDING_HASH: ${BRANDING_HASH:-}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:80"

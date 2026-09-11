@@ -510,6 +510,8 @@ services:
         NEXT_PUBLIC_BRAND_NAME_EN: ${NEXT_PUBLIC_BRAND_NAME_EN:-}
         # 品牌定制拉取端点（构建期烘焙）；必须是构建环境可达的完整公网 URL
         BRANDING_API_URL: ${BRANDING_API_URL:-}
+        # 品牌内容指纹（API 响应 sha256）：内容变化才重建 www 构建层
+        BRANDING_HASH: ${BRANDING_HASH:-}
     restart: unless-stopped
     container_name: qmkvm-cluster-www
     # 不暴露宿主机端口，统一经 lb / 进入
