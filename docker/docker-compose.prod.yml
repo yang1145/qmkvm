@@ -116,7 +116,8 @@ services:
       dockerfile: docker/Dockerfile.next
       network: host
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        # 缺失即报错，避免静默把 http://localhost:4000 烘焙进 SPA（浏览器端会打到用户本机）
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?请在 .env 设置 NEXT_PUBLIC_API_URL（如 https://api.example.com，deploy-prod.sh 自动写入）}
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:80"

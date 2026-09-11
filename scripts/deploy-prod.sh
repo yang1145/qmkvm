@@ -185,6 +185,9 @@ API_PUBLIC_URL=https://api.${DOMAIN_BASE}
 # ===== 管理后台（构建期直连，不用反代）=====
 ADMIN_API_URL=https://api.${DOMAIN_BASE}
 
+# ===== 客户中心 portal（SPA 构建期烘焙，改后需重建 portal）=====
+NEXT_PUBLIC_API_URL=https://api.${DOMAIN_BASE}
+
 # ===== 公网 HTTPS 入口（gateway 自动签发/续期证书）=====
 DOMAIN_BASE=${DOMAIN_BASE}
 ACME_EMAIL=${ACME_EMAIL}
