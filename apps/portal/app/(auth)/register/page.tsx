@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { emailRegisterSchema } from "@qmkvm/contracts";
 
 import { api } from "@/lib/api";
+import { useBranding } from "@/components/branding-provider";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Field } from "@/components/form";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const branding = useBranding();
   const { success } = useToast();
   const [email, setEmail] = React.useState("");
   const [name, setName] = React.useState("");
@@ -57,7 +59,7 @@ export default function RegisterPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold">注册账号</h1>
-        <p className="mt-1 text-sm text-muted-foreground">使用邮箱注册启明智联客户中心</p>
+        <p className="mt-1 text-sm text-muted-foreground">使用邮箱注册{branding.siteName}客户中心</p>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>

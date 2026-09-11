@@ -21,6 +21,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useApiData } from "@/hooks/use-api";
 import { formatCny, formatDate } from "@/lib/format";
 import { settingsSchema } from "@/lib/schemas";
+import { useBranding } from "@/components/branding-provider";
 import { PageHeader } from "@/components/page-header";
 import { InvoiceStatusBadge, orderTypeLabel } from "@/components/status-badge";
 import { EmptyState, ErrorState } from "@/components/empty-state";
@@ -39,6 +40,7 @@ const QUICK_LINKS = [
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const branding = useBranding();
 
   const settingsState = useApiData(
     () => api.get("/settings", { parse: settingsSchema, silent: true }),
@@ -87,7 +89,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={`您好，${user?.name || user?.email || user?.phone || "用户"}`}
-        description="欢迎回到启明智联客户中心"
+        description={`欢迎回到${branding.siteName}客户中心`}
       />
 
       {announcement ? (

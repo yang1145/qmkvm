@@ -22,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useBranding } from "@/components/branding-provider";
 import { useAuth } from "@/lib/auth-context";
 import { formatCny } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ function isActive(pathname: string, href: string, exact: boolean) {
 
 export function SiteHeader() {
   const { user, unreadCount, logout } = useAuth();
+  const branding = useBranding();
   const router = useRouter();
   const pathname = usePathname() ?? "/";
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -70,12 +72,21 @@ export function SiteHeader() {
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="mr-2 flex items-center gap-2 font-semibold">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
-            启
-          </span>
-          <span className="hidden sm:inline">启明智联</span>
+          {branding.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={branding.logo}
+              alt={branding.siteName}
+              className="h-7 w-7 rounded-md object-contain"
+            />
+          ) : (
+            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
+              {branding.siteName.slice(0, 1) || "启"}
+            </span>
+          )}
+          <span className="hidden sm:inline">{branding.siteName}</span>
           <span className="hidden text-xs font-normal text-muted-foreground sm:inline">
-            QmKvm
+            {branding.siteNameEn}
           </span>
         </Link>
 
@@ -201,7 +212,7 @@ export function SiteHeader() {
           />
           <div className="absolute right-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-l bg-card p-4 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <span className="font-semibold">启明智联</span>
+              <span className="font-semibold">{branding.siteName}</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
